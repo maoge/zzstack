@@ -1,0 +1,137 @@
+smsServerConf:
+    #系统属性   production生产环境、 sandbox 测试沙箱环境
+    system_property: "production"
+    
+    #缓存接入类型：1.redis 2.memcache
+    # app.cache.type=1
+    # app.memcachedAddr=192.168.128.51\:11211
+
+    #process进程最大数(全部)
+    max_sms_task_proc: 1
+
+    #batsave进程最大数(单台)
+    batch_save_process: 1
+
+    #web控制台命令接收端口
+    web_console_port: 5003
+
+    #各个通信协议接收端口
+    cmpp20_port: 8855
+    cmpp30_port: 8856
+    sgip12_port: 8857
+    smpp34_port: 8858
+    smgp30_port: 8859
+    http_port:   8860
+    http_port2:  8861
+    https_port:  8862
+
+    #美圣
+    meisheng_port: 8863
+    #中国人保
+    http_gbk_port: 8865
+    #天津电信
+    wjsx_port: 9010
+    #京东
+    jdws_addr: "http://127.0.0.1:9011/jdserver"
+
+    #WEB
+    web_service_addr: "http://192.168.128.50:9012/SmsWebService.asmx"
+    web_service_task_url: "http://192.168.128.77:8088/jersey/clientWeb/sendSms"
+
+
+    #扫描上行表间隔时间(毫秒)
+    mo_scan_interval: 3000
+
+    #发送HTTP协议状态报告间隔时间(毫秒)
+    http_report_interval: 500
+
+    #敏感词刷新间隔时间(毫秒)
+    sw_ref_interval: 180000
+
+    #客户参数刷新时间(毫秒)
+    cp_ref_interval: 180000
+    #本平台ip地址
+    local_ip: "127.0.0.1"
+
+    #cmpp20包日志功能
+    cmpp20_packlog: "no"
+
+    #sgip包日志功能
+    cmpp30_packlog: "no"
+
+    #smgp包日志功能
+    smgp_packlog: "no"
+
+    #sgip包日志功能
+    sgip_packlog: "no"
+
+    #http包日志功能
+    http_packlog: "no"
+
+    #http2包日志功能
+    http2_packlog: "no"
+
+    #https包日志功能
+    https_packlog: "no"
+
+    #告警服务地址
+    warn_svc_url: ""
+
+    #mt提交任务线程池核心数
+    dat_core_size: 16
+    #mt提交任务线程池最大数
+    dat_max_size: 16
+    #mt提交任务队列大小
+    dat_queue_size: 1000000
+
+    alt_core_size: 16
+    alt_max_size: 16
+    alt_queue_size: 1000000
+
+    #状态报告推送状态线程池核心数
+    bst_core_size: 16
+    #状态报告推送状态线程池最大数
+    bst_max_size: 16
+    #状态报告推送状态任务队列大小
+    bst_queue_size: 1000000
+
+    #状态报告推送更新队列大小
+    rpt_queue_size: 1000000
+
+    #是否开启 维护HTTP状态报告推送线程
+    http_report_push: "yes"
+    #是否开启 维护HTTP2状态报告推送线程
+    http2_report_push: "yes"
+    #是否开始 维护HTTPS状态报告推送线程
+    https_report_push: "yes"
+    #是否开启 维护SGIP Client 线程
+    sgip_report_push: "no"
+
+    #是否启动帐户中心服务线程
+    acct_service: "yes"
+
+    ##cmpp ismg id
+    cmpp_ismg_id: 59150
+
+    ##smgp and http ismg id
+    smgp_ismg_id: "591050"
+
+    #是否采集号段 yes/no/database
+    collect_msi: "yes"
+
+    #特殊用户状态报告推送
+    special_report_custid: ""
+
+    unique_link_url: "http://192.168.128.69:8081/store/short_url/generate/analysis"
+
+    #redis每次拉取状态报告最大条数
+    max_report_fetch: 100
+
+    #已发送状态包再次发送拦截是否执行
+    no_report_execute: "no"
+
+    # 决策是否启用(yes:启用 no:停用)
+    decision_enable: "no"
+
+    #prometheus采集server的端口
+    prometheus_port: 10010

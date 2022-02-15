@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--monitorInterval 热改生效时长配置 值以分钟为单位-->
+<Configuration monitorInterval="1">
+    <!-- 属性定义 -->
+    <Properties>
+        <!--日志根目录 -->
+        <property name="log-path">./logs</property>
+        <!-- 日志切割的最小单位 -->
+        <property name="every_file_size">128M</property>
+        <!-- 日志打印格式-->
+        <property name="console_pattern">[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c - %msg%n</property>
+        <property name="out_pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} |%-5level| %msg%n</property>
+        <property name="error_out_pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} |-%-5level [%t] %c [%L] -| %msg%n</property>
+        <!-- 日志输出级别 -->
+        <property name="output_log_level">info</property>
+        <!-- 日志归档间隔 -->
+        <property name="time_interval">1</property>
+        <property name="max_size">10</property>
+        <property name="error_file">${log-path}/paas-metasvr-error.log</property>
+        <property name="info_file">${log-path}/paas-metasvr-info.log</property>
+        <property name="debug_file">${log-path}/paas-metasvr-debug.log</property>
+    </Properties>
+
+    <Appenders>
+        <!-- 控制台输出 -->
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="${console_pattern}"/>
+        </Console>
+
+        <!--这个会打印出所有的信息，每次大小超过size，则这size大小的日志会自动存入按年份-月份建立的文件夹下面并进行压缩，作为存档-->
+        <RollingRandomAccessFile name="RollingRandomInfoFile" fileName="${info_file}"
+                                 filePattern="${log-path}/info/$${date:yyyy-MM}/paas-metasvr-info-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="${out_pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="${time_interval}"/>
+                <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${max_size}"/>
+        </RollingRandomAccessFile>
+
+        <!-- error 日志 -->
+        <RollingRandomAccessFile name="RollingRandomErrorFile" fileName="${error_file}"
+                                 filePattern="${log-path}/error/$${date:yyyy-MM}/paas-metasvr-error-%d{MM-dd-yyyy}-%i.log.gz"
+                                 immediateFlush="true">
+            <PatternLayout pattern="${error_out_pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="${time_interval}"/>
+                <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${max_size}"/>
+            <Filters>
+                <RegexFilter regex=".*Exception.*" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingRandomAccessFile>
+
+        <!-- debug 日志 -->
+        <RollingRandomAccessFile name="RollingRandomDebugFile" fileName="${debug_file}"
+                                 filePattern="${log-path}/debug/$${date:yyyy-MM}/paas-metasvr-debug-%d{MM-dd-yyyy}-%i.log.gz"
+                                 immediateFlush="false">
+            <PatternLayout pattern="${error_out_pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="${time_interval}"/>
+                <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${max_size}"/>
+            <Filters>
+                <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingRandomAccessFile>
+    </Appenders>
+
+    <Loggers>
+        <AsyncRoot level="${output_log_level}" includeLocation="false">
+            <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="RollingRandomInfoFile"/>
+            <AppenderRef ref="RollingRandomErrorFile"/>
+        </AsyncRoot>
+    </Loggers>
+
+</Configuration>

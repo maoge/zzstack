@@ -1,0 +1,48 @@
+jdbc:
+    decrypt: false
+    dbType: "mysql"
+    
+    # Druid, Hikari
+    dbSourceModel: "Hikari"
+    activeDBType: master
+    masterDBSources:
+        id: "RealTimeMasterDB"
+        nodes:
+            -
+                url: "jdbc:mysql://192.168.238.128:5600/smsdb?useSSL=false"
+                username: "root"
+                password: "a123456"
+                
+    backupDBSources:
+        id: "RealTimeBackupDB"
+        nodes:
+            -
+                url: "jdbc:mysql://192.168.238.128:5600/smsdb?useSSL=false"
+                username: "root"
+                password: "a123456"
+                
+    initialSize: 20
+    minIdle: 20
+    maxActive: 40
+    maxWait: 20000
+    
+    timeBetweenEvictionRunsMillis: 10000
+    minEvictableIdleTimeMillis: 300000
+    maxEvictableIdleTimeMillis: 600000
+    timeBetweenLogStatsMillis: 300000
+    keepAlive: false
+    
+    validationQuery: "SELECT 1 from dual"
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxOpenPreparedStatements: 100
+    
+    removeAbandoned: true
+    removeAbandonedTimeout: 1800
+    logAbandoned: true
+    
+    phyMaxUseCount: -1
+    filters: ""
+

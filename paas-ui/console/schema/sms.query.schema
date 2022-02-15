@@ -1,0 +1,118 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "SMS_QUERY_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS服务容器ID"},
+                
+                "NGX_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_SERVER容器ID","inputDisabled":true},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "NGX": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_SERVER ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "WORKER_PROCESSES": {"type":"string","required":true,"description":"worker_processes","remind":"true","default":"4","pattern":"[^0-9]","message":"worker_processes不能为空，必须是数字！"},
+                                    "LISTEN_PORT": {"type":"string","required":true,"description":"listen_port","remind":"true","default":"9500","pattern":"[^0-9]","message":"listen_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                },
+                
+                "SMS_QUERY_CONTAINER":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Query容器ID","inputDisabled":true},
+                        "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "SMS_QUERY": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_QUERY ID","inputDisabled":true},
+                                    "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                                    "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                                    "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                                    "PRE_EMBEDDED": {"type":"string","module":"select","required":true,"description":"是否预埋","remind":"true","default":"false","note":"false|true"},
+                                    "VERTX_PORT": {"type":"string","required":true,"description":"vertx.port","default":"9510","pattern":"[^0-9]","message":"vertx.port不能为空，必须是数字，范围在1024-65535","isPort":"yes"},
+                                    "VERTX_SSL": {"type":"string","module":"select","required":true,"description":"vertx.ssl","remind":"true","default":"false","note":"false|true"},
+                                    "VERTX_EVENT_LOOP_SIZE": {"type":"string","required":true,"description":"vertx.evLoopSize","default":"4","pattern":"[^0-9]","message":"EventLoopSize不能为空，必须是数字！"},
+                                    "VERTX_WORKER_SIZE": {"type":"string","required":true,"description":"vertx.workerSize","default":"100","pattern":"[^0-9]","message":"WorkerSize不能为空，必须是数字！"},
+                                    "VERTX_TASK_TIMEOUT": {"type":"string","required":true,"description":"vertx.taskTimeout(ms)","default":"20000","pattern":"[^0-9]","message":"TaskTimeout不能为空，必须是数字！"},
+                                    "REDIS_CLUSTER_CACHE": {"type":"string","module":"select","required":true,"description":"cache集群","remind":"true"},
+                                    "REDIS_CLUSTER_QUEUE": {"type":"string","module":"select","required":true,"description":"queue集群","remind":"true"},
+                                    "ROCKETMQ_SERV": {"type":"string","module":"select","required":true,"description":"rocketmq集群","remind":"true"},
+                                    "ROCKETMQ_PRODUCER_GROUP_NAME": {"type":"string","required":true,"description":"producer.groupname","default":"SMS_PLATFORM_GROUP"},
+                                    "CLICKHOUSE_SERV": {"type":"string","module":"select","required":true,"description":"clickhouse集群","remind":"true"},
+                                    "ORACLE_DG_SERV": {"type":"string","module":"select","required":true,"description":"oracle-dg集群","remind":"true"},
+                                    "ES_MT_SERVER": {"type":"string","required":true,"description":"es.mt地址","remind":"true","default":"192.168.128.88:9201,192.168.128.89:9201,192.168.128.90:9201"},
+                                    "ES_SCROLL_SIZE": {"type":"string","required":true,"description":"es.scroll.size","default":"50","pattern":"[^0-9]","message":"scrollSize不能为空，必须是数字！"},
+                                    "ES_SCROLL_LISTSIZE": {"type":"string","required":true,"description":"es.scroll.listsize","default":"500","pattern":"[^0-9]","message":"scrollListSize不能为空，必须是数字！"},
+                                    "ES_SCROLL_TIMEOUT": {"type":"string","required":true,"description":"es.scroll.timeout(ms)","default":"60000","pattern":"[^0-9]","message":"scrollTimeout不能为空，必须是数字！"},
+                                    "ES_MT_HIS_INDEX": {"type":"string","required":true,"description":"mt_his.index","default":"t_smsgateway_mt_his"},
+                                    "ES_MT_HIS_TYPE": {"type":"string","required":true,"description":"mt_his.type","default":"mt_his"},
+                                    "ES_MT_HIS_SORTFIELD": {"type":"string","required":true,"description":"mt_his.sortField","default":"insert_timestamp"},
+                                    "ES_REPORT_HIS_INDEX": {"type":"string","required":true,"description":"report_his.index","default":"t_smsgateway_report_his"},
+                                    "ES_REPORT_HIS_TYPE": {"type":"string","required":true,"description":"report_his.type","default":"report_his"},
+                                    "ES_REPORT_HIS_SORTFIELD": {"type":"string","required":true,"description":"report_his.sortField","default":"insert_timestamp"},
+                                    "ES_MO_HIS_INDEX": {"type":"string","required":true,"description":"mo_his.index","default":"t_smsgateway_mo_his"},
+                                    "ES_MO_HIS_TYPE": {"type":"string","required":true,"description":"mo_his.type","default":"mo_his"},
+                                    "ES_MO_HIS_SORTFIELD": {"type":"string","required":true,"description":"mo_his.sortField","default":"insert_timestamp"},
+                                    "EXPORT_URL": {"type":"string","required":true,"description":"export.url","remind":"true","default":"http://127.0.0.1:9006"},
+                                    "EXPORT_CREATE_TASK": {"type":"string","required":true,"description":"export.createTask","remind":"true","default":"${bigdata.export.url}/sms/export/createTask.json"},
+                                    "EXCEL_TEMPDIR": {"type":"string","required":true,"description":"excel.tempDir","remind":"true","default":"./data"},
+                                    "EXCEL_MAXEXCELROW": {"type":"string","required":true,"description":"excel.maxExcelRow","default":"50000","pattern":"[^0-9]","message":"maxExcelRow不能为空，必须是数字！"},
+                                    "JVM_OPS": {"type":"string","module":"textarea","required":true,"description":"jvm参数","default":"-server -Xms3g -Xmx3g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=30 -XX:InitiatingHeapOccupancyPercent=25 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:SurvivorRatio=8 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=128m -XX:-UseLargePages -XX:-UseBiasedLocking -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./logs/QueryOOM.dump"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                }
+
+                
+            }
+        }
+    }
+}

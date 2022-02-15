@@ -1,0 +1,188 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+    <style>
+        .list-group {
+            padding-left: 0;
+            margin-bottom: 20px;
+        }
+        .list-group-item {
+            position: relative;
+            display: block;
+            padding: 10px 15px;
+            margin-bottom: -1px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    
+    <div class="row bg-light	">
+        <div class="col-sm-4 col-xs-12 breadcrumb bg-light">
+            <li class="breadcrumb-item">工具</li>
+            <li class="breadcrumb-item">元数据查看</li>
+        </div>
+        <div class="col-sm-8 col-xs-12">
+            <div class="form-inline mt-md-0 mr-2 pt-1 float-right" >
+                <div class="input-group">
+                    <input id="instId" value="" class="form-control" type="text" 
+                           placeholder="请输入INST_ID" style="width: 300px;" />
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-success" onclick="searchMetaData();">
+                            <i class="iconfont ibsp-chaxun mr-1"></i>搜索
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr/>
+    <div class="row" style="">
+        <div class="col-md-5">
+            <h3>元数据树信息</h3>
+            <div id="treeview" class=""></div>
+        </div>
+        <div class="col-md-7">
+            <h3>元数据信息 <span id="containerName"></span></h3>
+
+            <div class="">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr class="info">
+                        <th>属性名称</th>
+                        <th>属性说明</th>
+                        <th>属性内容</th>
+                    </tr>
+                    </thead>
+                    <tbody id="cardMetaInfo">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+</body>
+
+<script src="../js/thirdParty/treeView.js" type="text/javascript" ></script>
+
+<script>
+    var $instId = $("#instId"),
+            $cardMetaInfo = $("#cardMetaInfo"),
+            $tree = $('#treeview'),
+            $containerName = $("#containerName");
+
+    function searchByRemote(instId){
+        $instId.val(instId);
+        searchMetaData();
+    }
+
+    function searchMetaData(){
+        var val = $instId.val();
+        val = trim(val);
+        getMetaTree(val,function(data){
+            var retInfo = data;
+            $tree.html("");
+            $tree.treeview({
+                data:retInfo,
+                expandIcon: 'iconfont ibsp-iconfontadd',
+                collapseIcon: 'iconfont ibsp-iconfontmove',
+                onNodeExpanded: function(event, node) {
+                    //动态加载子节点
+                    /*if(node.nodes.length == 0 ){
+                         getMetaTree(node['text'],function(data){
+                             $tree.treeview("appendTarget", [data[0]['text'], data[0]['nodes']]);
+                        });
+                     }*/
+                },
+                onNodeSelected: function(event, node) {
+                    var inst_id = node['inst_id'] != null ? node['inst_id'] : node['text'];
+                    getMetaData(inst_id,function(res) {
+                        $cardMetaInfo.html("");
+                        var data;
+                        for(var name in res){
+                            $containerName.html("（"+name+"）");
+                            data = res[name];
+                        }
+                        $.each(data,function(index,row){
+                            var html = ""
+                            $cardMetaInfo.append('<tr class=""><td>'+row['ATTR_NAME']+'</td> <td>'+row['ATTR_NAME_CN']+'</td> <td>'+row['ATTR_VALUE']+'</td> </tr>');
+                        });
+                    });
+                }
+            });
+        });
+    }
+
+    function getMetaTree(inst_id,callback) {
+        var res = "";
+        var reqData = {};
+        reqData.INST_ID = inst_id;
+        var req = {
+            url:rootUrl + "paas/metadata/getMetaTree",
+            type:"post",
+            async: true,
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(reqData),
+            success: function (res) {
+                if(res["RET_CODE"] == 0) {
+                    var arr = res["RET_INFO"],
+                    data = [];
+                    //res =  JSON.parse(arr);
+                    if(arr.length == 0){
+                        data.push({"text":inst_id});
+                    }else{
+                        data.push({"text":inst_id,nodes:arr});
+                    }
+                    callback(data);
+                } else {
+                    Alert("error",res["RET_INFO"]);
+                }
+            },
+            error:function(err){
+                Alert("error",err);
+            }
+        };
+        $.ajax(req);
+
+        return res;
+    }
+
+    function getMetaData(inst_id,callback) {
+        var reqData = {};
+        reqData.INST_ID = inst_id;
+        var req = {
+            url: rootUrl + "paas/metadata/getMetaData",
+            type:"post",
+            async: true,
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(reqData),
+            success: function (res) {
+                if(res["RET_CODE"] == 0){
+                    var arr = res["RET_INFO"];
+                    callback(arr);
+                }else{
+                    Alert("error",res["RET_INFO"]);
+                }
+            },
+            error:function(err){
+                Alert("error",err);
+            }
+        };
+        $.ajax(req);
+    }
+
+    function Alert(type, content) {
+        Util.alert(type,content);
+    }
+
+    function trim(x) {
+        return x.replace(/^\s+|\s+$/gm,'');
+    }
+
+</script>
+</html>

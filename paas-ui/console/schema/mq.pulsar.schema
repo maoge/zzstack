@@ -1,0 +1,187 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "PULSAR_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Pulsar服务容器 ID"},
+                
+                "PULSAR_BROKER_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"pulsar broker容器ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "PULSAR_BROKER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"pulsar broker ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "BROKER_PORT": {"type":"string","required":true,"description":"brokerServicePort","pattern":"[^0-9]","message":"brokerServicePort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "WEB_PORT": {"type":"string","required":true,"description":"webServicePort","pattern":"[^0-9]","message":"webServicePort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                }
+                            }
+                        }
+                    }
+                },
+                
+                "PULSAR_BOOKKEEPER_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"bookkeeper容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "PULSAR_BOOKKEEPER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"pulsar bookkeeper ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "BOOKIE_PORT": {"type":"string","required":true,"description":"bookiePort","pattern":"[^0-9]","message":"bookiePort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTP_SERVER_PORT": {"type":"string","required":true,"description":"httpServerPort","pattern":"[^0-9]","message":"httpServerPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "GRPC_PORT": {"type":"string","required":true,"description":"grpcPort","pattern":"[^0-9]","message":"metaDataPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                },
+                                "minItems":3
+                            }
+                        }
+                    }
+                },
+                
+                "ZOOKEEPER_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Zookeeper容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "ZOOKEEPER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Zookeeper ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "CLIENT_PORT": {"type":"string","required":true,"description":"clientPort端口","pattern":"[^0-9]","message":"ClientPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "ADMIN_PORT": {"type":"string","required":true,"description":"adminServerPort端口","pattern":"[^0-9]","message":"AdminPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "ZK_CLIENT_PORT1": {"type":"string","required":true,"description":"ClientPort端口1","pattern":"[^0-9]","message":"ClientPort1不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "ZK_CLIENT_PORT2": {"type":"string","required":true,"description":"ClientPort端口2","pattern":"[^0-9]","message":"ClientPort2不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                },
+                                "minItems":3
+                            }
+                        }
+                    }
+                },
+
+                "PULSAR_MANAGER":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Prometheus ID"},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"SSH ID"},
+                        "PULSAR_MGR_PORT": {"type":"string","required":true,"description":"pulsar manager端口","pattern":"[^0-9]","message":"manager端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "HERDDB_PORT": {"type":"string","required":true,"description":"herddb端口","pattern":"[^0-9]","message":"herddb端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                },
+
+                "PROMETHEUS":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Prometheus ID"},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"SSH ID"},
+                        "PROMETHEUS_PORT": {"type":"string","required":true,"description":"prometheus端口","pattern":"[^0-9]","message":"prometheus端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                },
+                
+                "GRAFANA":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Grafana ID"},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"SSH ID"},
+                        "HTTP_PORT": {"type":"string","required":true,"description":"grafana端口","pattern":"[^0-9]","message":"grafana端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

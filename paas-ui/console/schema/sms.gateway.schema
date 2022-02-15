@@ -1,0 +1,457 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "SMS_GATEWAY_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS服务容器ID"},
+                
+                "SMS_SERVER_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_SERVER容器ID","inputDisabled":true},
+                        "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "SMS_SERVER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_SERVER ID","inputDisabled":true},
+                                    "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                                    "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                                    "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                                    "REDIS_CLUSTER_CACHE": {"type":"string","module":"select","required":true,"description":"cache集群","remind":"true"},
+                                    "REDIS_CLUSTER_QUEUE": {"type":"string","module":"select","required":true,"description":"queue集群","remind":"true"},
+                                    "ORACLE_DG_SERV": {"type":"string","module":"select","required":true,"description":"oracle-dg集群","remind":"true"},
+                                    "SYSTEM_PROPERTY": {"type":"string","module":"select","required":true,"description":"运行模式","remind":"true","default":"production","note":"production|sandbox"},
+                                    "MAX_SMS_TASK_PROC": {"type":"string","required":true,"description":"process进程数","remind":"true","default":"1","pattern":"[^0-9]","message":"process进程数口不能为空，必须是数字！"},
+                                    "WEB_CONSOLE_PORT": {"type":"string","required":true,"description":"web控制台命令接收端口","remind":"true","default":"5003","pattern":"[^0-9]","message":"web控制台命令接收端口不能为空，必须是数字！"},
+                                    "BATCH_SAVE_PROCESS": {"type":"string","required":true,"description":"batsave组数","remind":"true","default":"1","pattern":"[^0-9]","message":"batsave组数口不能为空，必须是数字！"},
+                                    "CMPP20_PORT": {"type":"string","required":true,"description":"cmpp20端口","default":"8855","pattern":"[^0-9]","message":"cmpp20端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "CMPP30_PORT": {"type":"string","required":true,"description":"cmpp30端口","default":"8856","pattern":"[^0-9]","message":"cmpp30端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SGIP12_PORT": {"type":"string","required":true,"description":"sgip12端口","default":"8857","pattern":"[^0-9]","message":"sgip12端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SMPP34_PORT": {"type":"string","required":true,"description":"smpp34端口","default":"8858","pattern":"[^0-9]","message":"smpp34端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SMGP30_PORT": {"type":"string","required":true,"description":"smgp30端口","default":"8859","pattern":"[^0-9]","message":"smgp30端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTP_PORT": {"type":"string","required":true,"description":"http端口","default":"8860","pattern":"[^0-9]","message":"http端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTP_PORT2": {"type":"string","required":true,"description":"http2端口","default":"8861","pattern":"[^0-9]","message":"http2端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTPS_PORT": {"type":"string","required":true,"description":"https端口","default":"8862","pattern":"[^0-9]","message":"https端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "MEISHENG_PORT": {"type":"string","required":true,"description":"美圣端口","default":"8863","pattern":"[^0-9]","message":"美圣端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTP_GBK_PORT": {"type":"string","required":true,"description":"中国人保端口","default":"8865","pattern":"[^0-9]","message":"中国人保端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "WJSX_PORT": {"type":"string","required":true,"description":"天津电信","default":"9010","pattern":"[^0-9]","message":"天津电信端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "JDWS_ADDR": {"type":"string","required":true,"description":"京东服务地址","remind":"true","default":"http://127.0.0.1:9011/jdserver"},
+                                    "WEB_SERVICE_ADDR": {"type":"string","required":true,"description":"webservice地址","remind":"true","default":"http://192.168.128.50:9012/SmsWebService.asmx"},
+                                    "WEB_SERVICE_TASK_URL": {"type":"string","required":true,"description":"webserviceTaskUrl","remind":"true","default":"http://192.168.128.77:8088/jersey/clientWeb/sendSms"},
+                                    "MO_SCAN_INTERVAL": {"type":"string","required":true,"description":"扫描上行表间隔(毫秒)","default":"3000","pattern":"[^0-9]","message":"扫描上行表间隔(毫秒)不能为空，必须是数字！"},
+                                    "HTTP_REPORT_INTERVAL": {"type":"string","required":true,"description":"发送HTTP状态报告间隔(毫秒)","default":"500","pattern":"[^0-9]","message":"发送HTTP状态报告间隔(毫秒)不能为空，必须是数字！"},
+                                    "SW_REF_INTERVAL": {"type":"string","required":true,"description":"敏感词刷新间隔(毫秒)","default":"180000","pattern":"[^0-9]","message":"敏感词刷新间隔(毫秒)不能为空，必须是数字！"},
+                                    "CP_REF_INTERVAL": {"type":"string","required":true,"description":"客户参数刷新间隔(毫秒)","default":"180000","pattern":"[^0-9]","message":"客户参数刷新间隔(毫秒)不能为空，必须是数字！"},
+                                    "LOCAL_IP": {"type":"string","required":true,"description":"本平台ip地址","default":"127.0.0.1"},
+                                    "CMPP20_PACKLOG": {"type":"string","module":"select","required":true,"description":"cmpp20日志打包","default":"no","note":"no|yes"},
+                                    "CMPP30_PACKLOG": {"type":"string","module":"select","required":true,"description":"cmpp30日志打包","default":"no","note":"no|yes"},
+                                    "SMGP_PACKLOG": {"type":"string","module":"select","required":true,"description":"smgp日志打包","default":"no","note":"no|yes"},
+                                    "SGIP_PACKLOG": {"type":"string","module":"select","required":true,"description":"sgip日志打包","default":"no","note":"no|yes"},
+                                    "HTTP_PACKLOG": {"type":"string","module":"select","required":true,"description":"http日志打包","default":"no","note":"no|yes"},
+                                    "HTTP2_PACKLOG": {"type":"string","module":"select","required":true,"description":"http2日志打包","default":"no","note":"no|yes"},
+                                    "HTTPS_PACKLOG": {"type":"string","module":"select","required":true,"description":"https日志打包","default":"no","note":"no|yes"},
+                                    "WARN_SVC_URL": {"type":"string","required":true,"description":"告警服务地址","remind":"true","default":"http://47.105.34.55:9083/receiver/receiveWarningMessage"},
+                                    "DAT_CORE_SIZE": {"type":"string","required":true,"description":"行业核心线程数","default":"16","pattern":"[^0-9]","message":"行业核心线程数不能为空，必须是数字！"},
+                                    "DAT_MAX_SIZE": {"type":"string","required":true,"description":"行业最大线程数","default":"16","pattern":"[^0-9]","message":"行业最大线程数不能为空，必须是数字！"},
+                                    "DAT_QUEUE_SIZE": {"type":"string","required":true,"description":"行业核心队列大小","default":"1000000","pattern":"[^0-9]","message":"行业核心队列大小不能为空，必须是数字！"},
+                                    "ALT_CORE_SIZE": {"type":"string","required":true,"description":"营销核心线程数","default":"16","pattern":"[^0-9]","message":"营销核心线程数不能为空，必须是数字！"},
+                                    "ALT_MAX_SIZE": {"type":"string","required":true,"description":"营销最大线程数","default":"16","pattern":"[^0-9]","message":"营销最大线程数不能为空，必须是数字！"},
+                                    "ALT_QUEUE_SIZE": {"type":"string","required":true,"description":"营销核心队列大小","default":"1000000","pattern":"[^0-9]","message":"营销核心队列大小不能为空，必须是数字！"},
+                                    "BST_CORE_SIZE": {"type":"string","required":true,"description":"状态报告核心线程数","default":"16","pattern":"[^0-9]","message":"状态报告核心线程数不能为空，必须是数字！"},
+                                    "BST_MAX_SIZE": {"type":"string","required":true,"description":"状态报告最大线程数","default":"16","pattern":"[^0-9]","message":"状态报告最大线程数不能为空，必须是数字！"},
+                                    "BST_QUEUE_SIZE": {"type":"string","required":true,"description":"状态报告核心队列大小","default":"1000000","pattern":"[^0-9]","message":"状态报告核心队列大小不能为空，必须是数字！"},
+                                    "RPT_QUEUE_SIZE": {"type":"string","required":true,"description":"状态报告推送更新队列大小","default":"1000000","pattern":"[^0-9]","message":"状态报告推送更新队列大小不能为空，必须是数字！"},
+                                    "HTTP_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启HTTP状态报告推送维护线程","default":"yes","note":"yes|no"},
+                                    "HTTP2_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启HTTP2状态报告推送维护线程","default":"yes","note":"yes|no"},
+                                    "HTTPS_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启HTTPS状态报告推送维护线程","default":"yes","note":"yes|no"},
+                                    "SGIP_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启SGIP状态报告推送维护线程","default":"no","note":"no|yes"},
+                                    "ACCT_SERVICE": {"type":"string","module":"select","required":true,"description":"是否启动帐户中心服务线程","default":"yes","note":"yes|no"},
+                                    "CMPP_ISMG_ID": {"type":"string","required":true,"description":"cmpp ismg id","default":"59150"},
+                                    "SMGP_ISMG_ID": {"type":"string","required":true,"description":"smgp and http ismg id","default":"591050"},
+                                    "COLLECT_MSI": {"type":"string","module":"select","required":true,"description":"是否采集号段","default":"yes","note":"yes|no|database"},
+                                    "SPECIAL_REPORT_CUSTID": {"type":"string","required":true,"description":"特殊用户状态报告推送","default":""},
+                                    "UNIQUE_LINK_URL": {"type":"string","required":true,"description":"app.uniqueLink.url","remind":"true","default":"http://192.168.128.69:8081/store/short_url/generate/analysis"},
+                                    "MAX_REPORT_FETCH": {"type":"string","required":true,"description":"每次拉取状态报告最大条数","default":"100"},
+                                    "NO_REPORT_EXECUTE": {"type":"string","module":"select","required":true,"description":"app.noreport.execute","default":"no","note":"no|yes"},
+                                    "DECISION_ENABLE": {"type":"string","module":"select","required":true,"description":"决策是否启用","remind":"true","default":"no","note":"no|yes"},
+                                    "PROMETHEUS_PORT": {"type":"string","required":true,"description":"prometheus采集端口","remind":"true","default":"10010","pattern":"[^0-9]","message":"prometheus采集端口不能为空，必须是数字，范围在1024-65535","isPort":"yes"},
+                                    "JVM_OPS": {"type":"string","module":"textarea","required":true,"description":"jvm参数","default":"-Ddisplay=smsserver -server -Xms8g -Xmx8g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=30 -XX:InitiatingHeapOccupancyPercent=25 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:SurvivorRatio=8 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=256m -XX:-UseLargePages -XX:-UseBiasedLocking -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./logs/SmsServerOOM.dump"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                },
+                
+                "SMS_SERVER_EXT_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_SERVER容器ID","inputDisabled":true},
+                        "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "SMS_SERVER_EXT": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_SERVER ID","inputDisabled":true},
+                                    "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                                    "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                                    "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                                    "SMS_EXT_PROTO_SWITCH": {"type":"string","module":"select","required":true,"description":"扩展协议插件是否启用","remind":"true","default":"true","note":"true|false"},
+                                    "SMS_EXT_PROTO_PORT": {"type":"string","required":true,"description":"扩展协议端口","remind":"true","default":"8899","pattern":"[^0-9]","message":"扩展协议端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "REDIS_CLUSTER_CACHE": {"type":"string","module":"select","required":true,"description":"cache集群","remind":"true"},
+                                    "REDIS_CLUSTER_QUEUE": {"type":"string","module":"select","required":true,"description":"queue集群","remind":"true"},
+                                    "ORACLE_DG_SERV": {"type":"string","module":"select","required":true,"description":"oracle-dg集群","remind":"true"},
+                                    "SYSTEM_PROPERTY": {"type":"string","module":"select","required":true,"description":"运行模式","remind":"true","default":"production","note":"production|sandbox"},
+                                    "MAX_SMS_TASK_PROC": {"type":"string","required":true,"description":"process进程数","remind":"true","default":"1","pattern":"[^0-9]","message":"process进程数口不能为空，必须是数字！"},
+                                    "WEB_CONSOLE_PORT": {"type":"string","required":true,"description":"web控制台命令接收端口","remind":"true","default":"5003","pattern":"[^0-9]","message":"web控制台命令接收端口不能为空，必须是数字！"},
+                                    "BATCH_SAVE_PROCESS": {"type":"string","required":true,"description":"batsave组数","remind":"true","default":"1","pattern":"[^0-9]","message":"batsave组数口不能为空，必须是数字！"},
+                                    "CMPP20_PORT": {"type":"string","required":true,"description":"cmpp20端口","default":"8855","pattern":"[^0-9]","message":"cmpp20端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "CMPP30_PORT": {"type":"string","required":true,"description":"cmpp30端口","default":"8856","pattern":"[^0-9]","message":"cmpp30端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SGIP12_PORT": {"type":"string","required":true,"description":"sgip12端口","default":"8857","pattern":"[^0-9]","message":"sgip12端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SMPP34_PORT": {"type":"string","required":true,"description":"smpp34端口","default":"8858","pattern":"[^0-9]","message":"smpp34端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SMGP30_PORT": {"type":"string","required":true,"description":"smgp30端口","default":"8859","pattern":"[^0-9]","message":"smgp30端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTP_PORT": {"type":"string","required":true,"description":"http端口","default":"8860","pattern":"[^0-9]","message":"http端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTP_PORT2": {"type":"string","required":true,"description":"http2端口","default":"8861","pattern":"[^0-9]","message":"http2端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTPS_PORT": {"type":"string","required":true,"description":"https端口","default":"8862","pattern":"[^0-9]","message":"https端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "MEISHENG_PORT": {"type":"string","required":true,"description":"美圣端口","default":"8863","pattern":"[^0-9]","message":"美圣端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "HTTP_GBK_PORT": {"type":"string","required":true,"description":"中国人保端口","default":"8865","pattern":"[^0-9]","message":"中国人保端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "WJSX_PORT": {"type":"string","required":true,"description":"天津电信","default":"9010","pattern":"[^0-9]","message":"天津电信端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "JDWS_ADDR": {"type":"string","required":true,"description":"京东服务地址","remind":"true","default":"http://127.0.0.1:9011/jdserver"},
+                                    "WEB_SERVICE_ADDR": {"type":"string","required":true,"description":"webservice地址","remind":"true","default":"http://192.168.128.50:9012/SmsWebService.asmx"},
+                                    "WEB_SERVICE_TASK_URL": {"type":"string","required":true,"description":"webserviceTaskUrl","remind":"true","default":"http://192.168.128.77:8088/jersey/clientWeb/sendSms"},
+                                    "MO_SCAN_INTERVAL": {"type":"string","required":true,"description":"扫描上行表间隔(毫秒)","default":"3000","pattern":"[^0-9]","message":"扫描上行表间隔(毫秒)不能为空，必须是数字！"},
+                                    "HTTP_REPORT_INTERVAL": {"type":"string","required":true,"description":"发送HTTP状态报告间隔(毫秒)","default":"500","pattern":"[^0-9]","message":"发送HTTP状态报告间隔(毫秒)不能为空，必须是数字！"},
+                                    "SW_REF_INTERVAL": {"type":"string","required":true,"description":"敏感词刷新间隔(毫秒)","default":"180000","pattern":"[^0-9]","message":"敏感词刷新间隔(毫秒)不能为空，必须是数字！"},
+                                    "CP_REF_INTERVAL": {"type":"string","required":true,"description":"客户参数刷新间隔(毫秒)","default":"180000","pattern":"[^0-9]","message":"客户参数刷新间隔(毫秒)不能为空，必须是数字！"},
+                                    "LOCAL_IP": {"type":"string","required":true,"description":"本平台ip地址","default":"127.0.0.1"},
+                                    "CMPP20_PACKLOG": {"type":"string","module":"select","required":true,"description":"cmpp20日志打包","default":"no","note":"no|yes"},
+                                    "CMPP30_PACKLOG": {"type":"string","module":"select","required":true,"description":"cmpp30日志打包","default":"no","note":"no|yes"},
+                                    "SMGP_PACKLOG": {"type":"string","module":"select","required":true,"description":"smgp日志打包","default":"no","note":"no|yes"},
+                                    "SGIP_PACKLOG": {"type":"string","module":"select","required":true,"description":"sgip日志打包","default":"no","note":"no|yes"},
+                                    "HTTP_PACKLOG": {"type":"string","module":"select","required":true,"description":"http日志打包","default":"no","note":"no|yes"},
+                                    "HTTP2_PACKLOG": {"type":"string","module":"select","required":true,"description":"http2日志打包","default":"no","note":"no|yes"},
+                                    "HTTPS_PACKLOG": {"type":"string","module":"select","required":true,"description":"https日志打包","default":"no","note":"no|yes"},
+                                    "WARN_SVC_URL": {"type":"string","required":true,"description":"告警服务地址","remind":"true","default":"http://47.105.34.55:9083/receiver/receiveWarningMessage"},
+                                    "DAT_CORE_SIZE": {"type":"string","required":true,"description":"行业核心线程数","default":"16","pattern":"[^0-9]","message":"行业核心线程数不能为空，必须是数字！"},
+                                    "DAT_MAX_SIZE": {"type":"string","required":true,"description":"行业最大线程数","default":"16","pattern":"[^0-9]","message":"行业最大线程数不能为空，必须是数字！"},
+                                    "DAT_QUEUE_SIZE": {"type":"string","required":true,"description":"行业核心队列大小","default":"1000000","pattern":"[^0-9]","message":"行业核心队列大小不能为空，必须是数字！"},
+                                    "ALT_CORE_SIZE": {"type":"string","required":true,"description":"营销核心线程数","default":"16","pattern":"[^0-9]","message":"营销核心线程数不能为空，必须是数字！"},
+                                    "ALT_MAX_SIZE": {"type":"string","required":true,"description":"营销最大线程数","default":"16","pattern":"[^0-9]","message":"营销最大线程数不能为空，必须是数字！"},
+                                    "ALT_QUEUE_SIZE": {"type":"string","required":true,"description":"营销核心队列大小","default":"1000000","pattern":"[^0-9]","message":"营销核心队列大小不能为空，必须是数字！"},
+                                    "BST_CORE_SIZE": {"type":"string","required":true,"description":"状态报告核心线程数","default":"16","pattern":"[^0-9]","message":"状态报告核心线程数不能为空，必须是数字！"},
+                                    "BST_MAX_SIZE": {"type":"string","required":true,"description":"状态报告最大线程数","default":"16","pattern":"[^0-9]","message":"状态报告最大线程数不能为空，必须是数字！"},
+                                    "BST_QUEUE_SIZE": {"type":"string","required":true,"description":"状态报告核心队列大小","default":"1000000","pattern":"[^0-9]","message":"状态报告核心队列大小不能为空，必须是数字！"},
+                                    "RPT_QUEUE_SIZE": {"type":"string","required":true,"description":"状态报告推送更新队列大小","default":"1000000","pattern":"[^0-9]","message":"状态报告推送更新队列大小不能为空，必须是数字！"},
+                                    "HTTP_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启HTTP状态报告推送维护线程","default":"yes","note":"yes|no"},
+                                    "HTTP2_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启HTTP2状态报告推送维护线程","default":"yes","note":"yes|no"},
+                                    "HTTPS_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启HTTPS状态报告推送维护线程","default":"yes","note":"yes|no"},
+                                    "SGIP_REPORT_PUSH": {"type":"string","module":"select","required":true,"description":"是否开启SGIP状态报告推送维护线程","default":"no","note":"no|yes"},
+                                    "ACCT_SERVICE": {"type":"string","module":"select","required":true,"description":"是否启动帐户中心服务线程","default":"yes","note":"yes|no"},
+                                    "CMPP_ISMG_ID": {"type":"string","required":true,"description":"cmpp ismg id","default":"59150"},
+                                    "SMGP_ISMG_ID": {"type":"string","required":true,"description":"smgp and http ismg id","default":"591050"},
+                                    "COLLECT_MSI": {"type":"string","module":"select","required":true,"description":"是否采集号段","default":"yes","note":"yes|no|database"},
+                                    "SPECIAL_REPORT_CUSTID": {"type":"string","required":true,"description":"特殊用户状态报告推送","default":""},
+                                    "UNIQUE_LINK_URL": {"type":"string","required":true,"description":"app.uniqueLink.url","remind":"true","default":"http://192.168.128.69:8081/store/short_url/generate/analysis"},
+                                    "MAX_REPORT_FETCH": {"type":"string","required":true,"description":"每次拉取状态报告最大条数","default":"100"},
+                                    "NO_REPORT_EXECUTE": {"type":"string","module":"select","required":true,"description":"app.noreport.execute","default":"no","note":"no|yes"},
+                                    "DECISION_ENABLE": {"type":"string","module":"select","required":true,"description":"决策是否启用","remind":"true","default":"no","note":"no|yes"},
+                                    "PROMETHEUS_PORT": {"type":"string","required":true,"description":"prometheus采集端口","remind":"true","default":"10010","pattern":"[^0-9]","message":"prometheus采集端口不能为空，必须是数字，范围在1024-65535","isPort":"yes"},
+                                    "JVM_OPS": {"type":"string","module":"textarea","required":true,"description":"jvm参数","default":"-Ddisplay=smsserver -server -Xms8g -Xmx8g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=30 -XX:InitiatingHeapOccupancyPercent=25 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:SurvivorRatio=8 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=256m -XX:-UseLargePages -XX:-UseBiasedLocking -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./logs/SmsServerOOM.dump"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                },
+                
+                "SMS_PROCESS_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_PROCESS容器ID","inputDisabled":true},
+                        "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "SMS_PROCESS": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_PROCESS ID","inputDisabled":true},
+                                    "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                                    "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                                    "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                                    "PRE_EMBEDDED": {"type":"string","module":"select","required":true,"description":"是否预埋","remind":"true","default":"false","note":"false|true"},
+                                    "REDIS_CLUSTER_CACHE": {"type":"string","module":"select","required":true,"description":"cache集群","remind":"true"},
+                                    "REDIS_CLUSTER_QUEUE": {"type":"string","module":"select","required":true,"description":"queue集群","remind":"true"},
+                                    "REDIS_CLUSTER_PFM": {"type":"string","module":"select","required":true,"description":"pfm集群","remind":"true"},
+                                    "REDIS_CLUSTER_IPNUM": {"type":"string","module":"select","required":true,"description":"ip_num集群","remind":"true"},
+                                    "ORACLE_DG_SERV": {"type":"string","module":"select","required":true,"description":"oracle-dg集群","remind":"true"},
+                                    "ROCKETMQ_SERV": {"type":"string","module":"select","required":true,"description":"rocketmq集群","remind":"true"},
+                                    "PROCESSOR": {"type":"string","required":true,"description":"processor id","remind":"true","default":"1","pattern":"[^0-9]","message":"processor id不能为空，必须是数字！"},
+                                    "DB_INST_ID": {"type":"string","module":"select","required":true,"description":"数据库分区ID","remind":"true","default":"1","pattern":"[^0-9]","note":"1|2|3|4","message":"数据库分区ID不能为空，必须是数字！"},
+                                    "SYSTEM_PROPERTY": {"type":"string","module":"select","required":true,"description":"运行模式","remind":"true","default":"production","note":"production|sandbox"},
+                                    "SERVICE_IMPL": {"type":"string","module":"select","required":true,"description":"数据对接方式","remind":"true","default":"multi","note":"multi|database|mq","message":"数据对接方式不能为空，必须是数字！"},
+                                    "CP_REF_INTERVAL": {"type":"string","required":true,"description":"客户参数刷新间隔(毫秒)","default":"180000","pattern":"[^0-9]","message":"客户参数刷新间隔(毫秒)不能为空，必须是数字！"},
+                                    "WARN_SVC_URL": {"type":"string","required":true,"description":"告警服务地址","remind":"true","default":"http://47.105.34.55:9083/receiver/receiveWarningMessage"},
+                                    "DAT_CORE_SIZE": {"type":"string","required":true,"description":"行业核心线程数","default":"20","pattern":"[^0-9]","message":"行业核心线程数不能为空，必须是数字！"},
+                                    "DAT_MAX_SIZE": {"type":"string","required":true,"description":"行业最大线程数","default":"20","pattern":"[^0-9]","message":"行业最大线程数不能为空，必须是数字！"},
+                                    "DAT_QUEUE_SIZE": {"type":"string","required":true,"description":"行业核心队列大小","default":"1000000","pattern":"[^0-9]","message":"行业核心队列大小不能为空，必须是数字！"},
+                                    "ALT_CORE_SIZE": {"type":"string","required":true,"description":"营销核心线程数","default":"20","pattern":"[^0-9]","message":"营销核心线程数不能为空，必须是数字！"},
+                                    "ALT_MAX_SIZE": {"type":"string","required":true,"description":"营销最大线程数","default":"20","pattern":"[^0-9]","message":"营销最大线程数不能为空，必须是数字！"},
+                                    "ALT_QUEUE_SIZE": {"type":"string","required":true,"description":"营销核心队列大小","default":"1000000","pattern":"[^0-9]","message":"营销核心队列大小不能为空，必须是数字！"},
+                                    "TST_CORE_SIZE": {"type":"string","required":true,"description":"大营销核心线程数","default":"20","pattern":"[^0-9]","message":"大营销核心线程数不能为空，必须是数字！"},
+                                    "TST_MAX_SIZE": {"type":"string","required":true,"description":"大营销最大线程数","default":"20","pattern":"[^0-9]","message":"大营销最大线程数不能为空，必须是数字！"},
+                                    "TST_QUEUE_SIZE": {"type":"string","required":true,"description":"大营销核心队列大小","default":"1000000","pattern":"[^0-9]","message":"大营销核心队列大小不能为空，必须是数字！"},
+                                    "STS_CORE_SIZE": {"type":"string","required":true,"description":"压力测试核心线程数","default":"20","pattern":"[^0-9]","message":"压力测试核心线程数不能为空，必须是数字！"},
+                                    "STS_MAX_SIZE": {"type":"string","required":true,"description":"压力测试最大线程数","default":"20","pattern":"[^0-9]","message":"压力测试最大线程数不能为空，必须是数字！"},
+                                    "STS_QUEUE_SIZE": {"type":"string","required":true,"description":"压力测试核心队列大小","default":"1000000","pattern":"[^0-9]","message":"压力测试核心队列大小不能为空，必须是数字！"},
+                                    "MNP_ALI_URL": {"type":"string","required":true,"description":"携号转网阿里云地址","default":"http://47.98.147.230:3778/mnp/","message":"携号转网阿里云地址不能为空！"},
+                                    "MNP_ALI_CID": {"type":"string","required":true,"description":"携号转网阿里云CID","default":"Customer1BA2265E86","message":"携号转网阿里云CID不能为空！"},
+                                    "MNP_ALI_PASSWD": {"type":"string","required":true,"description":"携号转网阿里云密码","default":"FD322B94F55FA522ABF1156D0D48CAA0","message":"携号转网阿里云密码不能为空！"},
+                                    "SAMPLING_SWITCH": {"type":"string","module":"select","required":true,"description":"相似度检查开关","remind":"true","default":"off","note":"off|on"},
+                                    "CRON_EXPRESSION": {"type":"string","required":true,"description":"相似度检查调度表达式","default":"0 0/5 * * * ?"},
+                                    "WEB_CONSOLE_PORT": {"type":"string","required":true,"description":"web控制台命令接收端口","remind":"true","default":"5003","pattern":"[^0-9]","message":"web控制台命令接收端口不能为空，必须是数字！"},
+                                    "MT_QUEUE_CLEAR_EXPRESSION": {"type":"string","required":true,"description":"未消费数据调度表达式","default":"0 0 1 * * ?"},
+                                    "DECISION_ENABLE": {"type":"string","module":"select","required":true,"description":"决策是否启用","remind":"true","default":"yes","note":"no|yes"},
+                                    "COLLECT_MSI": {"type":"string","module":"select","required":true,"description":"是否采集号段","default":"database","note":"database|yes|no"},
+                                    "JVM_OPS": {"type":"string","module":"textarea","required":true,"description":"jvm参数","default":"-server -Xms2g -Xmx2g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:SurvivorRatio=8 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=128m -XX:-UseLargePages -XX:-UseBiasedLocking -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./logs/SmsProcessOOM.dump"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                },
+                
+                "SMS_CLIENT_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_CLIENT容器ID","inputDisabled":true},
+                        "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "SMS_CLIENT": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_CLIENT ID","inputDisabled":true},
+                                    "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                                    "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                                    "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                                    "PRE_EMBEDDED": {"type":"string","module":"select","required":true,"description":"是否预埋","remind":"true","default":"false","note":"false|true"},
+                                    "REDIS_CLUSTER_CACHE": {"type":"string","module":"select","required":true,"description":"cache集群","remind":"true"},
+                                    "REDIS_CLUSTER_QUEUE": {"type":"string","module":"select","required":true,"description":"queue集群","remind":"true"},
+                                    "ORACLE_DG_SERV": {"type":"string","module":"select","required":true,"description":"oracle-dg集群","remind":"true"},
+                                    "ROCKETMQ_SERV": {"type":"string","module":"select","required":true,"description":"rocketmq集群","remind":"true"},
+                                    "PROCESSOR": {"type":"string","required":true,"description":"chanGroup","remind":"true","default":"1","pattern":"[^0-9]","message":"PROCESSOR不能为空，必须是数字！"},
+                                    "BATCHSAVE_PROCESS": {"type":"string","required":true,"description":"batsave组数","remind":"true","default":"10","pattern":"[^0-9]","message":"batsave组数不能为空，必须是数字！"},
+                                    "WEB_CONSOLE_PORT": {"type":"string","required":true,"description":"web控制台命令接收端口","remind":"true","default":"6000","pattern":"[^0-9]","message":"web控制台命令接收端口不能为空，必须是数字，范围在1024","isPort":"yes"},
+                                    "SERVICE_IMPL": {"type":"string","module":"select","required":true,"description":"数据对接方式","remind":"true","default":"multi","note":"multi|database|mq"},
+                                    "CMPP20_PACKLOG": {"type":"string","module":"select","required":true,"description":"cmpp20日志打包","default":"no","note":"no|yes"},
+                                    "CMPP30_PACKLOG": {"type":"string","module":"select","required":true,"description":"cmpp30日志打包","default":"no","note":"no|yes"},
+                                    "SMGP_PACKLOG": {"type":"string","module":"select","required":true,"description":"smgp日志打包","default":"no","note":"no|yes"},
+                                    "SGIP_PACKLOG": {"type":"string","module":"select","required":true,"description":"sgip日志打包","default":"no","note":"no|yes"},
+                                    "SMPP_PACKLOG": {"type":"string","module":"select","required":true,"description":"smpp日志打包","default":"no","note":"no|yes"},
+                                    "WARN_SVC_URL": {"type":"string","required":true,"description":"告警服务地址","remind":"true","default":"http://47.105.34.55:9083/receiver/receiveWarningMessage"},
+                                    "BST_CORE_SIZE": {"type":"string","required":true,"description":"通用处理核心线程数","default":"50","pattern":"[^0-9]","message":"通用处理核心线程数不能为空，必须是数字！"},
+                                    "BST_MAX_SIZE": {"type":"string","required":true,"description":"通用处理最大线程数","default":"50","pattern":"[^0-9]","message":"通用处理最大线程数不能为空，必须是数字！"},
+                                    "BST_QUEUE_SIZE": {"type":"string","required":true,"description":"通用处理核心队列大小","default":"50000","pattern":"[^0-9]","message":"通用处理核心队列大小不能为空，必须是数字！"},
+                                    "MT_MO_MATCHER_IMPL": {"type":"string","module":"select","required":true,"description":"上/下行匹配模式","remind":"true","default":"es","note":"es|cache"},
+                                    "PARSE_RPT_TYPE":  {"type":"string","required":true,"description":"parseRpt.type","default":"1.9.9"},
+                                    "THREE_CHANNEL_LAST_UPDATE_REPORT_TIME": {"type":"string","required":true,"description":"状态报告过期超时时间(ms)","default":"172800000","pattern":"[^0-9]","message":"状态报告过期时间不能为空，必须是数字！"},
+                                    "JVM_OPS": {"type":"string","module":"textarea","required":true,"description":"jvm参数","default":"-server -Xms2g -Xmx2g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=30 -XX:InitiatingHeapOccupancyPercent=25 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:SurvivorRatio=8 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=128m -XX:-UseLargePages -XX:-UseBiasedLocking -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./logs/SmsClientOOM.dump"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                },
+
+                "SMS_BATSAVE_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_BATSAVE容器ID","inputDisabled":true},
+                        "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "SMS_BATSAVE": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"SMS_BATSAVE ID","inputDisabled":true},
+                                    "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                                    "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                                    "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                                    "PRE_EMBEDDED": {"type":"string","module":"select","required":true,"description":"是否预埋","remind":"true","default":"false","note":"false|true"},
+                                    "REDIS_CLUSTER_CACHE": {"type":"string","module":"select","required":true,"description":"cache集群","remind":"true"},
+                                    "REDIS_CLUSTER_QUEUE": {"type":"string","module":"select","required":true,"description":"queue集群","remind":"true"},
+                                    "ORACLE_DG_SERV": {"type":"string","module":"select","required":true,"description":"oracle-dg集群","remind":"true"},
+                                    "ROCKETMQ_SERV": {"type":"string","module":"select","required":true,"description":"rocketmq集群","remind":"true"},
+                                    "ES_SERVER": {"type":"string","required":true,"description":"es地址","remind":"true","default":"192.168.128.88:9201,192.168.128.89:9201,192.168.128.90:9201"},
+                                    "ES_MT_SERVER": {"type":"string","required":true,"description":"es.mt地址","remind":"true","default":"192.168.128.88:9201,192.168.128.89:9201,192.168.128.90:9201"},
+                                    "PROCESSOR": {"type":"string","required":true,"description":"batsave分组","remind":"true","default":"1","pattern":"[^0-9]","message":"PROCESSOR不能为空，必须是数字！"},
+                                    "DB_INST_ID": {"type":"string","module":"select","required":true,"description":"数据库分区ID","remind":"true","default":"1","pattern":"[^0-9]","note":"1|2|3|4","message":"数据库分区ID不能为空，必须是数字！"},
+                                    "SYSTEM_PROPERTY": {"type":"string","module":"select","required":true,"description":"运行模式","remind":"true","default":"production","note":"production|sandbox"},
+                                    "SERVICE_IMPL": {"type":"string","module":"select","required":true,"description":"数据对接方式","remind":"true","default":"multi","note":"multi|database|mq"},
+                                    "WARN_SVC_URL": {"type":"string","required":true,"description":"告警服务地址","remind":"true","default":"http://47.105.34.55:9083/receiver/receiveWarningMessage"},
+                                    "DAT_CORE_SIZE": {"type":"string","required":true,"description":"任务池核心线程数","default":"20","pattern":"[^0-9]","message":"任务池核心线程数不能为空，必须是数字！"},
+                                    "DAT_MAX_SIZE": {"type":"string","required":true,"description":"任务池最大线程数","default":"20","pattern":"[^0-9]","message":"任务池最大线程数不能为空，必须是数字！"},
+                                    "DAT_QUEUE_SIZE": {"type":"string","required":true,"description":"任务池核心队列大小","default":"1000000","pattern":"[^0-9]","message":"任务池核心队列大小不能为空，必须是数字！"},
+                                    "CP_REF_INTERVAL": {"type":"string","required":true,"description":"客户参数刷新间隔(毫秒)","default":"60000","pattern":"[^0-9]","message":"客户参数刷新间隔(毫秒)不能为空，必须是数字！"},
+                                    "WEB_CONSOLE_PORT": {"type":"string","required":true,"description":"web控制台命令接收端口","remind":"true","default":"5103","pattern":"[^0-9]","message":"web控制台命令接收端口不能为空，必须是数字，范围在1024-65535","isPort":"yes"},
+                                    "THREE_CHANNEL_LAST_UPDATE_REPORT_TIME": {"type":"string","required":true,"description":"状态报告过期超时时间(ms)","default":"172800000","pattern":"[^0-9]","message":"状态报告过期时间不能为空，必须是数字！"},
+                                    "JVM_OPS": {"type":"string","module":"textarea","required":true,"description":"jvm参数","default":"-server -Xms2g -Xmx2g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:SurvivorRatio=8 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=128m -XX:-UseLargePages -XX:-UseBiasedLocking -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./logs/BatSaveOOM.dump"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                },
+                
+                "SMS_STATS_CONTAINER":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"STATISTICS容器ID","inputDisabled":true},
+                        "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "SMS_STATS": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"STATISTICS ID","inputDisabled":true},
+                                    "VERSION": {"type":"string","module":"select","required":true,"minLength":36,"description":"version"},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                                    "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                                    "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                                    "PRE_EMBEDDED": {"type":"string","module":"select","required":true,"description":"是否预埋","remind":"true","default":"false","note":"false|true"},
+                                    "REDIS_CLUSTER_CACHE": {"type":"string","module":"select","required":true,"description":"cache集群","remind":"true"},
+                                    "REDIS_CLUSTER_QUEUE": {"type":"string","module":"select","required":true,"description":"queue集群","remind":"true"},
+                                    "ORACLE_DG_SERV": {"type":"string","module":"select","required":true,"description":"oracle-dg集群","remind":"true"},
+                                    "SYSTEM_PROPERTY": {"type":"string","module":"select","required":true,"description":"运行模式","remind":"true","default":"production","note":"production|sandbox"},
+                                    "WEB_CONSOLE_PORT": {"type":"string","required":true,"description":"web控制台命令接收端口","remind":"true","default":"5103","pattern":"[^0-9]","message":"web控制台命令接收端口不能为空，必须是数字，范围在1024-65535","isPort":"yes"},
+                                    "INTERNAL_PORT": {"type":"string","required":true,"description":"内部状态报告接收端口","default":"5001","pattern":"[^0-9]","message":"内部状态报告接收端口不能为空，必须是数字，范围在1024-65535","isPort":"yes"},
+                                    "SW_REF_INTERVAL": {"type":"string","required":true,"description":"敏感词刷新间隔(毫秒)","default":"3000000","pattern":"[^0-9]","message":"敏感词刷新间隔(毫秒)不能为空，必须是数字！"},
+                                    "WARN_SVC_URL": {"type":"string","required":true,"description":"告警服务地址","remind":"true","default":"http://47.105.34.55:9083/receiver/receiveWarningMessage"},
+                                    "DAT_CORE_SIZE": {"type":"string","required":true,"description":"任务池核心线程数","default":"24","pattern":"[^0-9]","message":"任务池核心线程数不能为空，必须是数字！"},
+                                    "DAT_MAX_SIZE": {"type":"string","required":true,"description":"任务池最大线程数","default":"24","pattern":"[^0-9]","message":"任务池最大线程数不能为空，必须是数字！"},
+                                    "DAT_QUEUE_SIZE": {"type":"string","required":true,"description":"任务池核心队列大小","default":"1000000","pattern":"[^0-9]","message":"任务池核心队列大小不能为空，必须是数字！"},
+                                    "ALT_CORE_SIZE": {"type":"string","required":true,"description":"营销核心线程数","default":"24","pattern":"[^0-9]","message":"营销核心线程数不能为空，必须是数字！"},
+                                    "ALT_MAX_SIZE": {"type":"string","required":true,"description":"营销最大线程数","default":"24","pattern":"[^0-9]","message":"营销最大线程数不能为空，必须是数字！"},
+                                    "ALT_QUEUE_SIZE": {"type":"string","required":true,"description":"营销核心队列大小","default":"1000000","pattern":"[^0-9]","message":"营销核心队列大小不能为空，必须是数字！"},
+                                    "SAMPLING_SWITCH": {"type":"string","module":"select","required":true,"description":"相似度检查开关","remind":"true","default":"off","note":"off|on"},
+                                    "CRON_EXPRESSION": {"type":"string","required":true,"description":"相似度检查调度表达式","default":"0 3/5 * * * ?"},
+                                    "MAX_SMS_TASK_PROC": {"type":"string","required":true,"description":"process进程数","remind":"true","default":"20","pattern":"[^0-9]","message":"process进程数不能为空，必须是数字！"},
+                                    "JVM_OPS": {"type":"string","module":"textarea","required":true,"description":"jvm参数","default":"-server -Xms2g -Xmx2g -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:G1ReservePercent=30 -XX:InitiatingHeapOccupancyPercent=25 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:SurvivorRatio=8 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintAdaptiveSizePolicy -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=30m -XX:-OmitStackTraceInFastThrow -XX:+AlwaysPreTouch -XX:MaxDirectMemorySize=128m -XX:-UseLargePages -XX:-UseBiasedLocking -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./logs/StatsOOM.dump"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+    }
+}

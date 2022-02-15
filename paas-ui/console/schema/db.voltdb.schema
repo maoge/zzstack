@@ -1,0 +1,62 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "VOLTDB_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"voltdb服务ID"},
+                
+                "VOLTDB_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"voltdb-container ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "VOLTDB_SERVER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"INST_ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "VOLT_CLIENT_PORT": {"type":"string","required":true,"description":"voltdb.client_port","remind":"true","default":"21212","pattern":"[^0-9]","message":"client_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "VOLT_ADMIN_PORT": {"type":"string","required":true,"description":"voltdb.admin_port","remind":"true","default":"21211","pattern":"[^0-9]","message":"admin_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "VOLT_WEB_PORT": {"type":"string","required":true,"description":"voltdb.web_port","remind":"true","default":"28080","pattern":"[^0-9]","message":"web_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "VOLT_INTERNAL_PORT": {"type":"string","required":true,"description":"voltdb.internal_port","remind":"true","default":"23021","pattern":"[^0-9]","message":"internal_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "VOLT_REPLI_PORT": {"type":"string","required":true,"description":"voltdb.repli_port","remind":"true","default":"25555","pattern":"[^0-9]","message":"repli_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "VOLT_ZK_PORT": {"type":"string","required":true,"description":"voltdb.zk_port","remind":"true","default":"27181","pattern":"[^0-9]","message":"zk_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SITES_PER_HOST": {"type":"string","required":true,"description":"voltdb.sits_per_host","default":"8","pattern":"[^0-9]","message":"sits_per_host不能为空，必须是>0数字！"},
+                                    "KFACTOR": {"type":"string","required":true,"description":"副本数","default":"2","pattern":"[^0-9]","message":"副本数不能为空，必须是>=1数字！"},
+                                    "MEM_LIMIT": {"type":"string","required":true,"description":"voltdb.memory_limit(GB)","remind":"true","default":"10","pattern":"[^0-9]","message":"副本数不能为空，必须是>=1数字！"},
+                                    "MEM_ALERT": {"type":"string","required":true,"description":"voltdb.memory_alert(GB)","remind":"true","default":"8","pattern":"[^0-9]","message":"memory_alert不能为空！"},
+                                    "HEARTBEAT_TIMEOUT": {"type":"string","required":true,"description":"heartbeat.timeout(s)","default":"60","pattern":"[^0-9]","message":"心跳超时时长不能为空，必须是>=1数字！"},
+                                    "TEMPTABLES_MAXSIZE": {"type":"string","required":true,"description":"temptables.maxsize(MB)","default":"200","pattern":"[^0-9]","message":"temptables.maxsize不能为空！"},
+                                    "ELASTIC_DURATION": {"type":"string","required":true,"description":"elastic.duration(ms)","default":"50","pattern":"[^0-9]","message":"elastic.duration不能为空！"},
+                                    "ELASTIC_THROUGHPUT": {"type":"string","required":true,"description":"elastic.throughput(MB)","default":"20","pattern":"[^0-9]","message":"elastic.throughput不能为空！"},
+                                    "QUERY_TIMEOUT": {"type":"string","required":true,"description":"query.timeout(ms)","default":"5000","pattern":"[^0-9]","message":"query.timeout不能为空！"},
+                                    "PROCEDURE_LOGINFO": {"type":"string","required":true,"description":"procedure.loginfo(ms)","default":"10000","pattern":"[^0-9]","message":"procedure.loginfo不能为空！"}
+                                },
+                                "minItems":3
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

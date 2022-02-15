@@ -1,0 +1,230 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+
+    <link href="../css/self/popupForm.css" type="text/css" rel="stylesheet"/>
+    <link href="../css/self/mTable.css" type="text/css" rel="stylesheet"/>
+    <link href="../css/self/serverList.css" type="text/css" rel="stylesheet"/>
+</head>
+
+<body>
+    <div class="row bg-light">
+        <div class="col-lg-4 col-sm-12 breadcrumb bg-light">
+            <li class="breadcrumb-item">基础服务功能</li>
+            <li class="breadcrumb-item">服务集群管理</li>
+        </div>
+        <div class="col-lg-8 col-sm-12">
+            <div class="form-inline mt-md-0 mr-2 pt-1 float-right" >
+                <input id= "S_SERV_INST_ID" class="form-control mr-sm-2" type="text" placeholder="请输入服务ID" >
+                <input id= "S_SERV_NAME" class="form-control mr-sm-2" type="text" placeholder="请输入服务名称" >
+                <div class="input-group">
+                    <select class="custom-select" id="S_SERV_CLAZZ" onchange="onServClazzSel($('#S_SERV_TYPE'), $('#S_SERV_CLAZZ'), false)">
+                        <option selected value = "">服务大类（----）</option>
+                        <option value ="SMS">SMS</option>
+                        <option value ="DB">DB</option>
+                        <option value ="MQ">MQ</option>
+                        <option value ="CACHE">CACHE</option>
+                        <option value ="SERVERLESS">SERVERLESS</option>
+
+                    </select>
+                    <select class="custom-select" id="S_SERV_TYPE">
+                        <option selected value = "">服务类型（----）</option>
+                    </select>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-success" onclick="searchService();">
+                            <i class="iconfont ibsp-chaxun mr-1"></i>搜索
+                        </button>
+                    </div>
+                </div>
+            </div>
+             
+            <div class="btn-group float-left my-sm-1 mr-5 ">
+                <button class="btn btn-outline-primary" onclick="showAddService();">新增服务</button>
+                <button class="btn btn-outline-danger" onclick="delService();">删除服务</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row-fluid" style="margin-top:10px">
+        <table id="service_list">
+        </table>
+    </div>
+
+    <div class="modal fade" id="newService" tabindex="-1" role="dialog" aria-labelledby="newServiceHeader" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newServiceHeader">新增服务</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="tab-pane active in" id="home">
+                        <form id="newServiceForm" class="form-horizontal">
+                            
+                            <div class="form-group row">
+                                <label for="SERV_CLAZZ" class="col-sm-3 control-label form-control-label">服务大类</label>
+                                <div class="col-sm-9">
+                                    <select class="custom-select" name="SERV_CLAZZ" id="SERV_CLAZZ"
+                                            onchange="onServClazzSel($('#SERV_TYPE'), $('#SERV_CLAZZ'), true ,$('#SERV_VERSION'))">
+                                        <option selected value ="">服务大类（----）</option>
+                                        <option value ="SMS">SMS</option>
+                                        <option value ="DB">DB</option>
+                                        <option value ="MQ">MQ</option>
+                                        <option value ="CACHE">CACHE</option>
+                                        <option value ="SERVERLESS">SERVERLESS</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="SERV_TYPE" class="col-sm-3 control-label form-control-label">服务类别</label>
+                                <div class="col-sm-9">
+                                    <select class="custom-select" name="SERV_TYPE" id="SERV_TYPE" 
+                                            onchange="onServTypeSel($('#SERV_TYPE'), $('#SERV_VERSION'))">
+                                        <option selected value = "">服务类型（----）</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group row ">
+                                <label for="SERV_NAME" class="col-sm-3 control-label form-control-label">服务名</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" name="SERV_NAME" id="SERV_NAME" placeholder="服务名">
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="SERV_VERSION" class="col-sm-3 control-label form-control-label">版本</label>
+                                <div class="col-sm-9">
+                                    <select class="custom-select" name="SERV_VERSION" id="SERV_VERSION"></select>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="IS_PRODUCT" class="col-sm-3 control-label form-control-label">是否生产环境</label>
+                                <div class="col-sm-9">
+                                    <select class="custom-select" id="IS_PRODUCT">
+                                        <option value ="0">否</option>
+                                        <option value ="1">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row ">
+                                <label for="USER" class="col-sm-3 control-label form-control-label">用户名</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" name="USER" id="USER" placeholder="用户名">
+                                </div>
+                            </div>
+                            <div class="form-group row ">
+                                <label for="PASSWORD" class="col-sm-3 control-label form-control-label">密码</label>
+                                <div class="col-sm-9">
+                                    <input type="password" class="form-control" name="PASSWORD" id="PASSWORD" placeholder="密码">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" onclick="addService()" class="btn btn-primary ">提交</button>
+                </div>
+            </div>
+        </div>
+	</div>
+
+    <div class="modal fade" id="modService" tabindex="-1" role="dialog" aria-labelledby="modServiceHeader" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modServiceHeader">修改服务信息</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="tab-pane active in" id="home">
+                        <form id="modServiceForm" class="form-horizontal">
+                            <div style="display:none">
+                                <input type="text" id="MOD_INST_ID">
+							</div>
+                            <div class="form-group row ">
+                                <label for="SERV_NAME" class="col-sm-3 control-label form-control-label">服务名</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" name="MOD_SERV_NAME" id="MOD_SERV_NAME" placeholder="服务名">
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="SERV_VERSION" class="col-sm-3 control-label form-control-label">版本</label>
+                                <div class="col-sm-9">
+                                    <select class="custom-select" name="SERV_VERSION" id="MOD_SERV_VERSION">
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="IS_PRODUCT" class="col-sm-3 control-label form-control-label">是否生产环境:</label>
+                                <div class="col-sm-9">
+                                    <select class="custom-select" id="MOD_IS_PRODUCT">
+                                        <option value ="0">否</option>
+                                        <option value ="1">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" onclick="modService()" class="btn btn-primary ">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="modServiceVersion" tabindex="-1" role="dialog" aria-labelledby="modServiceVersionHeader" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modServiceVersionHeader">修改服务版本</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="tab-pane active in" id="home">
+                        <form id="modServiceVersionForm" class="form-horizontal">
+                            <div style="display:none">
+                                <input type="text" id="MOD_INST_ID1">
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="SERV_VERSION" class="col-sm-3 control-label form-control-label">版本</label>
+                                <div class="col-sm-9">
+                                    <select class="custom-select" name="SERV_VERSION" id="MOD_SERV_VERSION1">
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" onclick="modServiceVersion()" class="btn btn-primary ">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="../js/self/popupForm.js" type="text/javascript" ></script>
+<script src="../js/self/mTable.js" type="text/javascript" ></script>
+<script src="../js/serviceList.js" type="text/javascript" ></script>
+
+</html>

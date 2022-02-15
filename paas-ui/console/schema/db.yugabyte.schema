@@ -1,0 +1,110 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "YUGABYTEDB_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"yugabyte服务容器 ID"},
+                
+                "YB_MASTER_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"yb-master容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "YB_MASTER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Zookeeper ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "RPC_BIND_PORT": {"type":"string","required":true,"description":"rpc_bind_port端口","remind":"true","default":"7100","pattern":"[^0-9]","message":"rpc_bind_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "WEBSERVER_PORT": {"type":"string","required":true,"description":"webserver_port端口","remind":"true","default":"7000","pattern":"[^0-9]","message":"webserver_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "DURABLE_WAL_WRITE": {"type":"string","module":"select","required":true,"description":"durable_wal_write","default":"true","note":"true|false"},
+                                    "ENABLE_LOAD_BALANCING": {"type":"string","module":"select","required":true,"description":"enable_load_balancing","default":"true","note":"true|false"},
+                                    "MAX_CLOCK_SKEW_USEC": {"type":"string","required":true,"description":"max_clock_skew_usec(微秒)","default":"500000","pattern":"[^0-9]","message":"click_skew不能为空，必须是数字！"},
+                                    "REPLICATION_FACTOR": {"type":"string","module":"select","required":true,"description":"副本数","remind":"true","default":"3","note":"3|1"},
+                                    "YB_NUM_SHARDS_PER_TSERVER": {"type":"string","required":true,"description":"yb_num_shards_per_tserver","default":"8","pattern":"[^0-9]","message":"shards不能为空，必须是数字！"},
+                                    "YSQL_NUM_SHARDS_PER_TSERVER": {"type":"string","required":true,"description":"ysql_num_shards_per_tserver","default":"8","pattern":"[^0-9]","message":"shards不能为空，必须是数字！"},
+                                    "PLACEMENT_CLOUD": {"type":"string","required":true,"description":"云服务商标志","default":"cloud1"},
+                                    "PLACEMENT_ZONE": {"type":"string","required":true,"description":"可用区标志","default":"az1"},
+                                    "PLACEMENT_REGION": {"type":"string","required":true,"description":"数据中心标志","default":"datacenter1"},
+                                    "CDC_WAL_RETENTION_TIME_SECS": {"type":"string","required":true,"description":"cdc_wal_retention_time_secs(秒)","default":"14400","pattern":"[^0-9]","message":"wal_retention_time不能为空，必须是数字！"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                },
+                
+                "YB_TSERVER_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"yb-tserver容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "YB_TSERVER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Zookeeper ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "RPC_BIND_PORT": {"type":"string","required":true,"description":"rpc_bind_port端口","remind":"true","default":"9100","pattern":"[^0-9]","message":"rpc_bind_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "WEBSERVER_PORT": {"type":"string","required":true,"description":"webserver_port端口","remind":"true","default":"9000","pattern":"[^0-9]","message":"webserver_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "PGSQL_PROXY_BIND_PORT": {"type":"string","required":true,"description":"pgsql_proxy_bind_port端口","remind":"true","default":"5433","pattern":"[^0-9]","message":"pgsql_proxy_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "PGSQL_PROXY_WEBSERVER_PORT": {"type":"string","required":true,"description":"pgsql_proxy_webserver_port端口","remind":"true","default":"13000","pattern":"[^0-9]","message":"pgsql_proxy_webserver_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "CQL_PROXY_BIND_PORT": {"type":"string","required":true,"description":"cql_proxy_bind_port端口","remind":"true","default":"9042","pattern":"[^0-9]","message":"cql_proxy_bind_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "CQL_PROXY_WEBSERVER_PORT": {"type":"string","required":true,"description":"cql_proxy_webserver_port端口","remind":"true","default":"12000","pattern":"[^0-9]","message":"cql_proxy_webserver_port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "YSQL_MAX_CONNECTIONS": {"type":"string","required":true,"description":"YSQL最大连接数","default":"4000","pattern":"[^0-9]","message":"ysql_max_connections不能为空，必须是数字！"},
+                                    "MAX_CLOCK_SKEW_USEC": {"type":"string","required":true,"description":"max_clock_skew_usec(微秒)","default":"500000","pattern":"[^0-9]","message":"click_skew不能为空，必须是数字！"},
+                                    "DURABLE_WAL_WRITE": {"type":"string","module":"select","required":true,"description":"durable_wal_write","default":"true","note":"true|false"},
+                                    "YB_NUM_SHARDS_PER_TSERVER": {"type":"string","required":true,"description":"yb_num_shards_per_tserver","default":"8","pattern":"[^0-9]","message":"shards不能为空，必须是数字！"},
+                                    "YSQL_NUM_SHARDS_PER_TSERVER": {"type":"string","required":true,"description":"ysql_num_shards_per_tserver","default":"8","pattern":"[^0-9]","message":"shards不能为空，必须是数字！"},
+                                    "PLACEMENT_CLOUD": {"type":"string","required":true,"description":"云服务商标志","default":"cloud1"},
+                                    "PLACEMENT_ZONE": {"type":"string","required":true,"description":"可用区标志","default":"az1"},
+                                    "PLACEMENT_REGION": {"type":"string","required":true,"description":"数据中心标志","default":"datacenter1"},
+                                    "ROCKSDB_COMPACT_FLUSH_RATE_LIMIT_BYTES_PER_SEC": {"type":"string","required":true,"description":"rocksdb最大归并速率(bytes/sec)","default":"268435456","pattern":"[^0-9]","message":"compact_flush_rate不能为空，必须是数字！"},
+                                    "ROCKSDB_UNIVERSAL_COMPACTION_MIN_MERGE_WIDTH": {"type":"string","required":true,"description":"rocksdb归并最少文件数","default":"4","pattern":"[^0-9]","message":"compaction_min_merge_width不能为空，必须是数字！"},
+                                    "ROCKSDB_UNIVERSAL_COMPACTION_SIZE_RATIO": {"type":"string","required":true,"description":"compaction_size_ratio","default":"20","pattern":"[^0-9]","message":"compaction_size_ratio不能为空，必须是数字！"},
+                                    "TIMESTAMP_HISTORY_RETENTION_INTERVAL_SEC": {"type":"string","required":true,"description":"retention_interval_sec(秒)","default":"120","pattern":"[^0-9]","message":"retention_interval_sec不能为空，必须是数字！"},
+                                    "REMOTE_BOOTSTRAP_RATE_LIMIT_BYTES_PER_SEC": {"type":"string","required":true,"description":"all tablet bootstrap rate(bytes/sec)","default":"268435456","pattern":"[^0-9]","message":"wal_retention_time不能为空，必须是数字！"}
+                                },
+                                "minItems":3
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

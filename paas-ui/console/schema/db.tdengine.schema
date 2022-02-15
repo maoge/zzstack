@@ -1,0 +1,99 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "TDENGINE_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"tdengine服务容器ID"},     
+                
+                "DNODE_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"dnode容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "TD_DNODE":{
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"dnode ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "PORT": {"type":"string","required":true,"description":"服务端口","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                }
+                            }
+                        }	
+                    }
+                },
+
+                "ARBITRATOR_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"arbitrator容器ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                       "TD_ARBITRATOR":{
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"arbitrator ID","inputDisabled":true},
+                                "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                "PORT": {"type":"string","required":true,"description":"服务端口","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                            },
+                            "minItems":1
+                        }
+                    }
+                },
+
+                "COLLECTD":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"COLLECTD ID"},
+                        "SSH_ID": {"type":"string","required":true,"description":"SSH ID"},
+                        "PORT": {"type":"string","required":true,"description":"服务端口","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }	
+}

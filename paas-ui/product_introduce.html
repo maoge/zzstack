@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <link href="css/product_intro.css" type="text/css" rel="stylesheet" />
+    <title></title>
+</head>
+<body>
+
+
+<div class="row featurette">
+    <div class="col-md-7">
+        <img class="featurette-image img-fluid mx-auto product_intro" src="images/productIntroduce/product_architecture.png" data-src="holder.js/500x500/auto" alt="Generic placeholder image">
+    </div>
+    <div class="col-md-5">
+        <p class="intro_head">总体规划</p>
+        <p class="intro_item">总体建设目标</p>
+        <ul>
+            <li>
+                <span class="item_head">基本原则：</span>
+                <span class="item_content">基础软件为关键，优先研发公共基础类数据库、消息、缓存服务类软件，吸收前期消息和缓存平台研发经验，对不合理的设计重构，放弃RabbitMQ和Redis，自主开发底层服务。</span>
+            </li>
+            <li>
+                <span class="item_head">平台拓展性：</span>
+                <span class="item_content">为适应后期新增组件，元数据模型上支持动态定义新组件，部署和运维层进行适配。</span>
+            </li>
+            <li>
+                <span class="item_head">易用性：</span>
+                <span class="item_content">一体化部署、监控、运维；基础服务图形化拖拉部署；弹性伸缩、高可用、故障自动恢复。</span>
+            </li>
+            <li>
+                <span class="item_head">高可用：</span>
+                <span class="item_content">每一类基础服务均提供强一致性高可用，满足不同应用需求。</span>
+            </li>
+            <li>
+                <span class="item_head">高性能：</span>
+                <span class="item_content">基础服务使用C/C++开发，性能高资源消耗低，网络层适配传统NIO和最新DPDK技术。</span>
+            </li>
+            <li>
+                <span class="item_head">故障自治：</span>
+                <span class="item_content">提供平台层故障自动探测和拉起，SDK层故障自动隔离和重试。</span>
+            </li>
+        </ul>
+        <p>在基础软件平台满足应用的基础上建设更大的Smart平台：微服务Service Mesh、高性能软负载、分布式计算和存储平台及资源调度与管理
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,148 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "CLICKHOUSE_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"clickhouse服务容器 ID"},
+                
+                "CLICKHOUSE_REPLICAS_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"clickhouse-replicas容器ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "CLICKHOUSE_REPLICAS": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"INST_ID","inputDisabled":true},
+                                    "INTERNAL_REPLICATION": {"type":"string","module":"select","required":true,"description":"副本内部同步","default":"FALSE","note":"否:false|是:true"},
+                                    
+                                    "CLICKHOUSE_SERVER": {
+                                        "type":"array",
+                                        "required":true,
+                                        "items": {
+                                            "type":"object",
+                                            "required":true,
+                                            "properties": {
+                                                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"pulsar broker ID","inputDisabled":true},
+                                                "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                                "HTTP_PORT": {"type":"string","required":true,"description":"httpPort","default":"38123","pattern":"[^0-9]","message":"httpPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                                "TCP_PORT": {"type":"string","required":true,"description":"tcpPort","default":"39000","pattern":"[^0-9]","message":"tcpPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                                "MYSQL_PORT": {"type":"string","required":true,"description":"mysqlPort","default":"39004","pattern":"[^0-9]","message":"mysqlPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                                "EXPORTER_PORT": {"type":"string","required":true,"description":"exporterPort","default":"39005","pattern":"[^0-9]","message":"exporterPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                                "INTERSERVER_HTTP_PORT": {"type":"string","required":true,"description":"interServerHttpPort","default":"39009","pattern":"[^0-9]","message":"interServerHttpPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                                "MAX_CONNECTIONS": {"type":"string","required":true,"description":"最大连接数","default":"4096","pattern":"[^0-9]","message":"最大连接数不能为空，必须是数字！"},
+                                                "MAX_CONCURRENT_QUERIES": {"type":"string","required":true,"description":"最大并发查询数","default":"300","pattern":"[^0-9]","message":"最大并发查询数不能为空，必须是数字！"},
+                                                "MAX_SERVER_MEMORY_USAGE": {"type":"string","required":true,"description":"服务最大占用内存(byte)","default":"34359738368","pattern":"[^0-9]","message":"服务最大占用内存不能为空，必须是数字！"},
+                                                "MAX_MEMORY_USAGE": {"type":"string","required":true,"description":"单次请求最大占用内存(byte)","default":"25769803776","pattern":"[^0-9]","message":"服务最大占用内存不能为空，必须是数字！"}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                
+                "ZOOKEEPER_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Zookeeper容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "ZOOKEEPER": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Zookeeper ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "CLIENT_PORT": {"type":"string","required":true,"description":"clientPort端口","pattern":"[^0-9]","message":"ClientPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "ADMIN_PORT": {"type":"string","required":true,"description":"adminServerPort端口","pattern":"[^0-9]","message":"AdminPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "ZK_CLIENT_PORT1": {"type":"string","required":true,"description":"ClientPort端口1","pattern":"[^0-9]","message":"ClientPort1不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "ZK_CLIENT_PORT2": {"type":"string","required":true,"description":"ClientPort端口2","pattern":"[^0-9]","message":"ClientPort2不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                },
+                                "minItems":3
+                            }
+                        }
+                    }
+                },
+                
+                "PROMETHEUS": {
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Prometheus ID"},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"SSH ID"},
+                        "PROMETHEUS_PORT": {"type":"string","required":true,"description":"prometheus端口","pattern":"[^0-9]","message":"prometheus端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                },
+                
+                "GRAFANA": {
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Grafana ID"},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"SSH ID"},
+                        "HTTP_PORT": {"type":"string","required":true,"description":"grafana端口","pattern":"[^0-9]","message":"grafana端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

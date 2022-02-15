@@ -1,0 +1,141 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+      "properties": {
+        "ROCKETMQ_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Rocketmq 服务容器 ID"},
+            
+                "ROCKETMQ_VBROKER_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Rocketmq vbroker容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "ROCKETMQ_VBROKER":{
+                            "type":"array",
+                            "required":true,
+                            "items":{
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Rocketmq vbroker ID","inputDisabled":true},
+                                    
+                                    "ROCKETMQ_BROKER":{
+                                        "type":"array",
+                                        "required":true,
+                                        "items":{
+                                            "type":"object",
+                                            "properties": {
+                                                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Rocketmq broker ID","inputDisabled":true},
+                                                "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                                "LISTEN_PORT": {"type":"string","required":true,"description":"listen-port","pattern":"[^0-9]","message":"listen-port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                                "BROKER_ROLE": {"type":"string","module":"select","required":true,"description":"broker-role","note":"请选择|ASYNC_MASTER|SYNC_MASTER|SLAVE"},
+                                                "FLUSH_DISK_TYPE": {"type":"string","module":"select","required":true,"description":"flushDiskType","note":"ASYNC_FLUSH|SYNC_FLUSH"}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                           
+                        }
+                    }
+                },
+                
+                "ROCKETMQ_NAMESRV_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Rocketmq namesrv容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "ROCKETMQ_NAMESRV":{
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Rocketmq namesrv ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "LISTEN_PORT": {"type":"string","required":true,"description":"listen-port","pattern":"[^0-9]","message":"listen-port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                }
+                            }
+                        }	
+                    }
+                },
+                
+                "COLLECTD":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"COLLECTD ID","inputDisabled":true},
+                        "SERV_INST_ID": {"type":"string","module":"input","required":true,"description":"SERV_INST_ID","inputDisabled":true},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                        "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                        "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                        "META_SVR_PASSWD": {"type":"string","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                        "COLLECTD_PORT": {"type":"string","required":true,"description":"服务端口","default":"8080","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                },
+                
+                "ROCKETMQ_CONSOLE":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"COLLECTD ID","inputDisabled":true},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                        "CONSOLE_PORT": {"type":"string","required":true,"description":"console端口","default":"12585","pattern":"[^0-9]","message":"console端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

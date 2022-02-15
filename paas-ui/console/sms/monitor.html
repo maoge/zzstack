@@ -1,0 +1,75 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+
+	<link href="../css/self/contextMenu.css" type="text/css" rel="stylesheet"/>
+	<link href="../css/self/popupForm.css" type="text/css" rel="stylesheet"/>
+	<style>
+		.floatDiv {
+			z-index: 9999;
+			width: 500px;
+			position: fixed;
+		}
+	</style>
+</head>
+
+<body>
+<div class="container-fluid" id="serviceManager" style="height: calc(100% - 46px);">
+	<div class="bg-light	">
+		<div class="breadcrumb bg-light">
+			<li class="breadcrumb-item">监控</li>
+			<li class="breadcrumb-item">sms</li>
+		</div>
+	</div>
+	<canvas id="canvas" style="background: white;"></canvas>
+</div>
+
+<div class="floatDiv" id="detail" tabindex="-1" role="dialog" aria-labelledby="metadataHeader" style="opacity: .7">
+	<div class="" role="document">
+		<div class="modal-content">
+			<div class="modal-body">
+				<div class="tab-pane active in">
+					<table class="table" >
+						<tbody id="tableDetail">
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+
+<!-- 改造过的jtopo -->
+<script src="../js/jtopo-0.4.8/jtopo.01.element.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.02.util.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.03.stage.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.04.display.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.05.sence.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.06.node.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.07.link.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.08.container.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.09.layout.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.10.chart.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.11.animate.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.12.search.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.13.logo.js" type="text/javascript" ></script>
+
+<!-- 自己封装的面板 -->
+
+<script src="sms/js/monitor.js" type="text/javascript" ></script>
+
+<script type="text/javascript">
+    var smsMonitor = new SmsMonitor({
+        floatDiv : $("#detail"),
+        floatDivTable : $("#tableDetail"),
+		basicUrl : "http://172.20.0.81:18999/TidbQuerySerivce/getMonitorData",
+		canvas : $("#canvas"),
+		mqReadyLimit : 1000,
+		redisQueueLimit :10000
+	});
+
+
+</script>
+</html>

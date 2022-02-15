@@ -1,0 +1,583 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+    <link href="../css/thirdParty/progress.css" type="text/css" rel="stylesheet">
+    <link href="../css/self/contextMenu.css" type="text/css" rel="stylesheet"/>
+    <link href="../css/self/popupForm.css" type="text/css" rel="stylesheet"/>
+    <link href="../css/thirdParty/bootstrap-datetimepicker.min.css" type="text/css" rel="stylesheet" />
+
+    <style>
+        .floatDiv {
+            z-index: 9999;
+            width: 500px;
+            position: fixed;
+        }
+        .progress2 {
+            width: 300px;
+            margin: auto;
+        }
+        .addReduceIcon{
+            font-size: 26px;
+            line-height: 44px;
+            cursor: pointer;
+            margin:0 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container-fluid" id="serviceManager" style="height: calc(100% - 46px);">
+    <div class="bg-light	">
+        <div class="breadcrumb bg-light">
+            <li class="breadcrumb-item">基础服务功能</li>
+            <li class="breadcrumb-item"><a data-load-page="serviceList" href="#">服务集群管理</a></li>
+            <li class="breadcrumb-item" id="service_name" >管理</li>
+        </div>
+    </div>
+    <div class="sidebar-nav right" id="toolbox" draggable="false">
+
+        <a href="#serverless-deploy" class="nav-header collapsed" data-toggle="collapse" draggable="false">Serverless网关</a>
+        <div id="serverless-deploy" class="collapse">
+            <ul class="nav nav-list ">
+                <li>
+                    <a href="#SERVERLESS-APISIX" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">Serverless</a>
+                    <div id="SERVERLESS-APISIX" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="APISIX_SERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/apisix.png" class="nodeStyle"/>
+                                <br><span>apisix-server</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="ETCD" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/apisix-etcd-node.png" class="nodeStyle"/>
+                                <br><span>apisix-etcd</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="PROMETHEUS" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/prometheus-icon.png" class="nodeStyle"/>
+                                <br><span>prometheus</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="GRAFANA" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/grafana-icon.png" class="nodeStyle"/>
+                                <br><span>grafana</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+            </ul>
+        </div>
+        
+        <a href="#mq-deploy" class="nav-header collapsed" data-toggle="collapse" draggable="false">MQ服务</a>
+        <div id="mq-deploy" class="collapse">
+            <ul class="nav nav-list ">
+                <li>
+                    <a href="#MQ-ROCKETMQ" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">ROCKETMQ</a>
+                    <div id="MQ-ROCKETMQ" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="ROCKETMQ_VBROKER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/rocketmq-vbroker-node.png" class="nodeStyle"/>
+                                <br><span>rocketmq_vbroker</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="ROCKETMQ_BROKER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/rocketmq-broker-node.png" class="nodeStyle"/>
+                                <br><span>rocketmq_broker</span>
+                            </div>
+                        </li>  
+                        <li>
+                            <div id="ROCKETMQ_NAMESRV" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/rocketmq-namesrv-node.png" class="nodeStyle"/>
+                                <br><span>rocketmq_namesrv</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="COLLECTD" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/collectd_icon.png" class="nodeStyle"/>
+                                <br><span>collectd</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="ROCKETMQ_CONSOLE" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/rocketmq-console.png" class="nodeStyle"/>
+                                <br><span>rocketmq_console</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+                <li>
+                    <a href="#MQ-PULSAR" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">PULSAR</a>
+                    <div id="MQ-PULSAR" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="PULSAR_BROKER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/broker.png" class="nodeStyle"/>
+                                <br><span>pulsar_broker</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="PULSAR_BOOKKEEPER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/bookkeeper.png" class="nodeStyle"/>
+                                <br><span>pulsar_bookkeeper</span>
+                            </div>
+                        </li>  
+                        <li>
+                            <div id="ZOOKEEPER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/zookkeeper.png" class="nodeStyle"/>
+                                <br><span>zookeeper</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="PULSAR_MANAGER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/pulsar-manager.png" class="nodeStyle"/>
+                                <br><span>pulsar_manager</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="PROMETHEUS" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/prometheus-icon.png" class="nodeStyle"/>
+                                <br><span>prometheus</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="GRAFANA" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/grafana-icon.png" class="nodeStyle"/>
+                                <br><span>grafana</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+            </ul>
+        </div>
+
+        <a href="#cache-deploy" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">Cache组件</a>
+        <div id="cache-deploy" class="collapse">
+            <ul class="nav nav-list ">
+                <li>
+                    <a href="#Cache-Redis" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">Redis</a>
+                    <div id="Cache-Redis" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="REDIS_PROXY" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/redis-proxy.png" class="nodeStyle"/>
+                                <br><span>redis-proxy</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="REDIS_NODE" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/redis-node.png" class="nodeStyle"/>
+                                <br><span>redis-server</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="COLLECTD" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/collectd_icon.png" class="nodeStyle"/>
+                                <br><span>collectd</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+            </ul>
+        </div>
+
+        <a href="#db-deploy" class="nav-header collapsed" data-toggle="collapse" draggable="false">DB组件</a>
+        <div id="db-deploy" class="collapse">
+            <ul class="nav nav-list ">
+                <li>
+                    <a href="#DB-TiDB" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">TiDB</a>
+                    <div id="DB-TiDB" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="TIDB_SERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/db_tidb_icon.png" class="nodeStyle"/>
+                                <br><span>tidb-server</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="PD_SERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/db_pd_icon.png" class="nodeStyle"/>
+                                <br><span>pd-server</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="TIKV_SERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/db_tikv_icon.png" class="nodeStyle"/>
+                                <br><span>tikv-server</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="DASHBOARD_PROXY" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/db_dashboard_proxy.png" class="nodeStyle"/>
+                                <br><span>dashboard-proxy</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+                <li>
+                    <a href="#DB_YUGABYTEDB" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">yugabytedb</a>
+                    <div id="DB_YUGABYTEDB" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="YB_MASTER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/yb-master.png" class="nodeStyle"/>
+                                <br><span>yb-master</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="YB_TSERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/yb-tserver.png" class="nodeStyle"/>
+                                <br><span>yb-tserver</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+                <li>
+                    <a href="#DB_TDENGINE" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">TDengine</a>
+                    <div id="DB_TDENGINE" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="TD_DNODE" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/dnode-node.png" class="nodeStyle"/>
+                                <br><span>td_dnode</span>
+                            </div>
+                        </li>     
+                        <li>
+                            <div id="TD_ARBITRATOR" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/arbitrator-node.png" class="nodeStyle"/>
+                                <br><span>td_arbitrator</span>
+                            </div>
+                        </li>                  
+                    </ul></div>
+                </li>
+                <li>
+                    <a href="#DB_CLICKHOUSE" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">clickhouse</a>
+                    <div id="DB_CLICKHOUSE" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="CLICKHOUSE_REPLICAS" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/clickhouse-replicas.png" class="nodeStyle"/>
+                                <br><span>clickhouse-replicas</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="CLICKHOUSE_SERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/clickhouse.png" class="nodeStyle"/>
+                                <br><span>clickhouse-server</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="ZOOKEEPER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/zookkeeper.png" class="nodeStyle"/>
+                                <br><span>zookeeper</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="PROMETHEUS" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/prometheus-icon.png" class="nodeStyle"/>
+                                <br><span>prometheus</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="GRAFANA" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/grafana-icon.png" class="nodeStyle"/>
+                                <br><span>grafana</span>
+                            </div>
+                        </li>               
+                    </ul></div>
+                </li>
+                <li>
+                    <a href="#DB_ORACLE_DG" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">Oracle_dg</a>
+                    <div id="DB_ORACLE_DG" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="ORCL_INSTANCE" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/oracle-node.png" class="nodeStyle"/>
+                                <br><span>orcl_instance</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+                <li>
+                    <a href="#DB_VOLTDB" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">voltdb</a>
+                    <div id="DB_VOLTDB" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="VOLTDB_SERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/voltdb-server.png" class="nodeStyle"/>
+                                <br><span>voltdb-server</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+            </ul>
+        </div>
+
+        <a href="#sms-deploy" class="nav-header collapsed" data-toggle="collapse" draggable="false">SMS网关</a>
+        <div id="sms-deploy" class="collapse">
+            <ul class="nav nav-list ">
+                <li>
+                    <a href="#SMS_GATEWAY" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">Sms</a>
+                    <div id="SMS_GATEWAY" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="SMS_SERVER" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/sms-server.png" class="nodeStyle"/>
+                                <br><span>sms-server</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="SMS_SERVER_EXT" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/sms-server.png" class="nodeStyle"/>
+                                <br><span>sms-server-ext</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="SMS_PROCESS" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/sms-process.png" class="nodeStyle"/>
+                                <br><span>sms-process</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="SMS_CLIENT" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/sms-client.png" class="nodeStyle"/>
+                                <br><span>sms-client</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="SMS_BATSAVE" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/batchsave.png" class="nodeStyle"/>
+                                <br><span>sms-batsave</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="SMS_STATS" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/sms_stats.png" class="nodeStyle"/>
+                                <br><span>sms_stats</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+                <li>
+                    <a href="#SMS_QUERY_SERVICE" class="nav-header collapsed text-white ui-dropdown-hover" data-toggle="collapse">SmsQueryService</a>
+                    <div id="SMS_QUERY_SERVICE" class="collapse"><ul class="nav nav-list ">
+                        <li>
+                            <div id="NGX" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/nginx.png" class="nodeStyle"/>
+                                <br><span>nginx</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="SMS_QUERY" class="text-black ui-dropdown-hover" draggable="true">
+                                <img name="backGroundImg" src="../images/console/sms_query.png" class="nodeStyle"/>
+                                <br><span>sms_query</span>
+                            </div>
+                        </li>
+                    </ul></div>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+    <canvas id="canvas" style="background: white;"></canvas>
+</div>
+
+<div class="floatDiv" id="metadata" tabindex="-1" role="dialog" aria-labelledby="metadataHeader">
+    <div class="" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="tab-pane active in">
+                    <table class="table" >
+                        <thead>
+                            <tr class="info">
+                                <th>属性名称</th>
+                                <th>属性内容</th>
+                            </tr>
+                        </thead>
+                        <tbody id="componentMetadata">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="adjustWeight" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="adjustWeightHeader" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 1000px;" role="document">
+        <div class="modal-content" >
+            <div class="modal-header">
+                <h5 class="modal-title" id="adjustWeightHeader">调整 A/B Quece权重</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeMmTimer()">
+                    <span aria-hidden="true" >×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-pane active in" id="adjustWeightHome">
+                    <form id="adjustWeightForm" class="form-horizontal">
+                        <div style="display: flex; justify-content:flex-start; height: 60px; padding-bottom: 10px;">
+                            <div style="padding-right: 10px; width: 132px; text-align:right;  line-height: 50px;"> 
+                                A的权重：
+                                <span id="aQueueWeight"></span>
+                            </div> 
+                            <div onclick="addAWeight()" class="addReduceIcon">
+                                <img src="../images/add.png" alt="" srcset="">
+                            </div>
+                            <div class="progress2" style="width: 300px;">
+                            
+                            </div>
+                            <div onclick="addBWeight()" class="addReduceIcon">
+                                <img src="../images/add.png" alt="" srcset="">
+                            </div>
+                            <div style="padding-left: 10px;  width: 110px; text-align:left; line-height: 50px;">
+                                B的权重：
+                                <span id="bQueueWeight"></span>
+                            </div>
+                            <div style="width: 140px; line-height: 50px;">
+                                <button type="button" onclick="withdrawSmsABQueueWeight()" class="btn btn-primary">撤回</button>
+                                <button type="button" onclick="adjustSmsABQueueWeightInfo()" class="btn btn-primary">保存</button>
+                            </div>
+                            <div class="row" style="width:214px; padding-top: 3px;">
+                                <div class="col-sm-12">
+                                    <div class="form-inline mt-md-0 mr-2 pt-1 float-right" >
+                                        <div class="input-group">
+                                            <select class="custom-select custom-select-icon" id="timeInterval">
+                                                <option selected value = "300000">Last 5 Minites</option>
+                                                <option value ="600000 ">Last 10 Minites</option>
+                                                <option value ="1200000">Last 20 Minites</option>
+                                                <option value ="1800000">Last 30 Minites</option>
+                                                <option value ="3600000">Last 1 Hour</option>
+                                                <option value ="10800000">Last 3 Hour</option>
+                                                <option value ="21600000">Last 6 Hour</option>
+                                                <option value ="43200000">Last 12 Hour</option>
+                                                <option value ="86400000">Last 24 Hour</option>
+                                                <option value ="604800000">Last 7 Days</option>
+                                                <option value ="1209600000">Last 14 Days</option>
+                                            </select>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="width: 982px;  height: 600px; overflow: scroll; overflow-x: hidden;">
+                            <div id="adjustWeightMain" style="width: 966px; height: 1100px;"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" onclick="closeMmTimer()">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="changeMs" tabindex="-1" role="dialog" aria-labelledby="changeMsHeader" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 1000px;" role="document">
+        <div class="modal-content" >
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeMsHeader">Oracle-DG 主从切换</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-pane active in" id="changeMsHome">
+                    <form id="changeMsForm" class="form-horizontal">
+                        <canvas id="canvas1" style="background: white;" width="970" height="400" ></canvas>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+<!-- 改造过的jtopo -->
+<script src="../js/jtopo-0.4.8/jtopo.01.element.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.02.util.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.03.stage.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.04.display.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.05.sence.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.06.node.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.07.link.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.08.container.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.09.layout.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.10.chart.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.11.animate.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.12.search.js" type="text/javascript" ></script>
+<script src="../js/jtopo-0.4.8/jtopo.13.logo.js" type="text/javascript" ></script>
+
+<!-- 自己封装的面板 -->
+<script src="../js/self/component.flexibleContainer.js" type="text/javascript" ></script>
+<script src="../js/thirdParty/progress.min.js" type="text/javascript" ></script>
+<script src="../js/self/progress.js" type="text/javascript" ></script>
+
+<script src="../js/self/component.statusNode.js" type="text/javascript" ></script>
+<script src="../js/self/component.abstractPlate.js" type="text/javascript" ></script>
+
+<script src="../js/self/component.CacheRedisClusterPlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.CacheRedisMSPlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.CacheRedisHaClusterPlate.js" type="text/javascript" ></script>
+
+<script src="../js/self/component.DBTidbPlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.DBYugaBytePlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.DBTDEnginePlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.DBOracleDGPlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.DBClickHousePlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.DBVoltDBPlate.js" type="text/javascript" ></script>
+
+<script src="../js/self/component.MQRocketMQPlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.MQPulsarPlate.js" type="text/javascript" ></script>
+
+<script src="../js/self/component.ServerlessAPISixPlate.js" type="text/javascript" ></script>
+
+<script src="../js/self/component.SMSGwPlate.js" type="text/javascript" ></script>
+<script src="../js/self/component.SMSQueryPlate.js" type="text/javascript" ></script>
+
+<script src="../js/self/component.alert.js" type="text/javascript" ></script>
+<script src="../js/self/contextMenu.js" type="text/javascript" ></script>
+<script src="../js/self/popupForm.js" type="text/javascript" ></script>
+<script src="../js/thirdParty/echarts.min.js" type="text/javascript" ></script>
+<script src="../js/thirdParty/bootstrap-datetimepicker.min.js" type="text/javascript" charset="UTF-8"></script>
+<script src="../js/thirdParty/bootstrap-datetimepicker.zh-CN.js" type="text/javascript" charset="UTF-8"></script>
+<!--echarts的暗色主题包-->
+<script src="../js/jvmMonitor.js" type="text/javascript"></script>
+<script src="../js/serviceManage.js" type="text/javascript" ></script>
+
+
+<script type="text/javascript">
+    var smsId, oracleId, containerName;
+    $(".breadcrumb>li>a").off("click").on("click",function(){
+        var $this = $(this), pageName = $this.data("load-page"),$main = $("#mainContent");
+        if(pageName != ""){
+            /*$main.load("pages/"+pageName+".html");*/
+            $(".contextMenu").remove();
+            $main.load(pageName+".html",function(){
+                initPage();
+            });
+        }
+    });
+    $("#metadata").hide();
+
+    function sumbit(){
+    }
+    var mm, mmTimer, INST_ID = [];
+    $("#timeInterval").change(function(){
+        mm = new JqMonitor({"INST_ID": INST_ID, "TIME_INTERVAL": $("#timeInterval").val()})
+    });
+    //toolbox drag
+	/*var $serviceManager = $("#serviceManager"),
+            x = $serviceManager.outerWidth(),
+            y = $serviceManager.outerHeight();
+    var max={
+        x : x,
+        y: y
+    }
+    Util.drag(
+        document.getElementById("toolbox"),
+        false,
+        function(x,type){return Math.max(0,Math.min(max[type],x))}
+    )*/
+</script>
+</html>

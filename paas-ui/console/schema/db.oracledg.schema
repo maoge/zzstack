@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "ORACLE_DG_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Oracle_dg服务容器ID"},
+            
+                "DG_CONTAINER":{
+                    "type":"array",
+                    "required":true,
+                    "items":{
+                        "type":"object",
+                        "properties": {
+                            "INST_ID": {"type":"string","required":true,"minLength":36,"description":"dg容器ID","inputDisabled":true},
+                            "DG_NAME": {"type":"string","required":true,"description":"dg名字","inputDisabled":true},
+                            "ACTIVE_DB_TYPE": {"type":"string","module":"select","required":true,"description":"数据库当前生效类型(主|备)","note":"master|backup"},
+                            "POS": {
+                                "type":"object",
+                                "required":true,
+                                "properties": {
+                                    "x": {"type":"integer","required":true},
+                                    "y": {"type":"integer","required":true},
+                                    "width": {"type":"integer"},
+                                    "height":{"type":"integer"},
+                                    "row":{"type":"integer"},
+                                    "col":{"type":"integer"}
+                                }
+                            },
+                            
+                            "ORCL_INSTANCE":{
+                                "type":"array",
+                                "required":true,
+                                "items":{
+                                    "type":"object",
+                                    "properties": {
+                                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"oracle实例ID","inputDisabled":true},
+                                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                        "ORA_LSNR_PORT": {"type":"string","required":true,"description":"oraListenPort","pattern":"[^0-9]","message":"oraListenPort不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                        "NODE_TYPE": {"type":"string","module":"select","required":true,"description":"master/slave"},
+                                        "DB_USER": {"type":"string","required":true,"description":"dbUser"},
+                                        "DB_PASSWD": {"type":"string","module":"passInput","required":true,"description":"dbPasswd"},
+                                        "DB_NAME": {"type":"string","required":true,"description":"oracleSID"}
+                                    }
+                                }
+                            }
+                        }
+                    }      
+                }
+            }
+        }
+    }	
+}

@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.zzstack.paas</groupId>
+    <artifactId>underlying</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0.13</version>
+    <modules>
+        <module>paas-common-utils</module>
+        <module>paas-common-redis-pool</module>
+        <module>paas-common-http-server</module>
+        <module>paas-common-dbclient</module>
+        <module>paas-sdk</module>
+        <module>paas-raft</module>
+        <module>paas-collectd</module>
+        <module>paas-firmware</module>
+        <module>paas-metasvr</module>
+        <module>paas-bench</module>
+    </modules>
+
+    <name>${project.artifactId}</name>
+
+    <properties>
+        <!-- sources support -->
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.locale>zh_CN</project.build.locale>
+
+        <!-- netty support -->
+        <netty-all.version>4.1.56.Final</netty-all.version>
+
+        <!-- vertx -->
+        <vertx.version>4.0.0</vertx.version>
+
+        <!-- jackson support -->
+		<jackson-annotations.version>2.12.0</jackson-annotations.version>
+        <jackson-core.version>2.12.0</jackson-core.version>
+        <jackson-coreutils.version>2.12.0</jackson-coreutils.version>
+		<jackson-databind.version>2.12.0</jackson-databind.version>
+		<jackson-dataformat-yaml.version>2.12.0</jackson-dataformat-yaml.version>
+
+        <!-- log support -->
+        <slf4j.version>1.7.26</slf4j.version>
+        <log4j2.version>2.17.1</log4j2.version>
+        <disruptor.version>3.4.2</disruptor.version>
+
+        <commons-codec.verion>1.11</commons-codec.verion>
+
+        <mysql-connector-java.version>8.0.23</mysql-connector-java.version>
+        <ojdbc6.version>11.2.0.3</ojdbc6.version>
+
+        <lz4-java.version>1.7.1</lz4-java.version>
+
+        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+        <maven-assembly-plugin.version>3.1.1</maven-assembly-plugin.version>
+        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+        <maven-jar-plugin.version>3.1.1</maven-jar-plugin.version>
+        <maven-source-plugin.version>3.1.0</maven-source-plugin.version>
+        <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
+
+        <hikari-cp.version>2.7.9</hikari-cp.version>
+        <mybatis.version>3.5.0</mybatis.version>
+        <mybatis-guice.version>3.12</mybatis-guice.version>
+        <druid.version>1.1.16</druid.version>
+
+        <snakeyaml.version>1.23</snakeyaml.version>
+        <jedis.version>3.4.1</jedis.version>
+
+        <guava-jre.version>30.1-jre</guava-jre.version>
+        <google-guice.version>4.2.3</google-guice.version>
+
+        <redisson.version>3.14.1</redisson.version>
+
+        <pulsar.version>2.7.2</pulsar.version>
+
+        <!--<ganymed-ssh2.version>262</ganymed-ssh2.version>-->
+	    <jsch.version>0.1.55</jsch.version>
+
+	    <fastjson.version>1.2.60</fastjson.version>
+	    <taos-jdbcdriver.version>2.0.16</taos-jdbcdriver.version>
+        <rocketmq.version>4.4.0</rocketmq.version>
+        <clickhouse-native-jdbc.version>2.5.6</clickhouse-native-jdbc.version>
+        <voltdbclient.version>10.0</voltdbclient.version>
+        
+        <brpc-java.version>2.5.9</brpc-java.version>
+        <rocksdbjni.version>5.1.4</rocksdbjni.version>
+
+        <repositories.ip>https://maven.aliyun.com</repositories.ip>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>${repositories.ip}/repository/central</url>
+        </repository>
+        <repository>
+            <id>public</id>
+            <url>${repositories.ip}/repository/public</url>
+        </repository>
+        <repository>
+            <id>release</id>
+            <url>${repositories.ip}/repository/releases</url>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <url>${repositories.ip}/repository/snapshots</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>public</id>
+            <url>${repositories.ip}/repository/public</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>release</id>
+            <url>${repositories.ip}/repository/releases</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>snapshots</id>
+            <url>${repositories.ip}/repository/snapshots</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>aliyunmaven</id>
+            <name>阿里云公共仓库</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+        </repository>
+    </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+	        <!-- netty support -->
+	        <dependency>
+	            <groupId>io.netty</groupId>
+	            <artifactId>netty-all</artifactId>
+	            <version>${netty-all.version}</version>
+	        </dependency>
+
+	        <!-- vertx support -->
+	        <dependency>
+	            <groupId>io.vertx</groupId>
+	            <artifactId>vertx-core</artifactId>
+	            <version>${vertx.version}</version>
+	            <exclusions>
+					<exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-common</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-buffer</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-transport</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-handler</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-handler-proxy</artifactId>
+				    </exclusion>
+				    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec</artifactId>
+                    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-codec-http</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-codec-http2</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-resolver</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-resolver-dns</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-codec-haproxy</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-transport-native-epoll</artifactId>
+				    </exclusion>
+				    <exclusion>
+				        <groupId>io.netty</groupId>
+				        <artifactId>netty-transport-native-kqueue</artifactId>
+				    </exclusion>
+	                <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-transport-native-unix-common</artifactId>
+                    </exclusion>
+	            </exclusions>
+	        </dependency>
+	        <dependency>
+	            <groupId>io.vertx</groupId>
+	            <artifactId>vertx-web</artifactId>
+	            <version>${vertx.version}</version>
+	        </dependency>
+	        <dependency>
+	            <groupId>io.vertx</groupId>
+	            <artifactId>vertx-web-common</artifactId>
+	            <version>${vertx.version}</version>
+	        </dependency>
+
+	        <dependency>
+	            <groupId>io.vertx</groupId>
+	            <artifactId>vertx-web-validation</artifactId>
+	            <version>${vertx.version}</version>
+	        </dependency>
+
+	        <dependency>
+	            <groupId>io.vertx</groupId>
+	            <artifactId>vertx-json-schema</artifactId>
+	            <version>${vertx.version}</version>
+	        </dependency>
+
+            <!-- jackson start -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson-annotations.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson-core.version}</version>
+            </dependency>
+
+			<dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson-databind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>${jackson-dataformat-yaml.version}</version>
+            </dependency>
+
+            <!-- log start -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+
+            <!--jcl bridge-->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-jcl</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <!-- jul bridge -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-jul</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>${disruptor.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql-connector-java.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc6</artifactId>
+                <version>${ojdbc6.version}</version>
+            </dependency>
+
+			<dependency>
+			    <groupId>com.github.housepower</groupId>
+			    <artifactId>clickhouse-native-jdbc</artifactId>
+			    <version>${clickhouse-native-jdbc.version}</version>
+			</dependency>
+
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.verion}</version>
+            </dependency>
+
+            <!-- lz4-java support -->
+            <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4-java.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikari-cp.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                <version>${mybatis.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis-guice</artifactId>
+                <version>${mybatis-guice.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>${jedis.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>${redisson.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-buffer</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-transport</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-handler</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-handler-proxy</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec-http</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec-http2</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-resolver</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-resolver-dns</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec-haproxy</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-transport-native-epoll</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-transport-native-kqueue</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-transport-native-unix-common</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava-jre.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>${google-guice.version}</version>
+            </dependency>
+
+	        <!-- pulsar-client -->
+	        <dependency>
+	            <groupId>org.apache.pulsar</groupId>
+	            <artifactId>pulsar-client</artifactId>
+	            <version>${pulsar.version}</version>
+	        </dependency>
+
+            <dependency>
+                <groupId>com.zzstack.paas</groupId>
+                <artifactId>paas-common-utils</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>com.zzstack.paas</groupId>
+                <artifactId>paas-raft</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.zzstack.paas</groupId>
+                <artifactId>paas-common-dbclient</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.zzstack.paas</groupId>
+                <artifactId>paas-common-redis-pool</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.zzstack.paas</groupId>
+                <artifactId>paas-common-http-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>com.zzstack.paas</groupId>
+                <artifactId>paas-sdk</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.jcraft</groupId>
+                <artifactId>jsch</artifactId>
+                <version>${jsch.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.taosdata.jdbc</groupId>
+                <artifactId>taos-jdbcdriver</artifactId>
+                <version>${taos-jdbcdriver.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            
+            <dependency>
+			    <groupId>org.voltdb</groupId>
+			    <artifactId>voltdbclient</artifactId>
+			    <version>${voltdbclient.version}</version>
+			</dependency>
+			
+			<dependency>
+                <groupId>com.baidu</groupId>
+                <artifactId>brpc-java</artifactId>
+                <version>${brpc-java.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.rocksdb</groupId>
+                <artifactId>rocksdbjni</artifactId>
+                <version>${rocksdbjni.version}</version>
+            </dependency>
+            
+        </dependencies>
+
+    </dependencyManagement>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+                <targetPath>${project.build.directory}/classes</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>META-INF/MANIFEST.MF</include>
+                    <include>*.yaml</include>
+                    <include>*.properties</include>
+                    <include>conf/**</include>
+                    <include>**/*.yaml</include>
+                    <include>**/*.xml</include>
+                    <include>**/*.properties</include>
+                </includes>
+                <targetPath>${project.build.directory}/classes</targetPath>
+            </resource>
+        </resources>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <testSource>${java.version}</testSource>
+                        <testTarget>${java.version}</testTarget>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                    <version>${maven-compiler-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven-resources-plugin.version}</version>
+                    <configuration>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+                <!-- 打jar包的插件 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven-assembly-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+        </plugins>
+
+    </build>
+
+</project>

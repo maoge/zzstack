@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "REDIS_HA_CLUSTER_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"redis cluster A/B容灾集群容器ID"},
+                
+                "HA_CONTAINER":{
+                    "type":"array",
+                    "required":true,
+                    "items": {
+                        "type":"object",
+                        "properties": {
+                            "INST_ID": {"type":"string","required":true,"minLength":36,"description":"INST_ID","inputDisabled":true},
+                            "SERV_CONTAINER_NAME": {"type":"string","required":true,"minLength":36,"description":"servContainerName","inputDisabled":true},
+                            "SERV_INST_ID": {"type":"string","module":"select","required":true,"description":"redis-cluster-service-id"},
+                            "WEIGHT": {"type":"string","required":true,"description":"负载权重","pattern":"[^0-9]","isWeight":"yes","message":"负载权重不能为空，必须是0-100的数字"},
+                            
+                            "POS": {
+                                "type":"object",
+                                "required":true,
+                                "properties": {
+                                    "x": {"type":"integer","required":true},
+                                    "y": {"type":"integer","required":true},
+                                    "width": {"type":"integer"},
+                                    "height":{"type":"integer"},
+                                    "row":{"type":"integer"},
+                                    "col":{"type":"integer"}
+                                }
+                            }
+                        }
+                    },
+                    "minItems":2
+                }
+            }
+        }
+    }	
+}

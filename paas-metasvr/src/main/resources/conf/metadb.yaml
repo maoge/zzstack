@@ -1,0 +1,53 @@
+jdbc:
+    decrypt: false
+    dbType: "mysql"
+    
+    # Druid, Hikari
+    dbSourceModel: "Hikari"
+    activeDBType: master
+    masterDBSources:
+        id: "RealTimeMasterDB"
+        nodes:
+            - url: "jdbc:mysql://172.20.0.171:57001/metadb?useSSL=false"
+              username: "paas_metadb"
+              password: "paas_metadb"
+
+            - url: "jdbc:mysql://172.20.0.172:57001/metadb?useSSL=false"
+              username: "paas_metadb"
+              password: "paas_metadb"
+                
+    backupDBSources:
+        id: "RealTimeBackupDB"
+        nodes:
+            - url: "jdbc:mysql://172.20.0.171:57001/metadb?useSSL=false"
+              username: "paas_metadb"
+              password: "paas_metadb"
+
+            - url: "jdbc:mysql://172.20.0.172:57001/metadb?useSSL=false"
+              username: "paas_metadb"
+              password: "paas_metadb"
+
+    initialSize: 5
+    minIdle: 5
+    maxActive: 40
+    maxWait: 10000
+    
+    timeBetweenEvictionRunsMillis: 10000
+    minEvictableIdleTimeMillis: 300000
+    maxEvictableIdleTimeMillis: 600000
+    timeBetweenLogStatsMillis: 300000
+    keepAlive: false
+    
+    validationQuery: "SELECT 1 from dual"
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxOpenPreparedStatements: 100
+    
+    removeAbandoned: true
+    removeAbandonedTimeout: 1800
+    logAbandoned: true
+    
+    phyMaxUseCount: -1
+    filters: ""

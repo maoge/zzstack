@@ -1,0 +1,94 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+    <link href="../css/self/mTable.css" type="text/css" rel="stylesheet" />
+
+    <style>
+        .m-table-container tbody td{
+            height: 20px;
+        }
+
+    </style>
+</head>
+
+<body>
+	<div class="container-fluid">
+		<div class="row bg-light	">
+			<div class="col-lg-4 col-sm-12 breadcrumb bg-light">
+				<li class="breadcrumb-item">基础服务功能</li>
+				<li class="breadcrumb-item"><a data-load-page="serviceList" href="#">服务集群管理</a></li>
+				<li class="breadcrumb-item">SQL执行计划</li>
+			</div>
+			<div class="col-lg-8 col-sm-12">
+				<div class="form-inline mt-md-0 mr-2 pt-1 float-right" >
+					<input  id="S_SCHEMA_NAME" name="S_SCHEMA_NAME"  class="form-control mr-sm-2" type="text" placeholder="请输入数据库名称" >
+					<input  id="S_USER_NAME" name="S_USER_NAME" class="form-control mr-sm-2" type="text" placeholder="请输入用户名" >
+					<input  type="password" id="S_USER_PWD" name="S_USER_PWD" class="form-control mr-sm-2" autoComplete="new-password" placeholder="请输入密码" >
+				</div>
+			</div>
+		</div>
+		<div style="margin-top: 10px">
+			<div class="form-group input-group">
+				<textarea id="S_SQL_STR" class="form-control" rows="4"  placeholder="请输入SQL语句"></textarea>
+				<div class="input-group-append">
+					<button id = "execute" class="btn btn-outline-secondary" >执行</button>
+				</div>
+			</div>
+			<div class="">
+				<div class="">
+					执行计划展示
+				</div>
+				<table id="explainGraph">
+
+				</table>
+			</div>
+		</div>
+
+	</div>
+
+	<!--<div class="container-fluid">
+		<div class="row-fluid" id = "button-group">
+			<div class="btn-toolbar">
+    			<button id="button_explain" class="btn btn-primary btn-lg" onclick="sqlExplain();">查看执行计划</button>
+    			<img src="./img/less.png" height="30" width="30" title="收起" 
+    				style="float: right; margin-right:10px; cursor:pointer" id="button_toggle" onclick="toggleTopDiv();"/>
+			</div>
+		</div>
+		<div class="row-fluid">
+			<div id="explainGraph" class="well">
+			</div>
+		</div>
+	</div>-->
+</body>
+
+<script src="../js/self/sqlExplain.js" type="text/javascript" ></script>
+<script type="text/javascript">
+	$(".breadcrumb>li>a").off("click").on("click",function(){
+		var $this = $(this);
+		pageName = $this.data("load-page");
+		$(".contextMenu").remove();
+		if(pageName != ""){
+			$mainContainer.load(pageName+".html",function(){
+				initPage();
+			});
+		}
+	});
+
+    function init(servName, servID) {
+        var sqlExpalin = new SQLExplain({
+            id : servID,
+            tableEle  : $("#explainGraph"),
+            sqlStrEle : $('#S_SQL_STR'),
+            schemaEle : $('#S_SCHEMA_NAME'),
+            userEle   : $('#S_USER_NAME'),
+            pwdEle    : $('#S_USER_PWD')
+        });
+        $('#service_name').text(servName);
+        $("#execute").click(function () {
+            sqlExpalin.execute();
+            Util.hideLoading();
+        });
+    }
+</script>
+</html>

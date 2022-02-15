@@ -1,0 +1,64 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.ProgressBar {
+  width: 300px;
+  height: 30px;
+  border-radius: 15px;
+  background: #f0f0f0;
+  margin: 0 auto;
+  /* box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.1) inset; */
+}
+.ProgressLine {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 15px;
+  background: #f0f0f0;
+}
+.ProgressLine::before {
+  position: absolute;
+  content: attr(text-content-after);
+  width: 30px;
+  height: 100%;
+  border-radius: 50%;
+  right: 0;
+  font-size: 8px;
+  background: #eb3e3e;
+  border: 6px solid #fff;
+  top: 50%;
+  transform: translate(6px, -50%);
+  box-sizing: content-box !important;
+  box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.ProgressBar .progressVal {
+  display: none;
+  position: absolute;
+  right: 0;
+  background: rgba(0, 0, 0, 0.4);
+  text-align: center;
+  min-width: 50px;
+  box-sizing: border-box;
+  padding: 0 4px;
+  font-size: 12px;
+  color: #fff;
+  height: 20px;
+  line-height: 20px;
+  border-radius: 4px;
+  top: -30px;
+}
+.ProgressLine.disabled {
+  background: #cecece;
+}
+.ProgressLine.disabled::before {
+  background: #999;
+  border-color: #999;
+}
+.vertical {
+  transform: rotate(-90deg);
+}

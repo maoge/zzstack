@@ -1,0 +1,47 @@
+jdbc:
+    decrypt: false
+    dbType: "tdengine"
+    
+    # Druid, Hikari
+    dbSourceModel: "Hikari"
+    activeDBType: master
+    masterDBSources:
+        id: "RealTimeMasterDB"
+        nodes:
+            -
+                url: "jdbc:TAOS://172.20.0.171:27700/tsdb"
+                username: "root"
+                password: "taosdata"
+                
+    backupDBSources:
+        id: "RealTimeBackupDB"
+        nodes:
+            -
+                url: "jdbc:TAOS://172.20.0.172:27700/tsdb"
+                username: "root"
+                password: "taosdata"
+                
+    initialSize: 20
+    minIdle: 20
+    maxActive: 40
+    maxWait: 20000
+    
+    timeBetweenEvictionRunsMillis: 10000
+    minEvictableIdleTimeMillis: 300000
+    maxEvictableIdleTimeMillis: 600000
+    timeBetweenLogStatsMillis: 300000
+    keepAlive: false
+    
+    validationQuery: "SELECT 1"
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxOpenPreparedStatements: 100
+    
+    removeAbandoned: true
+    removeAbandonedTimeout: 1800
+    logAbandoned: true
+    
+    phyMaxUseCount: -1
+    filters: ""

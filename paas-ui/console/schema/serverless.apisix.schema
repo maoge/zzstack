@@ -1,0 +1,151 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "APISIX_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Apisix微服务网关容器 ID"},
+            
+                "APISIX_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Apisix Server容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "APISIX_SERVER":{
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Apisix ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+				                    "HTTP_PORT": {"type":"string","required":true,"description":"http port","pattern":"[^0-9]","message":"http port 不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "SSL_PORT": {"type":"string","required":true,"description":"ssl port","pattern":"[^0-9]","message":"ssl port 不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "CONTROL_PORT": {"type":"string","required":true,"description":"control port","pattern":"[^0-9]","message":"control port 不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "DASHBOARD_PORT": {"type":"string","required":true,"description":"dashboard port","pattern":"[^0-9]","message":"dashboard port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "METRIC_PORT": {"type":"string","required":true,"description":"metric port","pattern":"[^0-9]","message":"metric port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                }
+                            },
+                            "minItems":1
+                        }
+                    }
+                },
+                
+                "ETCD_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Apisix Etcd容器 ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "ETCD":{
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Apisix Etcd ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "CLIENT_URLS_PORT": {"type":"string","required":true,"description":"client-urls-port","pattern":"[^0-9]","message":"client-urls-port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "PEER_URLS_PORT": {"type":"string","required":true,"description":"peer-urls-port","pattern":"[^0-9]","message":"peer-urls-port不能为空，必须是数字，范围在1024-65535！","isPort":"yes"}
+                                }
+                            }
+                        }	
+                    }
+                },
+                
+                "COLLECTD":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"COLLECTD ID"},
+                        "SSH_ID": {"type":"string","required":true,"description":"SSH ID"},
+                        "PORT": {"type":"string","required":true,"description":"服务端口","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                },
+                
+                "PROMETHEUS":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Prometheus ID"},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"SSH ID"},
+                        "PROMETHEUS_PORT": {"type":"string","required":true,"description":"prometheus端口","pattern":"[^0-9]","message":"prometheus端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                },
+                
+                "GRAFANA": {
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Grafana ID"},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"SSH ID"},
+                        "HTTP_PORT": {"type":"string","required":true,"description":"grafana端口","pattern":"[^0-9]","message":"grafana端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }	
+}

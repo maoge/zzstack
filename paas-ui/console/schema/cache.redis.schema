@@ -1,0 +1,111 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "REDIS_SERV_CLUSTER_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Cache服务容器ID"},
+            
+                "REDIS_PROXY_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Cache proxy容器ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "REDIS_PROXY":{
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Cache Proxy ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "PORT": {"type":"string","required":true,"description":"服务端口","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "NODE_CONN_POOL_SIZE": {"type":"string","required":true,"description":"Redis连接池大小","pattern":"[^0-9]","message":"Redis连接池大小不能为空，必须是数字！"},
+                                    "MAX_CONN": {"type":"string","required":true,"description":"最大连接数","pattern":"[^0-9]","message":"最大连接数不能为空，必须是数字！"},
+                                    "PROXY_THREADS": {"type":"string","required":true,"description":"接入机线程数","pattern":"[^0-9]","message":"接入机线程数不能为空，必须是数字!"}
+                                }
+                            },
+                            "minItems":1
+                        }
+                    }
+                },
+                
+                "REDIS_NODE_CONTAINER":{
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Cache node容器ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "REDIS_NODE":{
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Cache Node ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "PORT": {"type":"string","required":true,"description":"服务端口","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "MAX_MEMORY": {"type":"string","required":true,"description":"最大内存限制(GB)","pattern":"[^0-9]","message":"最大内存限制(GB)不能为空！"},
+                                    "MAX_CONN": {"type":"string","required":true,"description":"最大连接数","pattern":"[^0-9]","message":"最大连接数不能为空，必须是数字！"}
+                                }
+                            }
+                        }	
+                    }
+                },
+                
+                "COLLECTD":{
+                    "type":"object",
+                    "required":false,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"COLLECTD ID","inputDisabled":true},
+                        "SERV_INST_ID": {"type":"string","module":"input","required":true,"description":"SERV_INST_ID","inputDisabled":true},
+                        "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                        "META_SVR_URL": {"type":"string","module":"textarea","required":true,"description":"metasvr服务器地址","remind":"true","default":"http://ip1:port1,http://ip2:port2"},
+                        "META_SVR_USR": {"type":"string","required":true,"description":"metasvr鉴权用户","default":"dev"},
+                        "META_SVR_PASSWD": {"type":"string","module":"passInput","required":true,"description":"metasvr鉴权密码","default":"abcd.1234"},
+                        "COLLECTD_PORT": {"type":"string","required":true,"description":"服务端口","default":"8080","pattern":"[^0-9]","message":"服务端口不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }	
+}
