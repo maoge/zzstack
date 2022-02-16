@@ -39,9 +39,10 @@ public class CacheRedisMSConf implements IPaasConfig {
         
         public String transportMode = "NIO";
         
-        public String serverMode = "CLUSTER";
+        public String serverMode = "MASTER_SLAVE";
         
-        public RedisNodes server;
+        public RedisNodes master;
+        public RedisNodes slave;
 
     }
     

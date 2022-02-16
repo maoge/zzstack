@@ -39,7 +39,7 @@ public class FirmwareChecker {
 		if (instance != null)
 			return instance;
 		
-		synchronized (FirmwareNative.class) {
+		synchronized (FirmwareChecker.class) {
 			if (instance == null) {
 				try {
 					instance = new FirmwareChecker();

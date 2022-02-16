@@ -21,7 +21,7 @@ redisConfig:
     #单个连接最大订阅数量
     subscriptionsPerConnection: 1
     #客户端名称(在Redis节点里显示的客户端名称)
-    clientName: smsprocess-queue
+    clientName: 
     
     #负载均衡算法类的选择
     # 在使用多个Redis服务节点的环境里，可以选用以下几种负载均衡方式选择一个节点：
@@ -66,7 +66,6 @@ redisConfig:
     #TransportMode.KQUEUE - 需要依赖里有 netty-transport-native-kqueue包（macOS）
     transportMode: "NIO"
     
-    #PROXY, CLUSTER
     serverMode: CLUSTER
     
     server:

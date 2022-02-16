@@ -489,6 +489,7 @@ public class CONSTS {
     // serverMode: CLUSTER | PROXY
     public static final String REDIS_SERVER_MODE_PROXY = "PROXY";
     public static final String REDIS_SERVER_MODE_CLUSTER = "CLUSTER";
+    public static final String REDIS_SERVER_MODE_MS = "MASTER_SLAVE";
 
     public static final String REDIS_URL_FMT = "redis://%s:%s";
     public static final String REDIS_CLUSTER_A = "RedisClusterA";

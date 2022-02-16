@@ -72,7 +72,7 @@
         <guava-jre.version>30.1-jre</guava-jre.version>
         <google-guice.version>4.2.3</google-guice.version>
 
-        <redisson.version>3.14.1</redisson.version>
+        <redisson.version>3.16.8</redisson.version>
 
         <pulsar.version>2.7.2</pulsar.version>
 

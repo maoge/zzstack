@@ -17,6 +17,7 @@ import org.redisson.codec.SnappyCodec;
 import org.redisson.codec.SnappyCodecV2;
 import org.redisson.config.ClusterServersConfig;
 import org.redisson.config.Config;
+import org.redisson.config.MasterSlaveServersConfig;
 import org.redisson.config.ReadMode;
 import org.redisson.config.SubscriptionMode;
 import org.redisson.connection.balancer.RandomLoadBalancer;
@@ -29,9 +30,8 @@ import com.zzstack.paas.underlying.redis.loadbalance.WeightedRRLoadBalancer;
 import com.zzstack.paas.underlying.redis.node.RedissonClientHolder;
 import com.zzstack.paas.underlying.utils.YamlParser;
 import com.zzstack.paas.underlying.utils.config.CacheRedisClusterConf;
-import com.zzstack.paas.underlying.utils.config.CacheRedisClusterConf.RedisConfig;
 import com.zzstack.paas.underlying.utils.config.CacheRedisHaConf;
-import com.zzstack.paas.underlying.utils.config.CacheRedisHaConf.RedisHaConfig;
+import com.zzstack.paas.underlying.utils.config.CacheRedisMSConf;
 import com.zzstack.paas.underlying.utils.config.RedisNodes;
 import com.zzstack.paas.underlying.utils.consts.CONSTS;
 
@@ -52,6 +52,10 @@ public class RedissonConfParser {
     
     public static RedissonClientHolder fromRedissonConf(CacheRedisClusterConf redissonConf) {
         return parseRedisCluster(redissonConf);
+    }
+    
+    public static RedissonClientHolder fromRedissionConf(CacheRedisMSConf redissionConf) {
+        return parseRedisMS(redissionConf);
     }
     
     private static WeightedRRLoadBalancer marshell(CacheRedisHaConf redissonConf) {
@@ -87,6 +91,8 @@ public class RedissonConfParser {
             result.add(nodeB);
         } else if (serverMode.equals(CONSTS.REDIS_SERVER_MODE_PROXY)) {
             // TODO
+        } else if (serverMode.equals(CONSTS.REDIS_SERVER_MODE_MS)) {
+            
         }
 
         return result;
@@ -111,8 +117,140 @@ public class RedissonConfParser {
 
         return cluster;
     }
+    
+    public static RedissonClientHolder parseRedisMS(CacheRedisMSConf redissionConf) {
+        RedissonClientHolder cluster = null;
+        
+        CacheRedisMSConf.RedisConfig redisConf = redissionConf.redisConfig;
+        RedisNodes master = redisConf.master;
+        RedisNodes slave = redisConf.slave;
+        
+        cluster = marshellRedissonClient(redisConf, master, slave);
+        
+        return cluster;
+    }
+    
+    private static RedissonClientHolder marshellRedissonClient(CacheRedisMSConf.RedisConfig redisConf, RedisNodes master, RedisNodes slave) {
+        if ((master != null && master.nodeAddresses != null)
+                || (slave != null && slave.nodeAddresses != null)) {
+            Config config = new Config();
+            switch (redisConf.codec) {
+            case "ByteArrayCodec":
+                config.setCodec(new ByteArrayCodec());
+                break;
+            case "FstCodec":
+                config.setCodec(new FstCodec());
+                break;
+            case "JsonJacksonCodec":
+                config.setCodec(new JsonJacksonCodec());
+                break;
+            case "Kryo5Codec":
+                config.setCodec(new Kryo5Codec());
+                break;
+            case "KryoCodec":
+                config.setCodec(new KryoCodec());
+                break;
+            case "LZ4Codec":
+                config.setCodec(new LZ4Codec());
+                break;
+            case "SerializationCodec":
+                config.setCodec(new SerializationCodec());
+                break;
+            case "SnappyCodec":
+                config.setCodec(new SnappyCodec());
+                break;
+            case "SnappyCodecV2":
+                config.setCodec(new SnappyCodecV2());
+                break;
+            case "StringCodec":
+                config.setCodec(new StringCodec());
+                break;
+            default:
+                break;
+            }
+            
+            MasterSlaveServersConfig masterSlaveServersConfig = config.useMasterSlaveServers();
+            if (master != null && master.nodeAddresses != null) {
+                masterSlaveServersConfig.setMasterAddress(master.nodeAddresses[0]);
+            }
+            
+            if (slave != null && slave.nodeAddresses != null) {
+                for (String slaveAddr : slave.nodeAddresses) {
+                    masterSlaveServersConfig.addSlaveAddress(slaveAddr);
+                }
+            }
+            
+            masterSlaveServersConfig.setRetryInterval(redisConf.scanInterval);
+            
+            switch (redisConf.loadBalancer) {
+            case "RoundRobinLoadBalancer":
+            case "WeightedRoundRobinBalancer":
+                masterSlaveServersConfig.setLoadBalancer(new RoundRobinLoadBalancer());
+                break;
+            case "RandomLoadBalancer":
+                masterSlaveServersConfig.setLoadBalancer(new RandomLoadBalancer());
+                break;
+            default:
+                break;
+            }
+            
+            // BaseConfig
+            masterSlaveServersConfig.setIdleConnectionTimeout(redisConf.idleConnectionTimeout);
+            masterSlaveServersConfig.setConnectTimeout(redisConf.connectTimeout);
+            masterSlaveServersConfig.setTimeout(redisConf.timeout);
+            masterSlaveServersConfig.setRetryAttempts(redisConf.retryAttempts);
+            masterSlaveServersConfig.setRetryInterval(redisConf.retryInterval);
+            masterSlaveServersConfig.setPassword(redisConf.password);
+            masterSlaveServersConfig.setSubscriptionsPerConnection(redisConf.subscriptionsPerConnection);
+            masterSlaveServersConfig.setClientName(redisConf.clientName);
+            
+            // BaseMasterSlaveServersConfig
+            masterSlaveServersConfig.setSlaveConnectionMinimumIdleSize(redisConf.slaveConnectionMinimumIdleSize);
+            masterSlaveServersConfig.setSlaveConnectionPoolSize(redisConf.slaveConnectionPoolSize);
+            
+            masterSlaveServersConfig.setFailedSlaveReconnectionInterval(redisConf.failedSlaveReconnectionInterval);
+            masterSlaveServersConfig.setFailedSlaveCheckInterval(redisConf.failedSlaveCheckInterval);
+            
+            masterSlaveServersConfig.setMasterConnectionMinimumIdleSize(redisConf.masterConnectionMinimumIdleSize);
+            masterSlaveServersConfig.setMasterConnectionPoolSize(redisConf.masterConnectionPoolSize);
+            
+            switch (redisConf.readMode) {
+            case "SLAVE":
+                masterSlaveServersConfig.setReadMode(ReadMode.SLAVE);
+                break;
+            case "MASTER":
+                masterSlaveServersConfig.setReadMode(ReadMode.MASTER);
+                break;
+            case "MASTER_SLAVE":
+                masterSlaveServersConfig.setReadMode(ReadMode.MASTER_SLAVE);
+                break;
+            default:
+                break;
+            }
+            
+            switch (redisConf.subscriptionMode) {
+            case "SLAVE":
+                masterSlaveServersConfig.setSubscriptionMode(SubscriptionMode.SLAVE);
+                break;
+            case "MASTER":
+                masterSlaveServersConfig.setSubscriptionMode(SubscriptionMode.MASTER);
+                break;
+            default:
+                break;
+            }
+            masterSlaveServersConfig.setSubscriptionConnectionMinimumIdleSize(redisConf.subscriptionConnectionMinimumIdleSize);
+            masterSlaveServersConfig.setSubscriptionConnectionPoolSize(redisConf.subscriptionConnectionPoolSize);
+            
+            RedissonClient redissonClient = Redisson.create(config);
+            RedissonClientHolder redisClientHolder = new RedissonClientHolder(redissonClient, master.id, 100);
 
-    private static RedissonClientHolder marshellRedissonClient(RedisHaConfig redisConf, RedisNodes server) {
+            return redisClientHolder;
+        }
+
+        return null;
+    }
+
+    private static RedissonClientHolder marshellRedissonClient(CacheRedisHaConf.RedisHaConfig redisConf, RedisNodes server) {
         if (server.nodeAddresses != null) {
             Config config = new Config();
             switch (redisConf.codec) {
@@ -224,7 +362,7 @@ public class RedissonConfParser {
         return null;
     }
     
-    private static RedissonClientHolder marshellRedissonClient(RedisConfig redisConf, RedisNodes server) {
+    private static RedissonClientHolder marshellRedissonClient(CacheRedisClusterConf.RedisConfig redisConf, RedisNodes server) {
         if (server.nodeAddresses != null) {
             Config config = new Config();
             switch (redisConf.codec) {
