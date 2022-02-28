@@ -37,7 +37,9 @@ func (pool *DbPool) Connect() bool {
 	}
 
 	err = db.Ping()
-	if err != nil {
+	if err == nil {
+		log.Printf("database: %v connect OK", pool.Addr)
+	} else {
 		log.Fatalf("database connect fail, %v", err)
 		panic(err) // proper error handling instead of panic in your app
 	}
