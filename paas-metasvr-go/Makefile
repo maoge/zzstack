@@ -23,6 +23,7 @@ get:
 
 build:
 	@echo "> building binary..."
+	@mkdir -p $(GOBIN)
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go build -o $(GOBIN)/$(PROJECTNAME) $(GOFILES)
 
 install:
