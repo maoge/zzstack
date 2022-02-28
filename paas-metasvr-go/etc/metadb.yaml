@@ -1,0 +1,22 @@
+dbYaml:
+    decrypt: false
+    dbType: "mysql"
+    
+    dbSources:
+      - addr: "172.20.0.171:57001"
+        username: "paas_metadb"
+        password: "paas_metadb"
+        dbname: "metadb"
+
+      - addr: "172.20.0.172:57001"
+        username: "paas_metadb"
+        password: "paas_metadb"
+        dbname: "metadb"
+
+    connMaxLifetime: 1800
+    connMaxIdletime: 900
+    connTimeout: 3
+    readTimeout: 5
+
+    maxOpenConns: 40
+    maxIdleConns: 0
