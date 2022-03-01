@@ -76,7 +76,7 @@ func (ldbDbPool *LdbDbPool) Release() {
 }
 
 // select db over round-bobin balance pattern
-func (ldbDbPool *LdbDbPool) getDbPool() *DbPool {
+func (ldbDbPool *LdbDbPool) GetDbPool() *DbPool {
 	ldbDbPool.mut.Lock()
 	defer ldbDbPool.mut.Unlock()
 

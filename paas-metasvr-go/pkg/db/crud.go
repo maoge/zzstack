@@ -11,23 +11,24 @@ type CRUD struct {
 }
 
 // 查询单行记录
-func (crud *CRUD) QueryRow(pool *DbPool, sql string, args ...interface{}) (map[string]interface{}, error) {
+func (crud *CRUD) QueryRow(pool *DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD QueryRow pool nil ......"}
 	}
 
 	db := pool.DB
-	stmt, err := db.Prepare(sql)
+	stmt, err := db.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("CRUD QueryRow Prepare error: %v", err)
 		return nil, err
 	}
 
-	rows, err := stmt.Query(args)
+	rows, err := stmt.Query(args...)
 	defer rows.Close()
 	if err != nil {
-		log.Fatalf("CRUD QueryRow Query error: %v", err)
+		// log.Fatalf("CRUD QueryRow Query error: %v", err)
+		log.Println(err.Error())
 		return nil, err
 	}
 
@@ -47,9 +48,9 @@ func (crud *CRUD) QueryRow(pool *DbPool, sql string, args ...interface{}) (map[s
 	if rows.Next() {
 		err = rows.Scan(cache...)
 		if err == nil {
-			result := make(map[string]interface{})
-			for i, data := range cache {
-				result[columns[i]] = *data.(*interface{}) //取实际类型
+			result = make(map[string]interface{})
+			for i, colVal := range cache {
+				result[columns[i]] = *colVal.(*interface{}) //取实际类型
 			}
 		} else {
 			log.Fatalf("CRUD QueryRow rows Scan error: %v", err)
@@ -60,13 +61,13 @@ func (crud *CRUD) QueryRow(pool *DbPool, sql string, args ...interface{}) (map[s
 }
 
 // 查询返回记录列表
-func (crud *CRUD) QueryList(pool *DbPool, sql string, args ...interface{}) ([]map[string]interface{}, error) {
+func (crud *CRUD) QueryList(pool *DbPool, sql *string, args ...interface{}) ([]map[string]interface{}, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD QueryList pool nil ......"}
 	}
 
 	db := pool.DB
-	stmt, err := db.Prepare(sql)
+	stmt, err := db.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		return nil, err
@@ -108,13 +109,13 @@ func (crud *CRUD) QueryList(pool *DbPool, sql string, args ...interface{}) ([]ma
 }
 
 // count()
-func (crud *CRUD) QueryCount(pool *DbPool, sql string, args ...interface{}) (int, error) {
+func (crud *CRUD) QueryCount(pool *DbPool, sql *string, args ...interface{}) (int, error) {
 	if pool == nil {
 		return 0, &err.SqlErr{ErrInfo: "CRUD QueryCount pool nil ......"}
 	}
 
 	db := pool.DB
-	stmt, err := db.Prepare(sql)
+	stmt, err := db.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("QueryCount Prepare error: %v", err)
@@ -133,13 +134,13 @@ func (crud *CRUD) QueryCount(pool *DbPool, sql string, args ...interface{}) (int
 }
 
 // 更新
-func (crud *CRUD) Update(pool *DbPool, sql string, args ...interface{}) (sql.Result, error) {
+func (crud *CRUD) Update(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD Update pool nil ......"}
 	}
 
 	db := pool.DB
-	stmt, err := db.Prepare(sql)
+	stmt, err := db.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("CRUD Update Prepare error: %v", err)
@@ -150,7 +151,7 @@ func (crud *CRUD) Update(pool *DbPool, sql string, args ...interface{}) (sql.Res
 }
 
 // tx更新
-func (crud *CRUD) TxUpdate(pool *DbPool, sql string, args ...interface{}) (sql.Result, error) {
+func (crud *CRUD) TxUpdate(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD TxUpdate pool nil ......"}
 	}
@@ -161,7 +162,7 @@ func (crud *CRUD) TxUpdate(pool *DbPool, sql string, args ...interface{}) (sql.R
 		return nil, err
 	}
 
-	stmt, err := tx.Prepare(sql)
+	stmt, err := tx.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("CRUD TxUpdate Prepare error: %v", err)
@@ -184,13 +185,13 @@ func (crud *CRUD) TxUpdate(pool *DbPool, sql string, args ...interface{}) (sql.R
 }
 
 // 单条插入
-func (crud *CRUD) Insert(pool *DbPool, sql string, args ...interface{}) (sql.Result, error) {
+func (crud *CRUD) Insert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD Insert pool nil ......"}
 	}
 
 	db := pool.DB
-	stmt, err := db.Prepare(sql)
+	stmt, err := db.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("CRUD Insert Prepare error: %v", err)
@@ -201,7 +202,7 @@ func (crud *CRUD) Insert(pool *DbPool, sql string, args ...interface{}) (sql.Res
 }
 
 // tx单条插入
-func (crud *CRUD) TxInsert(pool *DbPool, sql string, args ...interface{}) (sql.Result, error) {
+func (crud *CRUD) TxInsert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD TxInsert pool nil ......"}
 	}
@@ -213,7 +214,7 @@ func (crud *CRUD) TxInsert(pool *DbPool, sql string, args ...interface{}) (sql.R
 		return nil, err
 	}
 
-	stmt, err := tx.Prepare(sql)
+	stmt, err := tx.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("CRUD TxInsert Prepare error: %v", err)
@@ -236,13 +237,13 @@ func (crud *CRUD) TxInsert(pool *DbPool, sql string, args ...interface{}) (sql.R
 }
 
 // batch插入
-func (crud *CRUD) BatchInsert(pool *DbPool, sql string, args []interface{}) (sql.Result, error) {
+func (crud *CRUD) BatchInsert(pool *DbPool, sql *string, args []interface{}) (sql.Result, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD BatchInsert pool nil ......"}
 	}
 
 	db := pool.DB
-	stmt, err := db.Prepare(sql)
+	stmt, err := db.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("CRUD BatchInsert Prepare error: %v", err)
@@ -253,7 +254,7 @@ func (crud *CRUD) BatchInsert(pool *DbPool, sql string, args []interface{}) (sql
 }
 
 // tx batch插入
-func (crud *CRUD) TxBatchInsert(pool *DbPool, sql string, args []interface{}) (sql.Result, error) {
+func (crud *CRUD) TxBatchInsert(pool *DbPool, sql *string, args []interface{}) (sql.Result, error) {
 	if pool == nil {
 		return nil, &err.SqlErr{ErrInfo: "CRUD TxBatchInsert pool nil ......"}
 	}
@@ -265,7 +266,7 @@ func (crud *CRUD) TxBatchInsert(pool *DbPool, sql string, args []interface{}) (s
 		return nil, err
 	}
 
-	stmt, err := tx.Prepare(sql)
+	stmt, err := tx.Prepare(*sql)
 	defer stmt.Close()
 	if err != nil {
 		log.Fatalf("CRUD TxBatchInsert tx Prepare error: %v", err)

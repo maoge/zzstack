@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"sync"
 
+	goredis "github.com/go-redis/redis/v7"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/db"
 	"github.com/maoge/paas-metasvr-go/pkg/redis"
@@ -16,8 +17,8 @@ type MetaSvrGlobalRes struct {
 	Config config.MetaSvrConfig
 
 	DbYaml    config.DbYaml
-	LdbDbPool db.LdbDbPool
-	RedisPool redis.RedisPool
+	ldbDbPool db.LdbDbPool
+	redisPool redis.RedisPool
 }
 
 func (global *MetaSvrGlobalRes) Init() {
@@ -27,6 +28,14 @@ func (global *MetaSvrGlobalRes) Init() {
 
 	global.initDBPool()
 	global.initRedisPool()
+}
+
+func (global *MetaSvrGlobalRes) GetDbPool() *db.DbPool {
+	return global.ldbDbPool.GetDbPool()
+}
+
+func (global *MetaSvrGlobalRes) GetRedisClusterClient() *goredis.ClusterClient {
+	return global.redisPool.GetClusterClient()
 }
 
 func (global *MetaSvrGlobalRes) initConf() {
@@ -41,14 +50,14 @@ func (global *MetaSvrGlobalRes) initDBPool() {
 	defer global.Mut.Unlock()
 
 	global.DbYaml.Load(global.Config.MetadbYamlName)
-	global.LdbDbPool.Init(&global.DbYaml)
+	global.ldbDbPool.Init(&global.DbYaml)
 }
 
 func (global *MetaSvrGlobalRes) initRedisPool() {
 	global.Mut.Lock()
 	defer global.Mut.Unlock()
 
-	global.RedisPool = redis.RedisPool{
+	global.redisPool = redis.RedisPool{
 		Addr:               global.Config.RedisCluster,
 		Password:           global.Config.RedisAuth,
 		MaxActive:          global.Config.RedisPoolMaxSize,
@@ -59,5 +68,5 @@ func (global *MetaSvrGlobalRes) initRedisPool() {
 		ReadTimeout:        global.Config.RedisReadTimeout,
 		WriteTimeout:       global.Config.RedisWriteTimeout,
 	}
-	global.RedisPool.Init()
+	global.redisPool.Init()
 }
