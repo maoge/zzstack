@@ -10,6 +10,14 @@ import (
 type CRUD struct {
 }
 
+func (crud *CRUD) SelectObject(pool *DbPool, dest interface{}, query *string, args ...interface{}) error {
+	return pool.DB.Get(dest, pool.DB.Rebind(*query), args...)
+}
+
+func (crud *CRUD) SelectSlice(pool *DbPool, dest interface{}, query *string, args ...interface{}) error {
+	return pool.DB.Select(dest, pool.DB.Rebind(*query), args...)
+}
+
 // 查询单行记录
 func (crud *CRUD) QueryRow(pool *DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
 	if pool == nil {

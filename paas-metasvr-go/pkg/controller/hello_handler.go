@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
@@ -45,13 +46,15 @@ func (hello *HelloController) RedisGet() {
 
 func (hello *HelloController) DbSelectSingleRow() {
 	hello.group.GET("/dbSelectSingleRow", func(c *gin.Context) {
-		resultMap := meta.DbSelectSingleRow("dev")
+		acc := meta.Accout{}
+		err := meta.DbSelectSingleRow(&acc, "dev")
 		var str string
-		if resultMap == nil {
-			str = ""
+		if err == nil {
+			str = utils.Struct2Json(&acc)
 		} else {
-			str = utils.InterfaceMap2Json(resultMap)
+			log.Println(err.Error())
 		}
+		log.Println(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }

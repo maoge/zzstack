@@ -12,6 +12,24 @@ var (
 	SQL_SEL_ACC_BYNAME = "select ACC_ID, ACC_NAME, PHONE_NUM, MAIL, PASSWD, CREATE_TIME from t_account where ACC_NAME = ?"
 )
 
+// type Accout struct {
+// 	ACC_ID      sql.NullString `db:"ACC_ID"`
+// 	ACC_NAME    sql.NullString `db:"ACC_NAME"`
+// 	PHONE_NUM   sql.NullString `db:"PHONE_NUM"`
+// 	MAIL        sql.NullString `db:"MAIL"`
+// 	PASSWD      sql.NullString `db:"PASSWD"`
+// 	CREATE_TIME sql.NullInt64  `db:"CREATE_TIME"`
+// }
+
+type Accout struct {
+	ACC_ID      string `db:"ACC_ID"`
+	ACC_NAME    string `db:"ACC_NAME"`
+	PHONE_NUM   string `db:"PHONE_NUM"`
+	MAIL        string `db:"MAIL"`
+	PASSWD      string `db:"PASSWD"`
+	CREATE_TIME int64  `db:"CREATE_TIME"`
+}
+
 func SetSession(key string, ses string) {
 	client := global.GLOBAL_RES.GetRedisClusterClient()
 
@@ -44,15 +62,14 @@ func GetSession(key string) {
 	}
 }
 
-func DbSelectSingleRow(accName string) map[string]interface{} {
+func DbSelectSingleRow(acc *Accout, accName string) error {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 	crud := db.CRUD{}
-	resultMap, err := crud.QueryRow(dbPool, &SQL_SEL_ACC_BYNAME, accName)
-	if err == nil {
-		return resultMap
+
+	err := crud.SelectObject(dbPool, acc, &SQL_SEL_ACC_BYNAME, accName)
+	if err != nil {
+		return err
 	} else {
-		log.Fatal(err.Error())
 		return nil
 	}
-
 }

@@ -1,16 +1,17 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 )
 
 type DbPool struct {
-	DB              *sql.DB       `json:"db,omitempty"`
+	// DB              *sql.DB
+	DB              *sqlx.DB
 	Addr            string        `json:"addr,omitempty"`
 	Username        string        `json:"username,omitempty"`
 	Password        string        `json:"password,omitempty"`
@@ -30,19 +31,20 @@ func (pool *DbPool) Connect() bool {
 	connStr := fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%ds&readTimeout=%ds",
 		pool.Username, pool.Password, pool.Addr, pool.DbName, pool.ConnTimeout, pool.ReadTimeout)
 
-	db, err := sql.Open(pool.DbType, connStr)
+	db, err := sqlx.Connect(pool.DbType, connStr)
+	// db, err := sql.Open(pool.DbType, connStr)
 	if err != nil {
 		log.Fatal(err)
-		panic(err)
+		// panic(err)
 	}
 
-	err = db.Ping()
-	if err == nil {
-		log.Printf("database: %v connect OK", pool.Addr)
-	} else {
-		log.Fatalf("database connect fail, %v", err)
-		panic(err) // proper error handling instead of panic in your app
-	}
+	// err = db.Ping()
+	// if err == nil {
+	// 	log.Printf("database: %v connect OK", pool.Addr)
+	// } else {
+	// 	log.Fatalf("database connect fail, %v", err)
+	// 	panic(err) // proper error handling instead of panic in your app
+	// }
 
 	db.SetMaxOpenConns(pool.MaxOpenConns)
 	db.SetMaxIdleConns(pool.MaxIdleConns)
