@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"reflect"
 )
 
 // for select single row, return outObject automatic reflect to dest struct
@@ -50,6 +51,14 @@ func SelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]int
 		return nil, err
 	}
 
+	for k, encoded := range m {
+		t := reflect.TypeOf(encoded)
+		if t.Kind() == reflect.Slice {
+			byteArr := encoded.([]uint8)
+			m[k] = string(byteArr)
+		}
+	}
+
 	return m, nil
 }
 
@@ -67,6 +76,14 @@ func TxSelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]i
 		return nil, err
 	}
 
+	for k, encoded := range m {
+		t := reflect.TypeOf(encoded)
+		if t.Kind() == reflect.Slice {
+			byteArr := encoded.([]uint8)
+			m[k] = string(byteArr)
+		}
+	}
+
 	return m, nil
 }
 
@@ -81,13 +98,23 @@ func SelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interfa
 	mapSlice := make([]interface{}, 0)
 	defer rows.Close()
 
+	m := make(map[string]interface{}, 0)
+
 	for rows.Next() {
-		s, err := rows.SliceScan()
+		err := rows.MapScan(m)
 		if err != nil {
 			return nil, err
 		}
 
-		mapSlice = append(mapSlice, s)
+		for k, encoded := range m {
+			t := reflect.TypeOf(encoded)
+			if t.Kind() == reflect.Slice {
+				byteArr := encoded.([]uint8)
+				m[k] = string(byteArr)
+			}
+		}
+
+		mapSlice = append(mapSlice, m)
 	}
 
 	return mapSlice, nil
@@ -108,13 +135,23 @@ func TxSelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]inter
 	mapSlice := make([]interface{}, 0)
 	defer rows.Close()
 
+	m := make(map[string]interface{}, 0)
+
 	for rows.Next() {
-		s, err := rows.SliceScan()
+		err := rows.MapScan(m)
 		if err != nil {
 			return nil, err
 		}
 
-		mapSlice = append(mapSlice, s)
+		for k, encoded := range m {
+			t := reflect.TypeOf(encoded)
+			if t.Kind() == reflect.Slice {
+				byteArr := encoded.([]uint8)
+				m[k] = string(byteArr)
+			}
+		}
+
+		mapSlice = append(mapSlice, m)
 	}
 
 	return mapSlice, nil
