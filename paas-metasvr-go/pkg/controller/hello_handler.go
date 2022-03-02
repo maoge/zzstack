@@ -118,8 +118,22 @@ func (hello *HelloController) DbSelectSingleRowAsMap() {
 	})
 }
 
-func (hello *HelloController) DbSelectSingleRowAsMapSlice() {
-	hello.group.GET("/dbSelectSingleRowAsMapSlice", func(c *gin.Context) {
+func (hello *HelloController) DbSelectSingleRowAsJson() {
+	hello.group.GET("/dbSelectSingleRowAsJson", func(c *gin.Context) {
+		bytes, err := meta.DbSelectSingleRowAsJson("dev")
+		var str string
+		if err == nil {
+			str = string(bytes)
+		} else {
+			log.Println(err.Error())
+		}
+		log.Println(str)
+		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
+	})
+}
+
+func (hello *HelloController) DbSelectMultiRowAsMapSlice() {
+	hello.group.GET("/dbSelectMultiRowAsMapSlice", func(c *gin.Context) {
 		resMapSlice, err := meta.DbSelectMultiRowAsSlice()
 		var str string
 		if err == nil {
@@ -132,12 +146,26 @@ func (hello *HelloController) DbSelectSingleRowAsMapSlice() {
 	})
 }
 
-func (hello *HelloController) TxDbSelectSingleRowAsMapSlice() {
-	hello.group.GET("/dbTxSelectSingleRowAsMapSlice", func(c *gin.Context) {
+func (hello *HelloController) TxDbSelectMultiRowAsMapSlice() {
+	hello.group.GET("/dbTxSelectMultiRowAsMapSlice", func(c *gin.Context) {
 		resMapSlice, err := meta.DbTxSelectMultiRowAsSlice()
 		var str string
 		if err == nil {
 			str = utils.Struct2Json(&resMapSlice)
+		} else {
+			log.Println(err.Error())
+		}
+		log.Println(str)
+		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
+	})
+}
+
+func (hello *HelloController) DbSelectMultiRowAsJson() {
+	hello.group.GET("/dbSelectMultiRowAsJson", func(c *gin.Context) {
+		bytes, err := meta.DbSelectMultiRowAsJson()
+		var str string
+		if err == nil {
+			str = string(bytes)
 		} else {
 			log.Println(err.Error())
 		}

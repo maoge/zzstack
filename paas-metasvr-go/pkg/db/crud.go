@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"reflect"
 )
 
@@ -87,6 +88,31 @@ func TxSelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]i
 	return m, nil
 }
 
+func SelectAsJson(pool *DbPool, sql *string, args ...interface{}) ([]byte, error) {
+	row := pool.DB.QueryRowx(pool.DB.Rebind(*sql), args...)
+
+	m := map[string]interface{}{}
+	err := row.MapScan(m)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, encoded := range m {
+		t := reflect.TypeOf(encoded)
+		if t.Kind() == reflect.Slice {
+			byteArr := encoded.([]uint8)
+			m[k] = string(byteArr)
+		}
+	}
+
+	jsonBytes, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonBytes, nil
+}
+
 // for select multi row, return result as []map[string]interface{}
 //     sliceMap, err := SelectAsMapSlice(db, sql, "SELECT * FROM person WHERE first_name=?", "Jason")
 func SelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
@@ -98,9 +124,8 @@ func SelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interfa
 	mapSlice := make([]interface{}, 0)
 	defer rows.Close()
 
-	m := make(map[string]interface{}, 0)
-
 	for rows.Next() {
+		m := make(map[string]interface{}, 0)
 		err := rows.MapScan(m)
 		if err != nil {
 			return nil, err
@@ -120,6 +145,41 @@ func SelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interfa
 	return mapSlice, nil
 }
 
+func SelectAsJsonArray(pool *DbPool, sql *string, args ...interface{}) ([]byte, error) {
+	rows, err := pool.DB.Queryx(pool.DB.Rebind(*sql), args...)
+	if err != nil {
+		return nil, err
+	}
+
+	mapSlice := make([]interface{}, 0)
+	defer rows.Close()
+
+	for rows.Next() {
+		m := make(map[string]interface{}, 0)
+		err := rows.MapScan(m)
+		if err != nil {
+			return nil, err
+		}
+
+		for k, encoded := range m {
+			t := reflect.TypeOf(encoded)
+			if t.Kind() == reflect.Slice {
+				byteArr := encoded.([]uint8)
+				m[k] = string(byteArr)
+			}
+		}
+
+		mapSlice = append(mapSlice, m)
+	}
+
+	jsonBytes, err := json.Marshal(mapSlice)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonBytes, nil
+}
+
 func TxSelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
@@ -135,9 +195,8 @@ func TxSelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]inter
 	mapSlice := make([]interface{}, 0)
 	defer rows.Close()
 
-	m := make(map[string]interface{}, 0)
-
 	for rows.Next() {
+		m := make(map[string]interface{}, 0)
 		err := rows.MapScan(m)
 		if err != nil {
 			return nil, err

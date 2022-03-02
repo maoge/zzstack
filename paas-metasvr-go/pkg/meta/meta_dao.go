@@ -116,6 +116,12 @@ func DbSelectSingleRowAsMap(accName string) (map[string]interface{}, error) {
 	return crud.SelectAsMap(dbPool, &SQL_SEL_ACC_BYNAME, accName)
 }
 
+func DbSelectSingleRowAsJson(accName string) ([]byte, error) {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+
+	return crud.SelectAsJson(dbPool, &SQL_SEL_ACC_BYNAME, accName)
+}
+
 func DbSelectMultiRowAsSlice() ([]interface{}, error) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
@@ -126,6 +132,12 @@ func DbTxSelectMultiRowAsSlice() ([]interface{}, error) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	return crud.TxSelectAsMapSlice(dbPool, &SQL_SEL_ALL_ACC)
+}
+
+func DbSelectMultiRowAsJson() ([]byte, error) {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+
+	return crud.SelectAsJsonArray(dbPool, &SQL_SEL_ALL_ACC)
 }
 
 func InsertWithParamList(args ...interface{}) error {
