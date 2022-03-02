@@ -2,296 +2,152 @@ package db
 
 import (
 	"database/sql"
-	"log"
-
-	"github.com/maoge/paas-metasvr-go/pkg/err"
 )
 
-type CRUD struct {
+// for select single row, return outObject automatic reflect to dest struct
+//     obj := Person{}
+//     err := crud.SelectAsObject(db, &obj, "SELECT * FROM person WHERE first_name=?", "Jason")
+func SelectAsObject(pool *DbPool, outObject interface{}, sql *string, args ...interface{}) error {
+	return pool.DB.Get(outObject, pool.DB.Rebind(*sql), args...)
 }
 
-func (crud *CRUD) SelectObject(pool *DbPool, dest interface{}, query *string, args ...interface{}) error {
-	return pool.DB.Get(dest, pool.DB.Rebind(*query), args...)
-}
-
-func (crud *CRUD) SelectSlice(pool *DbPool, dest interface{}, query *string, args ...interface{}) error {
-	return pool.DB.Select(dest, pool.DB.Rebind(*query), args...)
-}
-
-// 查询单行记录
-func (crud *CRUD) QueryRow(pool *DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD QueryRow pool nil ......"}
-	}
-
-	db := pool.DB
-	stmt, err := db.Prepare(*sql)
-	defer stmt.Close()
+func TxSelectAsObject(pool *DbPool, outObject interface{}, sql *string, args ...interface{}) error {
+	tx, err := pool.DB.Beginx()
 	if err != nil {
-		log.Fatalf("CRUD QueryRow Prepare error: %v", err)
+		return err
+	}
+	defer tx.Commit()
+
+	return tx.Get(outObject, pool.DB.Rebind(*sql), args...)
+}
+
+// for select multi rows, return outSlice automatic reflect to dest struct
+//     slice := []Person{}
+//     err := SelectAsSlice(db, &slice, "SELECT * FROM person ORDER BY first_name ASC")
+func SelectAsSlice(pool *DbPool, outSlice interface{}, sql *string, args ...interface{}) error {
+	return pool.DB.Select(outSlice, pool.DB.Rebind(*sql), args...)
+}
+
+// select with transaction
+func TxSelectAsSlice(pool *DbPool, outSlice interface{}, sql *string, args ...interface{}) error {
+	tx, err := pool.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit()
+
+	return tx.Select(outSlice, *sql, args...)
+}
+
+// for select single row, return result as map[string]interface{}
+//     resMap, err := SelectAsMap(db, &slice, "SELECT * FROM person WHERE first_name=?", "Jason")
+func SelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
+	row := pool.DB.QueryRowx(pool.DB.Rebind(*sql), args...)
+
+	m := map[string]interface{}{}
+	err := row.MapScan(m)
+	if err != nil {
 		return nil, err
 	}
 
-	rows, err := stmt.Query(args...)
+	return m, nil
+}
+
+func TxSelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
+	tx, err := pool.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit()
+
+	m := map[string]interface{}{}
+	row := tx.QueryRowx(pool.DB.Rebind(*sql), args...)
+	err = row.MapScan(m)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+// for select multi row, return result as []map[string]interface{}
+//     sliceMap, err := SelectAsMapSlice(db, sql, "SELECT * FROM person WHERE first_name=?", "Jason")
+func SelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
+	rows, err := pool.DB.Queryx(pool.DB.Rebind(*sql), args...)
+	if err != nil {
+		return nil, err
+	}
+
+	mapSlice := make([]interface{}, 0)
 	defer rows.Close()
-	if err != nil {
-		// log.Fatalf("CRUD QueryRow Query error: %v", err)
-		log.Println(err.Error())
-		return nil, err
-	}
 
-	if rows == nil {
-		log.Fatalf("CRUD QueryRow Query rows nil ......")
-		return nil, nil
-	}
-
-	columns, _ := rows.Columns()
-	columnLength := len(columns)
-	cache := make([]interface{}, columnLength) //临时存储每行数据
-	for index := range cache {                 //为每一列初始化一个指针
-		var a interface{}
-		cache[index] = &a
-	}
-	var result map[string]interface{} = nil //返回的切片
-	if rows.Next() {
-		err = rows.Scan(cache...)
-		if err == nil {
-			result = make(map[string]interface{})
-			for i, colVal := range cache {
-				result[columns[i]] = *colVal.(*interface{}) //取实际类型
-			}
-		} else {
-			log.Fatalf("CRUD QueryRow rows Scan error: %v", err)
-			return nil, err
-		}
-	}
-	return result, nil
-}
-
-// 查询返回记录列表
-func (crud *CRUD) QueryList(pool *DbPool, sql *string, args ...interface{}) ([]map[string]interface{}, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD QueryList pool nil ......"}
-	}
-
-	db := pool.DB
-	stmt, err := db.Prepare(*sql)
-	defer stmt.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := stmt.Query(args)
-	defer rows.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	if rows == nil {
-		log.Fatalf("CRUD QueryList Query rows nil ......")
-		return nil, nil
-	}
-
-	columns, _ := rows.Columns()
-	columnLength := len(columns)
-	cache := make([]interface{}, columnLength) //临时存储每行数据
-	for index := range cache {                 //为每一列初始化一个指针
-		var a interface{}
-		cache[index] = &a
-	}
-	var list []map[string]interface{} //返回的切片
 	for rows.Next() {
-		err = rows.Scan(cache...)
-		if err == nil {
-			item := make(map[string]interface{})
-			for i, data := range cache {
-				item[columns[i]] = *data.(*interface{}) //取实际类型
-			}
-			list = append(list, item)
-		} else {
-			log.Fatalf("CRUD QueryList rows.Scan error: %v", err)
-			return nil, err
-		}
-	}
-	return list, nil
-}
-
-// count()
-func (crud *CRUD) QueryCount(pool *DbPool, sql *string, args ...interface{}) (int, error) {
-	if pool == nil {
-		return 0, &err.SqlErr{ErrInfo: "CRUD QueryCount pool nil ......"}
-	}
-
-	db := pool.DB
-	stmt, err := db.Prepare(*sql)
-	defer stmt.Close()
-	if err != nil {
-		log.Fatalf("QueryCount Prepare error: %v", err)
-		return 0, err
-	}
-
-	row := stmt.QueryRow(args)
-
-	var cnt int
-	err = row.Scan(&cnt)
-	if err != nil {
-		return 0, err
-	}
-
-	return cnt, nil
-}
-
-// 更新
-func (crud *CRUD) Update(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD Update pool nil ......"}
-	}
-
-	db := pool.DB
-	stmt, err := db.Prepare(*sql)
-	defer stmt.Close()
-	if err != nil {
-		log.Fatalf("CRUD Update Prepare error: %v", err)
-		return nil, err
-	}
-
-	return stmt.Exec()
-}
-
-// tx更新
-func (crud *CRUD) TxUpdate(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD TxUpdate pool nil ......"}
-	}
-
-	db := pool.DB
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, err
-	}
-
-	stmt, err := tx.Prepare(*sql)
-	defer stmt.Close()
-	if err != nil {
-		log.Fatalf("CRUD TxUpdate Prepare error: %v", err)
-		return nil, err
-	}
-
-	result, err := stmt.Exec(args...)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	} else {
-		err = tx.Commit()
+		s, err := rows.SliceScan()
 		if err != nil {
-			log.Fatalf("CRUD TxUpdate Commit error: %v", err)
 			return nil, err
 		}
+
+		mapSlice = append(mapSlice, s)
 	}
 
-	return result, err
+	return mapSlice, nil
 }
 
-// 单条插入
-func (crud *CRUD) Insert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD Insert pool nil ......"}
-	}
-
-	db := pool.DB
-	stmt, err := db.Prepare(*sql)
-	defer stmt.Close()
+func TxSelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
+	tx, err := pool.DB.Beginx()
 	if err != nil {
-		log.Fatalf("CRUD Insert Prepare error: %v", err)
+		return nil, err
+	}
+	defer tx.Commit()
+
+	rows, err := tx.Queryx(pool.DB.Rebind(*sql), args...)
+	if err != nil {
 		return nil, err
 	}
 
-	return stmt.Exec(args)
-}
+	mapSlice := make([]interface{}, 0)
+	defer rows.Close()
 
-// tx单条插入
-func (crud *CRUD) TxInsert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD TxInsert pool nil ......"}
-	}
-
-	db := pool.DB
-	tx, err := db.Begin()
-	if err != nil {
-		log.Fatalf("CRUD TxInsert Begin error: %v", err)
-		return nil, err
-	}
-
-	stmt, err := tx.Prepare(*sql)
-	defer stmt.Close()
-	if err != nil {
-		log.Fatalf("CRUD TxInsert Prepare error: %v", err)
-		return nil, err
-	}
-
-	result, err := stmt.Exec(args...)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	} else {
-		err = tx.Commit()
+	for rows.Next() {
+		s, err := rows.SliceScan()
 		if err != nil {
-			log.Fatalf("CRUD TxInsert Commit error: %v", err)
 			return nil, err
 		}
+
+		mapSlice = append(mapSlice, s)
 	}
 
-	return result, err
+	return mapSlice, nil
 }
 
-// batch插入
-func (crud *CRUD) BatchInsert(pool *DbPool, sql *string, args []interface{}) (sql.Result, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD BatchInsert pool nil ......"}
-	}
-
-	db := pool.DB
-	stmt, err := db.Prepare(*sql)
-	defer stmt.Close()
-	if err != nil {
-		log.Fatalf("CRUD BatchInsert Prepare error: %v", err)
-		return nil, err
-	}
-
-	return stmt.Exec(args...)
+// for insert with param list bind with ?
+//     "INSERT INTO person (first_name, last_name, email) VALUES (?, ?, ?)"
+func Insert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+	return pool.DB.Exec(pool.DB.Rebind(*sql), args...)
 }
 
-// tx batch插入
-func (crud *CRUD) TxBatchInsert(pool *DbPool, sql *string, args []interface{}) (sql.Result, error) {
-	if pool == nil {
-		return nil, &err.SqlErr{ErrInfo: "CRUD TxBatchInsert pool nil ......"}
-	}
-
-	db := pool.DB
-	tx, err := db.Begin()
+func TxInsert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+	tx, err := pool.DB.Beginx()
 	if err != nil {
-		log.Fatalf("CRUD TxBatchInsert tx Begin error: %v", err)
 		return nil, err
 	}
+	defer tx.Commit()
 
-	stmt, err := tx.Prepare(*sql)
-	defer stmt.Close()
+	return tx.Exec(pool.DB.Rebind(*sql), args...)
+}
+
+// for insert with named param bind:
+//     "INSERT INTO person (first_name, last_name, email) VALUES (:first, :last, :email)"
+func NamedInsert(pool *DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+	return pool.DB.NamedExec(*sql, *args)
+}
+
+func TxNamedInsert(pool *DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+	tx, err := pool.DB.Beginx()
 	if err != nil {
-		log.Fatalf("CRUD TxBatchInsert tx Prepare error: %v", err)
 		return nil, err
 	}
+	defer tx.Commit()
 
-	result, err := stmt.Exec(args...)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	} else {
-		err = tx.Commit()
-		if err != nil {
-			log.Fatalf("CRUD TxBatchInsert tx Commit error: %v", err)
-			return nil, err
-		}
-	}
-
-	return result, err
+	return tx.NamedExec(*sql, *args)
 }
