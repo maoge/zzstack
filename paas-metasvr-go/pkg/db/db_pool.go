@@ -10,7 +10,6 @@ import (
 )
 
 type DbPool struct {
-	// DB              *sql.DB
 	DB              *sqlx.DB
 	Addr            string        `json:"addr,omitempty"`
 	Username        string        `json:"username,omitempty"`
@@ -32,19 +31,11 @@ func (pool *DbPool) Connect() bool {
 		pool.Username, pool.Password, pool.Addr, pool.DbName, pool.ConnTimeout, pool.ReadTimeout)
 
 	db, err := sqlx.Connect(pool.DbType, connStr)
-	// db, err := sql.Open(pool.DbType, connStr)
 	if err != nil {
-		log.Fatal(err)
-		// panic(err)
+		log.Fatalf("database connect fail, %v", err)
+	} else {
+		log.Printf("database: %v connect OK", pool.Addr)
 	}
-
-	// err = db.Ping()
-	// if err == nil {
-	// 	log.Printf("database: %v connect OK", pool.Addr)
-	// } else {
-	// 	log.Fatalf("database connect fail, %v", err)
-	// 	panic(err) // proper error handling instead of panic in your app
-	// }
 
 	db.SetMaxOpenConns(pool.MaxOpenConns)
 	db.SetMaxIdleConns(pool.MaxIdleConns)
