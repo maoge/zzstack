@@ -30,21 +30,23 @@ func (pool *DbPool) Connect() bool {
 	connStr := fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%ds&readTimeout=%ds",
 		pool.Username, pool.Password, pool.Addr, pool.DbName, pool.ConnTimeout, pool.ReadTimeout)
 
+	result := true
 	db, err := sqlx.Connect(pool.DbType, connStr)
-	if err != nil {
-		log.Fatalf("database connect fail, %v", err)
-	} else {
+	if err == nil {
 		log.Printf("database: %v connect OK", pool.Addr)
+
+		db.SetMaxOpenConns(pool.MaxOpenConns)
+		db.SetMaxIdleConns(pool.MaxIdleConns)
+		db.SetConnMaxLifetime(pool.ConnMaxLifetime)
+		db.SetConnMaxIdleTime(pool.ConnMaxIdleTime)
+
+		pool.DB = db
+	} else {
+		log.Fatalf("database connect fail, %v", err)
+		result = false
 	}
 
-	db.SetMaxOpenConns(pool.MaxOpenConns)
-	db.SetMaxIdleConns(pool.MaxIdleConns)
-	db.SetConnMaxLifetime(pool.ConnMaxLifetime)
-	db.SetConnMaxIdleTime(pool.ConnMaxIdleTime)
-
-	pool.DB = db
-
-	return true
+	return result
 }
 
 func (pool *DbPool) Release() {

@@ -53,7 +53,7 @@ func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
 		if dbPool.Connect() {
 			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, dbPool)
 		} else {
-			log.Fatalf("dbSource: %v connect fail ......", node)
+			log.Fatalf("dbSource: %v connect fail ......", node.Addr)
 			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, dbPool)
 		}
 	}
@@ -125,6 +125,9 @@ func (ldbDbPool *LdbDbPool) checkDbPool() {
 		err := dbPool.DB.Ping()
 		if err != nil {
 			log.Fatalf("DbPool %v disconnected ......", dbPool.Addr)
+
+			dbPool.DB.Close()
+			dbPool.DB = nil
 
 			// remove from valid array to invalid array when broken
 			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, *dbPool)
