@@ -13,11 +13,11 @@ import (
 // load balanced db pool
 
 type LdbDbPool struct {
-	mut          sync.Mutex
-	avlDBArr     []DbPool
-	inavlDBArr   []DbPool
-	recoverTimer *time.Timer
-	rrCounter    int64
+	mut           sync.Mutex
+	avlDBArr      []DbPool
+	inavlDBArr    []DbPool
+	maintainTimer *time.Timer
+	rrCounter     int64
 }
 
 func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
@@ -65,9 +65,9 @@ func (ldbDbPool *LdbDbPool) Release() {
 	ldbDbPool.mut.Lock()
 	defer ldbDbPool.mut.Unlock()
 
-	if ldbDbPool.recoverTimer != nil {
-		ldbDbPool.recoverTimer.Stop()
-		ldbDbPool.recoverTimer = nil
+	if ldbDbPool.maintainTimer != nil {
+		ldbDbPool.maintainTimer.Stop()
+		ldbDbPool.maintainTimer = nil
 	}
 
 	for _, dbPool := range ldbDbPool.avlDBArr {
@@ -99,13 +99,41 @@ func (ldbDbPool *LdbDbPool) getDbIndex(max int64) int64 {
 }
 
 func (ldbDbPool *LdbDbPool) startRecover() {
-	ldbDbPool.recoverTimer = time.NewTimer(consts.DB_RECOVER_INTERVAL)
+	ldbDbPool.maintainTimer = time.NewTimer(consts.DB_RECOVER_INTERVAL)
 
 	for {
 		select {
-		case <-ldbDbPool.recoverTimer.C:
+		case <-ldbDbPool.maintainTimer.C:
+			ldbDbPool.checkDbPool()
 			ldbDbPool.recoverDbPool()
-			ldbDbPool.recoverTimer.Reset(consts.DB_RECOVER_INTERVAL)
+			ldbDbPool.maintainTimer.Reset(consts.DB_RECOVER_INTERVAL)
+		}
+	}
+}
+
+func (ldbDbPool *LdbDbPool) checkDbPool() {
+	ldbDbPool.mut.Lock()
+	defer ldbDbPool.mut.Unlock()
+
+	var avlLen = len(ldbDbPool.avlDBArr)
+	if avlLen == 0 {
+		return
+	}
+
+	for i := avlLen - 1; i >= 0; i-- {
+		dbPool := &ldbDbPool.avlDBArr[i]
+		err := dbPool.DB.Ping()
+		if err != nil {
+			log.Fatalf("DbPool %v disconnected ......", dbPool.Addr)
+
+			// remove from valid array to invalid array when broken
+			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, *dbPool)
+
+			if i > 0 {
+				ldbDbPool.avlDBArr = ldbDbPool.inavlDBArr[:i]
+			} else {
+				ldbDbPool.avlDBArr = make([]DbPool, 0)
+			}
 		}
 	}
 }
@@ -124,7 +152,7 @@ func (ldbDbPool *LdbDbPool) recoverDbPool() {
 			ldbDbPool.mut.Lock()
 			defer ldbDbPool.mut.Unlock()
 
-			// remove from broken array to useable array when recovered
+			// remove from invalid array to valid array when recovered
 			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, *dbPool)
 
 			if i > 0 {
@@ -135,7 +163,7 @@ func (ldbDbPool *LdbDbPool) recoverDbPool() {
 
 			break
 		} else {
-			log.Fatalf("DbPool %v reconnect fail ......", dbPool)
+			log.Fatalf("DbPool %v reconnect fail ......", dbPool.Addr)
 		}
 	}
 }
