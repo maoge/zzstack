@@ -1,11 +1,12 @@
 package meta
 
 import (
+	"database/sql"
 	"fmt"
-	"log"
 
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 var (
@@ -41,12 +42,13 @@ func SetSession(key string, ses string) {
 		cmd := client.Do("set", key, ses)
 		res, err := cmd.Result()
 		if err != nil {
-			log.Fatalf("getSession error: %v", err)
+			errMsg := fmt.Sprintf("getSession error: %v", err)
+			utils.LOGGER.Error(errMsg)
 		} else {
-			fmt.Println(res.(string))
+			utils.LOGGER.Info(res.(string))
 		}
 	} else {
-		log.Fatal("redis pool get connection result nil")
+		utils.LOGGER.Error("redis pool get connection result nil")
 	}
 }
 
@@ -57,12 +59,13 @@ func GetSession(key string) {
 		cmd := client.Do("get", key)
 		val, err := cmd.Result()
 		if err != nil {
-			log.Fatalf("getSession error: %v", err)
+			errMsg := fmt.Sprintf("getSession error: %v", err)
+			utils.LOGGER.Error(errMsg)
 		} else {
-			fmt.Println(val.(string))
+			utils.LOGGER.Info(val.(string))
 		}
 	} else {
-		log.Fatal("redis pool get connection result nil")
+		utils.LOGGER.Error("redis pool get connection result nil")
 	}
 }
 
@@ -140,62 +143,50 @@ func DbSelectMultiRowAsJson() ([]byte, error) {
 	return crud.SelectAsJsonArray(dbPool, &SQL_SEL_ALL_ACC)
 }
 
-func InsertWithParamList(args ...interface{}) error {
+func InsertWithParamList(args ...interface{}) (sql.Result, error) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	res, err := crud.Insert(dbPool, &SQL_INS_ACC_WITH_ARGS, args...)
 	if err != nil {
-		log.Fatalf("%v", err)
-		return err
+		utils.LOGGER.Error(err.Error())
+		return nil, err
 	} else {
-		id, _ := res.LastInsertId()
-		affectedRows, _ := res.RowsAffected()
-		log.Printf("LastInsertId: %v, RowsAffected:%v", id, affectedRows)
-		return nil
+		return res, nil
 	}
 }
 
-func TxInsertWithParamList(args ...interface{}) error {
+func TxInsertWithParamList(args ...interface{}) (sql.Result, error) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	res, err := crud.TxInsert(dbPool, &SQL_INS_ACC_WITH_ARGS, args...)
 	if err != nil {
-		log.Fatalf("%v", err)
-		return err
+		utils.LOGGER.Error(err.Error())
+		return nil, err
 	} else {
-		id, _ := res.LastInsertId()
-		affectedRows, _ := res.RowsAffected()
-		log.Printf("LastInsertId: %v, RowsAffected:%v", id, affectedRows)
-		return nil
+		return res, nil
 	}
 }
 
-func InsertWithNamedMap(argMap *map[string]interface{}) error {
+func InsertWithNamedMap(argMap *map[string]interface{}) (sql.Result, error) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	res, err := crud.NamedInsert(dbPool, &SQL_INS_ACC_WITH_NAMED_MAP, argMap)
 	if err != nil {
-		log.Fatalf("%v", err)
-		return err
+		utils.LOGGER.Error(err.Error())
+		return nil, err
 	} else {
-		id, _ := res.LastInsertId()
-		affectedRows, _ := res.RowsAffected()
-		log.Printf("LastInsertId: %v, RowsAffected:%v", id, affectedRows)
-		return nil
+		return res, nil
 	}
 }
 
-func TxInsertWithNamedMap(argMap *map[string]interface{}) error {
+func TxInsertWithNamedMap(argMap *map[string]interface{}) (sql.Result, error) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	res, err := crud.TxNamedInsert(dbPool, &SQL_INS_ACC_WITH_NAMED_MAP, argMap)
 	if err != nil {
-		log.Fatalf("%v", err)
-		return err
+		utils.LOGGER.Error(err.Error())
+		return nil, err
 	} else {
-		id, _ := res.LastInsertId()
-		affectedRows, _ := res.RowsAffected()
-		log.Printf("LastInsertId: %v, RowsAffected:%v", id, affectedRows)
-		return nil
+		return res, nil
 	}
 }

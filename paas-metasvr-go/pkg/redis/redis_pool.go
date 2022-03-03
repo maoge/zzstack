@@ -1,11 +1,13 @@
 package redis
 
 import (
-	"log"
+	"fmt"
 	"strings"
 	"time"
 
 	goredis "github.com/go-redis/redis/v7"
+
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 type RedisPool struct {
@@ -48,7 +50,8 @@ func (redisPool *RedisPool) Init() {
 	cmd := redisPool.clusterClient.Do("ping")
 	res, err := cmd.Result()
 	if err == nil {
-		log.Printf("ping -> %v, redis cluster: {%v} init OK", res, redisPool.Addr)
+		info := fmt.Sprintf("ping -> %v, redis cluster: {%v} init OK", res, redisPool.Addr)
+		utils.LOGGER.Info(info)
 	} else {
 		panic(err)
 	}

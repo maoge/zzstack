@@ -1,13 +1,14 @@
-package db
+package pool
 
 import (
-	"log"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 // load balanced db pool
@@ -25,7 +26,7 @@ func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
 	defer ldbDbPool.mut.Unlock()
 
 	if dbYaml == nil {
-		log.Fatalln("LdbDbPool Init error, dbYaml nil ......")
+		utils.LOGGER.Info(consts.ERR_LDBPOOL_YAML_INIT)
 		return
 	}
 
@@ -53,7 +54,9 @@ func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
 		if dbPool.Connect() {
 			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, dbPool)
 		} else {
-			log.Fatalf("dbSource: %v connect fail ......", node.Addr)
+			errMsg := fmt.Sprintf("dbSource: %v connect fail ......", node.Addr)
+			utils.LOGGER.Error(errMsg)
+
 			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, dbPool)
 		}
 	}
@@ -125,7 +128,8 @@ func (ldbDbPool *LdbDbPool) checkDbPool() {
 		dbPool := &ldbDbPool.avlDBArr[i]
 		err := dbPool.DB.Ping()
 		if err != nil {
-			log.Fatalf("DbPool %v disconnected ......", dbPool.Addr)
+			errMsg := fmt.Sprintf("DbPool %v disconnected ......", dbPool.Addr)
+			utils.LOGGER.Error(errMsg)
 
 			dbPool.DB.Close()
 			dbPool.DB = nil
@@ -153,7 +157,8 @@ func (ldbDbPool *LdbDbPool) recoverDbPool() {
 	for i := inavlLen - 1; i >= 0; i-- {
 		dbPool := &ldbDbPool.inavlDBArr[i]
 		if dbPool.Connect() {
-			log.Printf("DbPool %v recovered ......", dbPool)
+			info := fmt.Sprintf("DbPool: %v recovered ......", dbPool.Addr)
+			utils.LOGGER.Info(info)
 
 			ldbDbPool.mut.Lock()
 			defer ldbDbPool.mut.Unlock()
@@ -169,7 +174,8 @@ func (ldbDbPool *LdbDbPool) recoverDbPool() {
 
 			break
 		} else {
-			log.Fatalf("DbPool %v reconnect fail ......", dbPool.Addr)
+			errMsg := fmt.Sprintf("DbPool: %v reconnect fail ......", dbPool.Addr)
+			utils.LOGGER.Error(errMsg)
 		}
 	}
 }

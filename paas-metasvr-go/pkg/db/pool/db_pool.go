@@ -1,12 +1,12 @@
-package db
+package pool
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 type DbPool struct {
@@ -33,7 +33,8 @@ func (pool *DbPool) Connect() bool {
 	result := true
 	db, err := sqlx.Connect(pool.DbType, connStr)
 	if err == nil {
-		log.Printf("database: %v connect OK", pool.Addr)
+		info := fmt.Sprintf("database: %v connect OK", pool.Addr)
+		utils.LOGGER.Info(info)
 
 		db.SetMaxOpenConns(pool.MaxOpenConns)
 		db.SetMaxIdleConns(pool.MaxIdleConns)
@@ -42,7 +43,8 @@ func (pool *DbPool) Connect() bool {
 
 		pool.DB = db
 	} else {
-		log.Fatalf("database connect fail, %v", err)
+		err := fmt.Sprintf("database connect fail, %v", err.Error())
+		utils.LOGGER.Error(err)
 		result = false
 	}
 

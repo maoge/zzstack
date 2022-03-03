@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
@@ -52,9 +51,9 @@ func (hello *HelloController) DbSelectSingleRow() {
 		if err == nil {
 			str = utils.Struct2Json(&acc)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -67,9 +66,9 @@ func (hello *HelloController) DbTxSelectSingleRow() {
 		if err == nil {
 			str = utils.Struct2Json(&acc)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -82,9 +81,9 @@ func (hello *HelloController) DbSelectMultiRow() {
 		if err == nil {
 			str = utils.Struct2Json(&accSlice)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -97,9 +96,9 @@ func (hello *HelloController) DbTxSelectMultiRow() {
 		if err == nil {
 			str = utils.Struct2Json(&accSlice)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -111,9 +110,9 @@ func (hello *HelloController) DbSelectSingleRowAsMap() {
 		if err == nil {
 			str = utils.Struct2Json(&resMap)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -125,9 +124,9 @@ func (hello *HelloController) DbSelectSingleRowAsJson() {
 		if err == nil {
 			str = string(bytes)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -139,9 +138,9 @@ func (hello *HelloController) DbSelectMultiRowAsMapSlice() {
 		if err == nil {
 			str = utils.Struct2Json(&resMapSlice)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -153,9 +152,9 @@ func (hello *HelloController) TxDbSelectMultiRowAsMapSlice() {
 		if err == nil {
 			str = utils.Struct2Json(&resMapSlice)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
@@ -167,39 +166,39 @@ func (hello *HelloController) DbSelectMultiRowAsJson() {
 		if err == nil {
 			str = string(bytes)
 		} else {
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "acc_info": str})
 	})
 }
 
 func (hello *HelloController) DbInsertWithArgsList() {
 	hello.group.GET("/dbInsertWithArgsList", func(c *gin.Context) {
-		err := meta.InsertWithParamList("scdd1a5d-1d70-e15d-y671-habdbee9dddd", "test", "13800000003", "c@b", "b3fc7e7f88ef098fbc0671303a3a2d4a", 1634113956248)
+		_, err := meta.InsertWithParamList("scdd1a5d-1d70-e15d-y671-habdbee9dddd", "test", "13800000003", "c@b", "b3fc7e7f88ef098fbc0671303a3a2d4a", 1634113956248)
 		var str string
 		if err == nil {
 			str = "insert OK"
 		} else {
 			str = "insert NOK"
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "result_info": str})
 	})
 }
 
 func (hello *HelloController) TxDbInsertWithArgsList() {
 	hello.group.GET("/dbTxInsertWithArgsList", func(c *gin.Context) {
-		err := meta.TxInsertWithParamList("scdd1a5d-1d70-e15d-y671-habdbee9dddd", "test", "13800000003", "c@b", "b3fc7e7f88ef098fbc0671303a3a2d4a", 1634113956248)
+		_, err := meta.TxInsertWithParamList("scdd1a5d-1d70-e15d-y671-habdbee9dddd", "test", "13800000003", "c@b", "b3fc7e7f88ef098fbc0671303a3a2d4a", 1634113956248)
 		var str string
 		if err == nil {
 			str = "insert OK"
 		} else {
 			str = "insert NOK"
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "result_info": str})
 	})
 }
@@ -215,15 +214,15 @@ func (hello *HelloController) DbInsertWithNamedMap() {
 			"create_time": int64(1634113956248),
 		}
 
-		err := meta.InsertWithNamedMap(&paramMap)
+		_, err := meta.InsertWithNamedMap(&paramMap)
 		var str string
 		if err == nil {
 			str = "insert OK"
 		} else {
 			str = "insert NOK"
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "result_info": str})
 	})
 }
@@ -239,15 +238,15 @@ func (hello *HelloController) TxDbInsertWithNamedMap() {
 			"create_time": int64(1634113956248),
 		}
 
-		err := meta.TxInsertWithNamedMap(&paramMap)
+		_, err := meta.TxInsertWithNamedMap(&paramMap)
 		var str string
 		if err == nil {
 			str = "insert OK"
 		} else {
 			str = "insert NOK"
-			log.Println(err.Error())
+			utils.LOGGER.Error(err.Error())
 		}
-		log.Println(str)
+		utils.LOGGER.Info(str)
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc"), "result_info": str})
 	})
 }

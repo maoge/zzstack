@@ -4,16 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"reflect"
+
+	"github.com/maoge/paas-metasvr-go/pkg/db/pool"
 )
 
 // for select single row, return outObject automatic reflect to dest struct
 //     obj := Person{}
 //     err := crud.SelectAsObject(db, &obj, "SELECT * FROM person WHERE first_name=?", "Jason")
-func SelectAsObject(pool *DbPool, outObject interface{}, sql *string, args ...interface{}) error {
+func SelectAsObject(pool *pool.DbPool, outObject interface{}, sql *string, args ...interface{}) error {
 	return pool.DB.Get(outObject, pool.DB.Rebind(*sql), args...)
 }
 
-func TxSelectAsObject(pool *DbPool, outObject interface{}, sql *string, args ...interface{}) error {
+func TxSelectAsObject(pool *pool.DbPool, outObject interface{}, sql *string, args ...interface{}) error {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return err
@@ -26,12 +28,12 @@ func TxSelectAsObject(pool *DbPool, outObject interface{}, sql *string, args ...
 // for select multi rows, return outSlice automatic reflect to dest struct
 //     slice := []Person{}
 //     err := SelectAsSlice(db, &slice, "SELECT * FROM person ORDER BY first_name ASC")
-func SelectAsSlice(pool *DbPool, outSlice interface{}, sql *string, args ...interface{}) error {
+func SelectAsSlice(pool *pool.DbPool, outSlice interface{}, sql *string, args ...interface{}) error {
 	return pool.DB.Select(outSlice, pool.DB.Rebind(*sql), args...)
 }
 
 // select with transaction
-func TxSelectAsSlice(pool *DbPool, outSlice interface{}, sql *string, args ...interface{}) error {
+func TxSelectAsSlice(pool *pool.DbPool, outSlice interface{}, sql *string, args ...interface{}) error {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return err
@@ -43,7 +45,7 @@ func TxSelectAsSlice(pool *DbPool, outSlice interface{}, sql *string, args ...in
 
 // for select single row, return result as map[string]interface{}
 //     resMap, err := SelectAsMap(db, &slice, "SELECT * FROM person WHERE first_name=?", "Jason")
-func SelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
+func SelectAsMap(pool *pool.DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
 	row := pool.DB.QueryRowx(pool.DB.Rebind(*sql), args...)
 
 	m := map[string]interface{}{}
@@ -63,7 +65,7 @@ func SelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]int
 	return m, nil
 }
 
-func TxSelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
+func TxSelectAsMap(pool *pool.DbPool, sql *string, args ...interface{}) (map[string]interface{}, error) {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return nil, err
@@ -88,7 +90,7 @@ func TxSelectAsMap(pool *DbPool, sql *string, args ...interface{}) (map[string]i
 	return m, nil
 }
 
-func SelectAsJson(pool *DbPool, sql *string, args ...interface{}) ([]byte, error) {
+func SelectAsJson(pool *pool.DbPool, sql *string, args ...interface{}) ([]byte, error) {
 	row := pool.DB.QueryRowx(pool.DB.Rebind(*sql), args...)
 
 	m := map[string]interface{}{}
@@ -115,7 +117,7 @@ func SelectAsJson(pool *DbPool, sql *string, args ...interface{}) ([]byte, error
 
 // for select multi row, return result as []map[string]interface{}
 //     sliceMap, err := SelectAsMapSlice(db, sql, "SELECT * FROM person WHERE first_name=?", "Jason")
-func SelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
+func SelectAsMapSlice(pool *pool.DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
 	rows, err := pool.DB.Queryx(pool.DB.Rebind(*sql), args...)
 	if err != nil {
 		return nil, err
@@ -145,7 +147,7 @@ func SelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interfa
 	return mapSlice, nil
 }
 
-func SelectAsJsonArray(pool *DbPool, sql *string, args ...interface{}) ([]byte, error) {
+func SelectAsJsonArray(pool *pool.DbPool, sql *string, args ...interface{}) ([]byte, error) {
 	rows, err := pool.DB.Queryx(pool.DB.Rebind(*sql), args...)
 	if err != nil {
 		return nil, err
@@ -180,7 +182,7 @@ func SelectAsJsonArray(pool *DbPool, sql *string, args ...interface{}) ([]byte, 
 	return jsonBytes, nil
 }
 
-func TxSelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
+func TxSelectAsMapSlice(pool *pool.DbPool, sql *string, args ...interface{}) ([]interface{}, error) {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return nil, err
@@ -218,11 +220,11 @@ func TxSelectAsMapSlice(pool *DbPool, sql *string, args ...interface{}) ([]inter
 
 // for insert with param list bind with ?
 //     "INSERT INTO person (first_name, last_name, email) VALUES (?, ?, ?)"
-func Insert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+func Insert(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
 	return pool.DB.Exec(pool.DB.Rebind(*sql), args...)
 }
 
-func TxInsert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+func TxInsert(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return nil, err
@@ -234,11 +236,11 @@ func TxInsert(pool *DbPool, sql *string, args ...interface{}) (sql.Result, error
 
 // for insert with named param bind:
 //     "INSERT INTO person (first_name, last_name, email) VALUES (:first, :last, :email)"
-func NamedInsert(pool *DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+func NamedInsert(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
 	return pool.DB.NamedExec(*sql, *args)
 }
 
-func TxNamedInsert(pool *DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+func TxNamedInsert(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return nil, err
