@@ -15,7 +15,7 @@ dbYaml:
 
     connMaxLifetime: 1800
     connMaxIdletime: 900
-    connTimeout: 3
+    connTimeout: 1
     readTimeout: 5
 
     maxOpenConns: 40
