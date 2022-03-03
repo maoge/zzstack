@@ -8,6 +8,7 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 
 	"github.com/maoge/paas-metasvr-go/pkg/db/pool"
+	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/redis"
 )
 
@@ -20,6 +21,8 @@ type MetaSvrGlobalRes struct {
 	DbYaml    config.DbYaml
 	ldbDbPool pool.LdbDbPool
 	redisPool redis.RedisPool
+
+	cmptMeta *meta.CmptMeta
 }
 
 func (g *MetaSvrGlobalRes) Init() {
@@ -29,6 +32,7 @@ func (g *MetaSvrGlobalRes) Init() {
 
 	g.initDBPool()
 	g.initRedisPool()
+	g.initCmptMeta()
 }
 
 func (g *MetaSvrGlobalRes) GetDbPool() *pool.DbPool {
@@ -44,6 +48,13 @@ func (g *MetaSvrGlobalRes) initConf() {
 	defer g.Mut.Unlock()
 
 	g.Config = *config.NewConfig()
+}
+
+func (g *MetaSvrGlobalRes) initCmptMeta() {
+	g.Mut.Lock()
+	defer g.Mut.Unlock()
+
+	g.cmptMeta = meta.NewCmptMeta()
 }
 
 func (g *MetaSvrGlobalRes) initDBPool() {
