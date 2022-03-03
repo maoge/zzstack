@@ -113,13 +113,14 @@ func (ldbDbPool *LdbDbPool) startRecover() {
 
 func (ldbDbPool *LdbDbPool) checkDbPool() {
 	ldbDbPool.mut.Lock()
-	defer ldbDbPool.mut.Unlock()
-
 	var avlLen = len(ldbDbPool.avlDBArr)
+	ldbDbPool.mut.Unlock()
+
 	if avlLen == 0 {
 		return
 	}
 
+	// Ping cost too much time, so ping operation cannot be Surrounded by lock
 	for i := avlLen - 1; i >= 0; i-- {
 		dbPool := &ldbDbPool.avlDBArr[i]
 		err := dbPool.DB.Ping()
@@ -132,11 +133,13 @@ func (ldbDbPool *LdbDbPool) checkDbPool() {
 			// remove from valid array to invalid array when broken
 			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, *dbPool)
 
+			ldbDbPool.mut.Lock()
 			if i > 0 {
 				ldbDbPool.avlDBArr = ldbDbPool.inavlDBArr[:i]
 			} else {
 				ldbDbPool.avlDBArr = make([]DbPool, 0)
 			}
+			ldbDbPool.mut.Unlock()
 		}
 	}
 }
