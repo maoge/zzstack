@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
+	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/route"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
@@ -28,6 +29,7 @@ func diableLog() {
 func initial() {
 	utils.Init()
 	global.GLOBAL_RES.Init()
+	meta.InitGlobalCmptMeta()
 }
 
 func startHttp() {
@@ -36,7 +38,7 @@ func startHttp() {
 	engine := gin.New()
 
 	info := fmt.Sprintf("start http server: {%v}", global.GLOBAL_RES.Config.WebApiAddress)
-	utils.LOGGER.Error(info)
+	utils.LOGGER.Info(info)
 
 	route.Init(engine)
 	err := engine.Run(global.GLOBAL_RES.Config.WebApiAddress)

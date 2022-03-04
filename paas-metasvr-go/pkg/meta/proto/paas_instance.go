@@ -6,14 +6,14 @@ import (
 
 type PaasInstance struct {
 	INST_ID string `db:"INST_ID"`
-	CMPT_ID uint32 `db:"CMPT_ID"`
+	CMPT_ID int    `db:"CMPT_ID"`
 	STATUS  string `db:"IS_DEPLOYED"`
-	POS_X   int32  `db:"POS_X"`
-	POS_Y   int32  `db:"POS_Y"`
-	WIDTH   int32  `db:"WIDTH"`
-	HEIGHT  int32  `db:"HEIGHT"`
-	ROW_    int32  `db:"ROW_"`
-	COL_    int32  `db:"COL_"`
+	POS_X   int    `db:"POS_X"`
+	POS_Y   int    `db:"POS_Y"`
+	WIDTH   int    `db:"WIDTH"`
+	HEIGHT  int    `db:"HEIGHT"`
+	ROW_    int    `db:"ROW_"`
+	COL_    int    `db:"COL_"`
 }
 
 func (m *PaasInstance) IsDeployed() bool {

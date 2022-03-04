@@ -14,17 +14,7 @@ var (
 	SQL_SEL_ALL_ACC            = "select ACC_ID, ACC_NAME, PHONE_NUM, MAIL, PASSWD, CREATE_TIME from t_account order by ACC_NAME"
 	SQL_INS_ACC_WITH_ARGS      = "insert into t_account(ACC_ID, ACC_NAME, PHONE_NUM, MAIL, PASSWD, CREATE_TIME) values (?,?,?,?,?,?)"
 	SQL_INS_ACC_WITH_NAMED_MAP = "insert into t_account(ACC_ID, ACC_NAME, PHONE_NUM, MAIL, PASSWD, CREATE_TIME) values (:acc_id, :acc_name, :phone_num, :mail, :passwd, :create_time)"
-	// SQL_INS_ACC_WITH_NAMED_MAP = "insert into t_account(ACC_ID, ACC_NAME, PHONE_NUM, MAIL, PASSWD) values (:acc_id, :acc_name, :phone_num, :mail, :passwd, now())"
 )
-
-// type Accout struct {
-// 	ACC_ID      sql.NullString `db:"ACC_ID"`
-// 	ACC_NAME    sql.NullString `db:"ACC_NAME"`
-// 	PHONE_NUM   sql.NullString `db:"PHONE_NUM"`
-// 	MAIL        sql.NullString `db:"MAIL"`
-// 	PASSWD      sql.NullString `db:"PASSWD"`
-// 	CREATE_TIME sql.NullInt64  `db:"CREATE_TIME"`
-// }
 
 type Accout struct {
 	ACC_ID      string `db:"ACC_ID"`

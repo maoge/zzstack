@@ -3,7 +3,7 @@ package proto
 import "github.com/maoge/paas-metasvr-go/pkg/consts"
 
 type PaasMetaAttr struct {
-	ATTR_ID      uint32 `db:"ATTR_ID"`
+	ATTR_ID      int    `db:"ATTR_ID"`
 	ATTR_NAME    string `db:"ATTR_NAME"`
 	ATTR_NAME_CN string `db:"ATTR_NAME_CN"`
 	AUTO_GEN     string `db:"AUTO_GEN"`
