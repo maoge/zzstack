@@ -20,8 +20,6 @@ type MetaSvrGlobalRes struct {
 	DbYaml    config.DbYaml
 	ldbDbPool pool.LdbDbPool
 	redisPool redis.RedisPool
-
-	// cmptMeta *meta.CmptMeta
 }
 
 func (g *MetaSvrGlobalRes) Init() {
@@ -31,7 +29,6 @@ func (g *MetaSvrGlobalRes) Init() {
 
 	g.initDBPool()
 	g.initRedisPool()
-	// g.initCmptMeta()
 }
 
 func (g *MetaSvrGlobalRes) GetDbPool() *pool.DbPool {
@@ -48,13 +45,6 @@ func (g *MetaSvrGlobalRes) initConf() {
 
 	g.Config = *config.NewConfig()
 }
-
-// func (g *MetaSvrGlobalRes) initCmptMeta() {
-// 	g.Mut.Lock()
-// 	defer g.Mut.Unlock()
-
-// 	g.cmptMeta = meta.NewCmptMeta(&g.ldbDbPool)
-// }
 
 func (g *MetaSvrGlobalRes) initDBPool() {
 	g.Mut.Lock()
