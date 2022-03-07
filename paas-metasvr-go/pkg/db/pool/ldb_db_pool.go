@@ -15,8 +15,8 @@ import (
 
 type LdbDbPool struct {
 	mut           sync.Mutex
-	avlDBArr      []DbPool
-	inavlDBArr    []DbPool
+	avlDBArr      []*DbPool
+	inavlDBArr    []*DbPool
 	maintainTimer *time.Timer
 	rrCounter     int64
 }
@@ -32,8 +32,8 @@ func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
 
 	dbSources := dbYaml.DbSources
 
-	ldbDbPool.avlDBArr = make([]DbPool, 0)
-	ldbDbPool.inavlDBArr = make([]DbPool, 0)
+	ldbDbPool.avlDBArr = make([]*DbPool, 0)
+	ldbDbPool.inavlDBArr = make([]*DbPool, 0)
 
 	for _, node := range dbSources {
 		var dbPool = DbPool{
@@ -52,12 +52,12 @@ func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
 		}
 
 		if dbPool.Connect() {
-			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, dbPool)
+			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, &dbPool)
 		} else {
 			errMsg := fmt.Sprintf("dbSource: %v connect fail ......", node.Addr)
 			utils.LOGGER.Error(errMsg)
 
-			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, dbPool)
+			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, &dbPool)
 		}
 	}
 
@@ -85,7 +85,7 @@ func (ldbDbPool *LdbDbPool) GetDbPool() *DbPool {
 
 	avlSize := len(ldbDbPool.avlDBArr)
 	idx := ldbDbPool.getDbIndex(int64(avlSize))
-	dbPool := &ldbDbPool.avlDBArr[idx]
+	dbPool := ldbDbPool.avlDBArr[idx]
 
 	return dbPool
 }
@@ -95,7 +95,7 @@ func (ldbDbPool *LdbDbPool) getDbIndex(max int64) int64 {
 		return 0
 	}
 
-	idx := atomic.AddInt64(&ldbDbPool.rrCounter, 1)
+	idx := atomic.AddInt64(&(ldbDbPool.rrCounter), 1)
 	idx = idx % max
 
 	return idx
@@ -125,7 +125,7 @@ func (ldbDbPool *LdbDbPool) checkDbPool() {
 
 	// Ping cost too much time, so ping operation cannot be Surrounded by lock
 	for i := avlLen - 1; i >= 0; i-- {
-		dbPool := &ldbDbPool.avlDBArr[i]
+		dbPool := ldbDbPool.avlDBArr[i]
 		err := dbPool.DB.Ping()
 		if err != nil {
 			errMsg := fmt.Sprintf("DbPool %v disconnected ......", dbPool.Addr)
@@ -135,13 +135,13 @@ func (ldbDbPool *LdbDbPool) checkDbPool() {
 			dbPool.DB = nil
 
 			// remove from valid array to invalid array when broken
-			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, *dbPool)
+			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, dbPool)
 
 			ldbDbPool.mut.Lock()
 			if i > 0 {
 				ldbDbPool.avlDBArr = ldbDbPool.inavlDBArr[:i]
 			} else {
-				ldbDbPool.avlDBArr = make([]DbPool, 0)
+				ldbDbPool.avlDBArr = make([]*DbPool, 0)
 			}
 			ldbDbPool.mut.Unlock()
 		}
@@ -155,7 +155,7 @@ func (ldbDbPool *LdbDbPool) recoverDbPool() {
 	}
 
 	for i := inavlLen - 1; i >= 0; i-- {
-		dbPool := &ldbDbPool.inavlDBArr[i]
+		dbPool := ldbDbPool.inavlDBArr[i]
 		if dbPool.Connect() {
 			info := fmt.Sprintf("DbPool: %v recovered ......", dbPool.Addr)
 			utils.LOGGER.Info(info)
@@ -164,12 +164,12 @@ func (ldbDbPool *LdbDbPool) recoverDbPool() {
 			defer ldbDbPool.mut.Unlock()
 
 			// remove from invalid array to valid array when recovered
-			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, *dbPool)
+			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, dbPool)
 
 			if i > 0 {
 				ldbDbPool.inavlDBArr = ldbDbPool.inavlDBArr[:i]
 			} else {
-				ldbDbPool.inavlDBArr = make([]DbPool, 0)
+				ldbDbPool.inavlDBArr = make([]*DbPool, 0)
 			}
 
 			break
