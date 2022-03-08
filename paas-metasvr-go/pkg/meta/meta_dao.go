@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
+	"github.com/maoge/paas-metasvr-go/pkg/err"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
+	"github.com/maoge/paas-metasvr-go/pkg/meta/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
@@ -25,6 +28,62 @@ type Accout struct {
 	CREATE_TIME int64  `db:"CREATE_TIME"`
 }
 
+func Login(accUser *proto.AccUser, resultBean *proto.ResultBean) bool {
+	account := CMPT_META.GetAccount(accUser.USER)
+	if account == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_ACCOUNT_NOT_EXISTS
+		return false
+	}
+
+	encrypt := utils.GeneratePasswd(accUser.USER, accUser.PASSWORD)
+	if encrypt != account.PASSWD {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_PWD_INCORRECT
+		return false
+	}
+
+	session := CMPT_META.GetAccSession(accUser.USER)
+	if session == nil {
+		key := utils.GetRedisSessionKey(accUser.USER)
+		s := GetSessionFromRedis(key)
+		utils.LOGGER.Info(s.MAGIC_KEY)
+	}
+
+	return true
+}
+
+func GetSessionFromRedis(accName string) *proto.AccountSession {
+	key := utils.GetRedisSessionKey(accName)
+	val, err := RedisGet(key)
+	if err != nil {
+		return nil
+	}
+
+	session := val.(string)
+	utils.LOGGER.Info(session)
+	return nil
+}
+
+func RedisGet(key string) (interface{}, error) {
+	client := global.GLOBAL_RES.GetRedisClusterClient()
+
+	if client != nil {
+		cmd := client.Do("get", key)
+		return cmd.Result()
+		// val, err := cmd.Result()
+		// if err != nil {
+		// 	errMsg := fmt.Sprintf("getSession error: %v", err)
+		// 	utils.LOGGER.Error(errMsg)
+		// } else {
+		// 	utils.LOGGER.Info(val.(string))
+		// }
+	} else {
+		// utils.LOGGER.Error("redis pool get connection result nil")
+		return nil, err.RedisErr{ErrInfo: consts.ERR_REDIS_POOL_NIL}
+	}
+}
+
 func SetSession(key string, ses string) {
 	client := global.GLOBAL_RES.GetRedisClusterClient()
 
@@ -36,23 +95,6 @@ func SetSession(key string, ses string) {
 			utils.LOGGER.Error(errMsg)
 		} else {
 			utils.LOGGER.Info(res.(string))
-		}
-	} else {
-		utils.LOGGER.Error("redis pool get connection result nil")
-	}
-}
-
-func GetSession(key string) {
-	client := global.GLOBAL_RES.GetRedisClusterClient()
-
-	if client != nil {
-		cmd := client.Do("get", key)
-		val, err := cmd.Result()
-		if err != nil {
-			errMsg := fmt.Sprintf("getSession error: %v", err)
-			utils.LOGGER.Error(errMsg)
-		} else {
-			utils.LOGGER.Info(val.(string))
 		}
 	} else {
 		utils.LOGGER.Error("redis pool get connection result nil")

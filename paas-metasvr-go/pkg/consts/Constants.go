@@ -5,17 +5,25 @@ import (
 )
 
 var (
-	DB_RECOVER_INTERVAL   time.Duration = 3 * time.Second
-	ERR_LDBPOOL_YAML_INIT               = "LdbDbPool Init error, dbYaml nil ......"
-	INFO_OK                             = "OK"
-	STR_TRUE                            = "1"
-	STR_FALSE                           = "0"
-	STR_ALARM                           = "4"
-	STR_ERROR                           = "3"
-	STR_WARN                            = "2"
-	STR_DEPLOYED                        = "1"
-	STR_SAVED                           = "0"
-	POS_DEFAULT_VALUE     int           = -1
+	DB_RECOVER_INTERVAL time.Duration = 3 * time.Second
+	INFO_OK                           = "OK"
+	STR_TRUE                          = "1"
+	STR_FALSE                         = "0"
+	STR_ALARM                         = "4"
+	STR_ERROR                         = "3"
+	STR_WARN                          = "2"
+	STR_DEPLOYED                      = "1"
+	STR_SAVED                         = "0"
+	POS_DEFAULT_VALUE   int           = -1
+
+	REVOKE_OK              int = 0
+	REVOKE_NOK             int = -1
+	REVOKE_NOK_QUEUE_EXIST int = -2
+	REVOKE_AUTH_FAIL       int = -3
+	REVOKE_AUTH_IP_LIMIT   int = -4
+	SERVICE_NOT_INIT       int = -5
+
+	SESSION_KEY_PREFIX = "session:"
 
 	CACHE_REDIS_CLUSTER_TEMP_FILE      = "CacheRedisClusterTemplate.yaml"
 	CACHE_REDIS_MASTER_SLAVE_TEMP_FILE = "CacheRedisMSTemplate.yaml"

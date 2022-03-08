@@ -357,3 +357,11 @@ func (m *CmptMeta) loadMetaCmptVersion() {
 		utils.LOGGER.Error(errMsg)
 	}
 }
+
+func (m *CmptMeta) GetAccount(user string) *proto.Account {
+	return m.accountMap[user]
+}
+
+func (m *CmptMeta) GetAccSession(user string) *proto.AccountSession {
+	return m.accSessionMap[user]
+}

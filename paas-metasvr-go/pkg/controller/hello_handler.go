@@ -38,7 +38,7 @@ func (hello *HelloController) RedisSet() {
 
 func (hello *HelloController) RedisGet() {
 	hello.group.GET("/getSession", func(c *gin.Context) {
-		meta.GetSession("abc")
+		meta.RedisGet("abc")
 		c.JSON(200, gin.H{"msg": fmt.Sprintf("getSession %s", "abc")})
 	})
 }
