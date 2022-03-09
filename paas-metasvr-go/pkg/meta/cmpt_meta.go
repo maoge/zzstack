@@ -56,6 +56,9 @@ func (m *CmptMeta) init() {
 	m.loadMetaServer()
 	m.loadMetaSsh()
 	m.loadMetaCmptVersion()
+
+	m.accSessionMap = make(map[string]*proto.AccountSession)
+	m.magicKeyMap = make(map[string]*proto.AccountSession)
 }
 
 func (m *CmptMeta) reloadMetaData(dataType string) {
@@ -358,10 +361,41 @@ func (m *CmptMeta) loadMetaCmptVersion() {
 	}
 }
 
-func (m *CmptMeta) GetAccount(user string) *proto.Account {
+func (m *CmptMeta) getAccount(user string) *proto.Account {
 	return m.accountMap[user]
 }
 
-func (m *CmptMeta) GetAccSession(user string) *proto.AccountSession {
+func (m *CmptMeta) getAccSession(user string) *proto.AccountSession {
 	return m.accSessionMap[user]
+}
+
+func (m *CmptMeta) addAccSession(accSession *proto.AccountSession, isLocalOnly bool) {
+	m.accSessionMap[accSession.ACC_NAME] = accSession
+	m.magicKeyMap[accSession.MAGIC_KEY] = accSession
+
+	// TODO broadcast cluster event
+	if !isLocalOnly {
+		// JsonObject msgBody = new JsonObject();
+		// msgBody.put(FixHeader.HEADER_ACC_NAME,  accSession.getAccName());
+		// msgBody.put(FixHeader.HEADER_MAGIC_KEY, accSession.getMagicKey());
+		// msgBody.put(FixHeader.HEADER_SESSION_TIMEOUT, accSession.getSessionTimeOut());
+
+		// EventBean ev = new EventBean(EventType.EVENT_ADD_SESSON, msgBody.toString(), "");
+		// EventBusMsg.publishEvent(ev);
+		// MetaDataDao.putSessionToRedis(accSession);
+	}
+}
+
+func (m *CmptMeta) removeTtlSession(accName, magicKey string, isLocalOnly bool) {
+	delete(m.accSessionMap, accName)
+	delete(m.magicKeyMap, magicKey)
+
+	// TODO broadcast cluster event
+	if !isLocalOnly {
+		// JsonObject msgBody = new JsonObject();
+		// msgBody.put(FixHeader.HEADER_ACC_NAME,  accName);
+		// msgBody.put(FixHeader.HEADER_MAGIC_KEY, magicKey);
+		// EventBean ev = new EventBean(EventType.EVENT_REMOVE_SESSON, msgBody.toString(), "");
+		// EventBusMsg.publishEvent(ev);
+	}
 }

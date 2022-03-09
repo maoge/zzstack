@@ -126,6 +126,13 @@ func (ldbDbPool *LdbDbPool) checkDbPool() {
 	// Ping cost too much time, so ping operation cannot be Surrounded by lock
 	for i := avlLen - 1; i >= 0; i-- {
 		dbPool := ldbDbPool.avlDBArr[i]
+
+		if dbPool.DB == nil {
+			errInfo := fmt.Sprintf("ldbDbPool avlDBArr[%v].DB nil ......", i)
+			utils.LOGGER.Error(errInfo)
+			continue
+		}
+
 		err := dbPool.DB.Ping()
 		if err != nil {
 			errMsg := fmt.Sprintf("DbPool %v disconnected ......", dbPool.Addr)

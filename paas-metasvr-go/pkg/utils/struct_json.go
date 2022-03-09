@@ -16,3 +16,7 @@ func Struct2Json(val interface{}) string {
 	s := string(jsonBytes)
 	return s
 }
+
+func Json2Struct(data []byte, dest interface{}) {
+	json.Unmarshal(data, dest)
+}

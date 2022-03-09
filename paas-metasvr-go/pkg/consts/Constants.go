@@ -23,7 +23,8 @@ var (
 	REVOKE_AUTH_IP_LIMIT   int = -4
 	SERVICE_NOT_INIT       int = -5
 
-	SESSION_KEY_PREFIX = "session:"
+	SESSION_TTL        int64 = 3600000
+	SESSION_KEY_PREFIX       = "session:"
 
 	CACHE_REDIS_CLUSTER_TEMP_FILE      = "CacheRedisClusterTemplate.yaml"
 	CACHE_REDIS_MASTER_SLAVE_TEMP_FILE = "CacheRedisMSTemplate.yaml"

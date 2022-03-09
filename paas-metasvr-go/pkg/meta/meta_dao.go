@@ -29,7 +29,7 @@ type Accout struct {
 }
 
 func Login(accUser *proto.AccUser, resultBean *proto.ResultBean) bool {
-	account := CMPT_META.GetAccount(accUser.USER)
+	account := CMPT_META.getAccount(accUser.USER)
 	if account == nil {
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = consts.ERR_ACCOUNT_NOT_EXISTS
@@ -43,26 +43,62 @@ func Login(accUser *proto.AccUser, resultBean *proto.ResultBean) bool {
 		return false
 	}
 
-	session := CMPT_META.GetAccSession(accUser.USER)
+	session := CMPT_META.getAccSession(accUser.USER)
 	if session == nil {
 		key := utils.GetRedisSessionKey(accUser.USER)
-		s := GetSessionFromRedis(key)
-		utils.LOGGER.Info(s.MAGIC_KEY)
+		session = GetSessionFromRedis(key)
+
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = session.MAGIC_KEY
+
+		if session == nil {
+			magicKey := utils.GenUUID()
+			newSession := proto.NewAccountSession(accUser.USER, magicKey)
+			CMPT_META.addAccSession(newSession, false)
+		} else {
+			if !session.IsSessionValid() {
+				// remove the old and add new on
+				resultBean.RET_INFO = createSession(accUser.USER, session.MAGIC_KEY)
+			} else {
+				// local cache not exists, fill from redis to local cache
+				CMPT_META.addAccSession(session, true)
+			}
+		}
+
+		return true
+	}
+
+	resultBean.RET_CODE = consts.REVOKE_OK
+	resultBean.RET_INFO = session.MAGIC_KEY
+
+	// if session ttl, create new
+	if !session.IsSessionValid() {
+		resultBean.RET_INFO = createSession(accUser.USER, session.MAGIC_KEY)
 	}
 
 	return true
 }
 
-func GetSessionFromRedis(accName string) *proto.AccountSession {
-	key := utils.GetRedisSessionKey(accName)
-	val, err := RedisGet(key)
+func createSession(accName, oldMagicKey string) string {
+	CMPT_META.removeTtlSession(accName, oldMagicKey, false)
+
+	magicKey := utils.GenUUID()
+	newSession := proto.NewAccountSession(accName, magicKey)
+	CMPT_META.addAccSession(newSession, false)
+
+	return magicKey
+}
+
+func GetSessionFromRedis(userSessionKey string) *proto.AccountSession {
+	val, err := RedisGet(userSessionKey)
 	if err != nil {
 		return nil
 	}
 
-	session := val.(string)
-	utils.LOGGER.Info(session)
-	return nil
+	str := val.(string)
+	var session proto.AccountSession
+	utils.Json2Struct([]byte(str), &session)
+	return &session
 }
 
 func RedisGet(key string) (interface{}, error) {
@@ -70,16 +106,13 @@ func RedisGet(key string) (interface{}, error) {
 
 	if client != nil {
 		cmd := client.Do("get", key)
-		return cmd.Result()
-		// val, err := cmd.Result()
-		// if err != nil {
-		// 	errMsg := fmt.Sprintf("getSession error: %v", err)
-		// 	utils.LOGGER.Error(errMsg)
-		// } else {
-		// 	utils.LOGGER.Info(val.(string))
-		// }
+		val, err := cmd.Result()
+		if err != nil {
+			return nil, err
+		} else {
+			return val, nil
+		}
 	} else {
-		// utils.LOGGER.Error("redis pool get connection result nil")
 		return nil, err.RedisErr{ErrInfo: consts.ERR_REDIS_POOL_NIL}
 	}
 }
