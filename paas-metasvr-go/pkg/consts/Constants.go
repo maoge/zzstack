@@ -26,6 +26,11 @@ var (
 	SESSION_TTL        int64 = 3600000
 	SESSION_KEY_PREFIX       = "session:"
 
+	PAAS_TENANT     = "paas-tenant"
+	PAAS_NAMESPACE  = "paas-namespace"
+	SYS_EVENT_TOPIC = "sys-event"
+	SYS_CHECK_TASK  = "sys-check-task"
+
 	CACHE_REDIS_CLUSTER_TEMP_FILE      = "CacheRedisClusterTemplate.yaml"
 	CACHE_REDIS_MASTER_SLAVE_TEMP_FILE = "CacheRedisMSTemplate.yaml"
 	CACHE_REDIS_HA_CLUSTER_TEMP_FILE   = "CacheRedisHaTemplate.yaml"

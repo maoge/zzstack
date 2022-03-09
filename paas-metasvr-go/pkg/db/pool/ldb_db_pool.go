@@ -21,6 +21,12 @@ type LdbDbPool struct {
 	rrCounter     int64
 }
 
+func NewLdbDbPool(dbYaml *config.DbYaml) *LdbDbPool {
+	ldbPool := LdbDbPool{}
+	ldbPool.Init(dbYaml)
+	return &ldbPool
+}
+
 func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
 	ldbDbPool.mut.Lock()
 	defer ldbDbPool.mut.Unlock()

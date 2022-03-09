@@ -18,8 +18,8 @@ type MetaSvrGlobalRes struct {
 	Config config.MetaSvrConfig
 
 	DbYaml    config.DbYaml
-	ldbDbPool pool.LdbDbPool
-	redisPool redis.RedisPool
+	ldbDbPool *pool.LdbDbPool
+	redisPool *redis.RedisPool
 }
 
 func (g *MetaSvrGlobalRes) Init() {
@@ -51,14 +51,15 @@ func (g *MetaSvrGlobalRes) initDBPool() {
 	defer g.Mut.Unlock()
 
 	g.DbYaml.Load(g.Config.MetadbYamlName)
-	g.ldbDbPool.Init(&g.DbYaml)
+
+	g.ldbDbPool = pool.NewLdbDbPool(&g.DbYaml)
 }
 
 func (g *MetaSvrGlobalRes) initRedisPool() {
 	g.Mut.Lock()
 	defer g.Mut.Unlock()
 
-	g.redisPool = redis.RedisPool{
+	g.redisPool = &redis.RedisPool{
 		Addr:               g.Config.RedisCluster,
 		Password:           g.Config.RedisAuth,
 		MaxActive:          g.Config.RedisPoolMaxSize,
