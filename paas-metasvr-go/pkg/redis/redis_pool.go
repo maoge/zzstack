@@ -7,6 +7,7 @@ import (
 
 	goredis "github.com/go-redis/redis/v7"
 
+	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
@@ -22,6 +23,23 @@ type RedisPool struct {
 	DialTimeout        time.Duration
 	ReadTimeout        time.Duration
 	WriteTimeout       time.Duration
+}
+
+func NewRedisPool() *RedisPool {
+	pool := &RedisPool{
+		Addr:               config.META_SVR_CONFIG.RedisCluster,
+		Password:           config.META_SVR_CONFIG.RedisAuth,
+		MaxActive:          config.META_SVR_CONFIG.RedisPoolMaxSize,
+		MaxIdle:            config.META_SVR_CONFIG.RedisPoolMinSize,
+		IdleTimeout:        config.META_SVR_CONFIG.RedisIdleTimeout,
+		IdleCheckFrequency: config.META_SVR_CONFIG.RedisIdleCheckFrequency,
+		DialTimeout:        config.META_SVR_CONFIG.RedisDialTimeout,
+		ReadTimeout:        config.META_SVR_CONFIG.RedisReadTimeout,
+		WriteTimeout:       config.META_SVR_CONFIG.RedisWriteTimeout,
+	}
+
+	pool.Init()
+	return pool
 }
 
 func (redisPool *RedisPool) Init() {

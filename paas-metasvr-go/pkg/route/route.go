@@ -18,8 +18,8 @@ func RegisterController(controller interface{}) {
 func Init(e *gin.Engine) {
 	defaultGroup := e.Group("")
 	helloController := controller.NewHelloController(defaultGroup)
-	RegisterController(&helloController)
+	RegisterController(helloController)
 
 	accountHandler := controller.NewAccountHandler(defaultGroup)
-	RegisterController(&accountHandler)
+	RegisterController(accountHandler)
 }

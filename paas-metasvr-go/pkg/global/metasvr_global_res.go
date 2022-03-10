@@ -5,31 +5,55 @@ import (
 	"sync"
 
 	goredis "github.com/go-redis/redis/v7"
-	"github.com/maoge/paas-metasvr-go/pkg/config"
 
+	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/db/pool"
+
+	// "github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/redis"
 )
 
 var GLOBAL_RES MetaSvrGlobalRes
 
 type MetaSvrGlobalRes struct {
-	Mut    sync.Mutex
-	Config config.MetaSvrConfig
+	Mut sync.Mutex
 
-	DbYaml    config.DbYaml
 	ldbDbPool *pool.LdbDbPool
 	redisPool *redis.RedisPool
+	// eventbus  eventbus.EventBus
 }
 
 func (g *MetaSvrGlobalRes) Init() {
-	g.initConf()
-
-	runtime.GOMAXPROCS(g.Config.GoMaxPorc)
+	runtime.GOMAXPROCS(config.META_SVR_CONFIG.GoMaxPorc)
 
 	g.initDBPool()
 	g.initRedisPool()
+	// g.initEventBus()
 }
+
+func (g *MetaSvrGlobalRes) initDBPool() {
+	g.Mut.Lock()
+	defer g.Mut.Unlock()
+
+	var dbYaml config.DbYaml
+	dbYaml.Load(config.META_SVR_CONFIG.MetadbYamlName)
+
+	g.ldbDbPool = pool.NewLdbDbPool(&dbYaml)
+}
+
+func (g *MetaSvrGlobalRes) initRedisPool() {
+	g.Mut.Lock()
+	defer g.Mut.Unlock()
+
+	g.redisPool = redis.NewRedisPool()
+}
+
+// func (g *MetaSvrGlobalRes) initEventBus() {
+// 	g.Mut.Lock()
+// 	defer g.Mut.Unlock()
+
+// 	g.eventbus = eventbus.CreateEventBus(consts.EVENTBUS_PULSAR).(eventbus.EventBus)
+// }
 
 func (g *MetaSvrGlobalRes) GetDbPool() *pool.DbPool {
 	return g.ldbDbPool.GetDbPool()
@@ -37,38 +61,4 @@ func (g *MetaSvrGlobalRes) GetDbPool() *pool.DbPool {
 
 func (g *MetaSvrGlobalRes) GetRedisClusterClient() *goredis.ClusterClient {
 	return g.redisPool.GetClusterClient()
-}
-
-func (g *MetaSvrGlobalRes) initConf() {
-	g.Mut.Lock()
-	defer g.Mut.Unlock()
-
-	g.Config = *config.NewConfig()
-}
-
-func (g *MetaSvrGlobalRes) initDBPool() {
-	g.Mut.Lock()
-	defer g.Mut.Unlock()
-
-	g.DbYaml.Load(g.Config.MetadbYamlName)
-
-	g.ldbDbPool = pool.NewLdbDbPool(&g.DbYaml)
-}
-
-func (g *MetaSvrGlobalRes) initRedisPool() {
-	g.Mut.Lock()
-	defer g.Mut.Unlock()
-
-	g.redisPool = &redis.RedisPool{
-		Addr:               g.Config.RedisCluster,
-		Password:           g.Config.RedisAuth,
-		MaxActive:          g.Config.RedisPoolMaxSize,
-		MaxIdle:            g.Config.RedisPoolMinSize,
-		IdleTimeout:        g.Config.RedisIdleTimeout,
-		IdleCheckFrequency: g.Config.RedisIdleCheckFrequency,
-		DialTimeout:        g.Config.RedisDialTimeout,
-		ReadTimeout:        g.Config.RedisReadTimeout,
-		WriteTimeout:       g.Config.RedisWriteTimeout,
-	}
-	g.redisPool.Init()
 }

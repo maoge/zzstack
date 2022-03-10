@@ -26,6 +26,7 @@ var (
 	SESSION_TTL        int64 = 3600000
 	SESSION_KEY_PREFIX       = "session:"
 
+	EVENTBUS_PULSAR = "pulsar"
 	PAAS_TENANT     = "paas-tenant"
 	PAAS_NAMESPACE  = "paas-namespace"
 	SYS_EVENT_TOPIC = "sys-event"

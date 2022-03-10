@@ -5,7 +5,10 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
+
+	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/route"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
@@ -28,8 +31,10 @@ func diableLog() {
 
 func initial() {
 	utils.Init()
+	config.InitMetaSvrConf()
 	global.GLOBAL_RES.Init()
 	meta.InitGlobalCmptMeta()
+	eventbus.InitEventBus()
 }
 
 func startHttp() {
@@ -37,16 +42,16 @@ func startHttp() {
 
 	engine := gin.New()
 
-	info := fmt.Sprintf("start http server: {%v}", global.GLOBAL_RES.Config.WebApiAddress)
+	info := fmt.Sprintf("start http server: {%v}", config.META_SVR_CONFIG.WebApiAddress)
 	utils.LOGGER.Info(info)
 
 	route.Init(engine)
-	err := engine.Run(global.GLOBAL_RES.Config.WebApiAddress)
+	err := engine.Run(config.META_SVR_CONFIG.WebApiAddress)
 	if err == nil {
-		info := fmt.Sprintf("http server: {%v} start OK", global.GLOBAL_RES.Config.WebApiAddress)
+		info := fmt.Sprintf("http server: {%v} start OK", config.META_SVR_CONFIG.WebApiAddress)
 		utils.LOGGER.Info(info)
 	} else {
-		err := fmt.Sprintf("http server: {%v} start error: %s", global.GLOBAL_RES.Config.WebApiAddress, err)
+		err := fmt.Sprintf("http server: {%v} start error: %s", config.META_SVR_CONFIG.WebApiAddress, err)
 		utils.LOGGER.Error(err)
 	}
 }

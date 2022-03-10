@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/maoge/paas-metasvr-go/pkg/meta"
+	"github.com/maoge/paas-metasvr-go/pkg/dao/accdao"
 	"github.com/maoge/paas-metasvr-go/pkg/meta/proto"
 )
 
@@ -13,8 +13,8 @@ type AccountHandler struct {
 	group *gin.RouterGroup
 }
 
-func NewAccountHandler(g *gin.RouterGroup) AccountHandler {
-	return AccountHandler{group: g}
+func NewAccountHandler(g *gin.RouterGroup) *AccountHandler {
+	return &AccountHandler{group: g}
 }
 
 func (m *AccountHandler) Login() {
@@ -32,7 +32,7 @@ func (m *AccountHandler) Login() {
 		err := c.MustBindWith(&user, binding.JSON)
 		if err == nil {
 			resultBean := proto.NewResultBean()
-			meta.Login(&user, resultBean)
+			accdao.Login(&user, resultBean)
 			c.JSON(http.StatusOK, resultBean)
 		} else {
 			c.String(http.StatusBadRequest, "参数绑定失败"+err.Error())

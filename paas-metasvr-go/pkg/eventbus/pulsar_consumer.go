@@ -6,20 +6,20 @@ import (
 	"time"
 
 	"github.com/apache/pulsar-client-go/pulsar"
+	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 type PulsarConsumer struct {
-	client   pulsar.Client
-	consumer pulsar.Consumer
+	client   *pulsar.Client
+	consumer *pulsar.Consumer
 }
 
-func CreatePulsarConsumer() *PulsarConsumer {
+func CreatePulsarConsumer() EventBusConsumer {
 	topic := fmt.Sprintf("persistent://public/default/%v", consts.SYS_EVENT_TOPIC)
 
-	addr := fmt.Sprintf("pulsar://%v", global.GLOBAL_RES.Config.EventbusAddress)
+	addr := fmt.Sprintf("pulsar://%v", config.META_SVR_CONFIG.EventbusAddress)
 	pulsarClient, err := pulsar.NewClient(pulsar.ClientOptions{
 		URL:               addr,
 		OperationTimeout:  3 * time.Second,
@@ -34,8 +34,8 @@ func CreatePulsarConsumer() *PulsarConsumer {
 
 	pulsarConsumer, err := pulsarClient.Subscribe(pulsar.ConsumerOptions{
 		Topic:             topic,
-		SubscriptionName:  global.GLOBAL_RES.Config.EventbusConsumerSubscription,
-		ReceiverQueueSize: global.GLOBAL_RES.Config.ThreadPoolCoreSize,
+		SubscriptionName:  config.META_SVR_CONFIG.EventbusConsumerSubscription,
+		ReceiverQueueSize: config.META_SVR_CONFIG.ThreadPoolCoreSize,
 		Type:              pulsar.Exclusive,
 		// .ackTimeout(10, TimeUnit.SECONDS)
 	})
@@ -45,17 +45,20 @@ func CreatePulsarConsumer() *PulsarConsumer {
 		utils.LOGGER.Fatal(errInfo)
 	}
 
-	return &PulsarConsumer{
-		client:   pulsarClient,
-		consumer: pulsarConsumer,
+	return PulsarConsumer{
+		client:   &pulsarClient,
+		consumer: &pulsarConsumer,
 	}
 }
 
-func (m *PulsarConsumer) Receive() (interface{}, error) {
-	return m.consumer.Receive(context.Background())
+func (m PulsarConsumer) Receive() (interface{}, error) {
+	return (*m.consumer).Receive(context.Background())
 }
 
-func (m *PulsarConsumer) Close() {
-	m.consumer.Close()
-	m.client.Close()
+func (m PulsarConsumer) Close() {
+	(*m.consumer).Close()
+	(*m.client).Close()
+
+	m.consumer = nil
+	m.client = nil
 }

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao"
+	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	"github.com/maoge/paas-metasvr-go/pkg/meta/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 	"github.com/maoge/paas-metasvr-go/pkg/utils/multimap/setmultimap"
@@ -105,7 +105,7 @@ func (m *CmptMeta) reloadAll() {
 }
 
 func (m *CmptMeta) loadAccount() {
-	accSlice, err := dao.LoadAccount()
+	accSlice, err := metadao.LoadAccount()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -148,7 +148,7 @@ func (m *CmptMeta) loadMetaServRoot() {
 }
 
 func (m *CmptMeta) loadMetaAttr() {
-	attrSlice, err := dao.LoadMetaAttr()
+	attrSlice, err := metadao.LoadMetaAttr()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -167,7 +167,7 @@ func (m *CmptMeta) loadMetaAttr() {
 }
 
 func (m *CmptMeta) loadMetaCmpt() {
-	cmptSlice, err := dao.LoadMetaCmpt()
+	cmptSlice, err := metadao.LoadMetaCmpt()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -186,7 +186,7 @@ func (m *CmptMeta) loadMetaCmpt() {
 }
 
 func (m *CmptMeta) loadMetaCmptAttr() {
-	cmptAttrSlice, err := dao.LoadMetaCmptAttr()
+	cmptAttrSlice, err := metadao.LoadMetaCmptAttr()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -203,7 +203,7 @@ func (m *CmptMeta) loadMetaCmptAttr() {
 }
 
 func (m *CmptMeta) loadMetaInst() {
-	instSlice, err := dao.LoadMetaInst()
+	instSlice, err := metadao.LoadMetaInst()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -220,7 +220,7 @@ func (m *CmptMeta) loadMetaInst() {
 }
 
 func (m *CmptMeta) loadMetaInstAttr() {
-	instAttrSlice, err := dao.LoadMetaInstAttr()
+	instAttrSlice, err := metadao.LoadMetaInstAttr()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -237,7 +237,7 @@ func (m *CmptMeta) loadMetaInstAttr() {
 }
 
 func (m *CmptMeta) loadMetaService() {
-	serviceSlice, err := dao.LoadMetaService()
+	serviceSlice, err := metadao.LoadMetaService()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -254,7 +254,7 @@ func (m *CmptMeta) loadMetaService() {
 }
 
 func (m *CmptMeta) loadMetaTopo() {
-	topoSlice, err := dao.LoadMetaTopo()
+	topoSlice, err := metadao.LoadMetaTopo()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -271,7 +271,7 @@ func (m *CmptMeta) loadMetaTopo() {
 }
 
 func (m *CmptMeta) loadDeployHost() {
-	deployHostSlice, err := dao.LoadDeployHost()
+	deployHostSlice, err := metadao.LoadDeployHost()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -288,7 +288,7 @@ func (m *CmptMeta) loadDeployHost() {
 }
 
 func (m *CmptMeta) loadDeployFile() {
-	deployFileSlice, err := dao.LoadDeployFile()
+	deployFileSlice, err := metadao.LoadDeployFile()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -305,7 +305,7 @@ func (m *CmptMeta) loadDeployFile() {
 }
 
 func (m *CmptMeta) loadMetaServer() {
-	serverSlice, err := dao.LoadMetaServer()
+	serverSlice, err := metadao.LoadMetaServer()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -322,7 +322,7 @@ func (m *CmptMeta) loadMetaServer() {
 }
 
 func (m *CmptMeta) loadMetaSsh() {
-	sshSlice, err := dao.LoadMetaSsh()
+	sshSlice, err := metadao.LoadMetaSsh()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -339,7 +339,7 @@ func (m *CmptMeta) loadMetaSsh() {
 }
 
 func (m *CmptMeta) loadMetaCmptVersion() {
-	cmptVerSlice, err := dao.LoadMetaCmptVersion()
+	cmptVerSlice, err := metadao.LoadMetaCmptVersion()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -361,15 +361,15 @@ func (m *CmptMeta) loadMetaCmptVersion() {
 	}
 }
 
-func (m *CmptMeta) getAccount(user string) *proto.Account {
+func (m *CmptMeta) GetAccount(user string) *proto.Account {
 	return m.accountMap[user]
 }
 
-func (m *CmptMeta) getAccSession(user string) *proto.AccountSession {
+func (m *CmptMeta) GetAccSession(user string) *proto.AccountSession {
 	return m.accSessionMap[user]
 }
 
-func (m *CmptMeta) addAccSession(accSession *proto.AccountSession, isLocalOnly bool) {
+func (m *CmptMeta) AddAccSession(accSession *proto.AccountSession, isLocalOnly bool) {
 	m.accSessionMap[accSession.ACC_NAME] = accSession
 	m.magicKeyMap[accSession.MAGIC_KEY] = accSession
 
@@ -386,7 +386,7 @@ func (m *CmptMeta) addAccSession(accSession *proto.AccountSession, isLocalOnly b
 	}
 }
 
-func (m *CmptMeta) removeTtlSession(accName, magicKey string, isLocalOnly bool) {
+func (m *CmptMeta) RemoveTtlSession(accName, magicKey string, isLocalOnly bool) {
 	delete(m.accSessionMap, accName)
 	delete(m.magicKeyMap, magicKey)
 

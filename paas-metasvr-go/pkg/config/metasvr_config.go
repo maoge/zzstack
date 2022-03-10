@@ -8,6 +8,8 @@ import (
 	ini "gopkg.in/ini.v1"
 )
 
+var META_SVR_CONFIG *MetaSvrConfig
+
 type MetaSvrConfig struct {
 	GoMaxPorc int `json:"go_max_porc,omitempty"`
 
@@ -52,6 +54,10 @@ type MetaSvrConfig struct {
 
 	MetadbYamlName string `json:"metadb_yaml_name,omitempty"`
 	TDYamlName     string `json:"td_yaml_name,omitempty"`
+}
+
+func InitMetaSvrConf() {
+	META_SVR_CONFIG = NewConfig()
 }
 
 func NewConfig() *MetaSvrConfig {

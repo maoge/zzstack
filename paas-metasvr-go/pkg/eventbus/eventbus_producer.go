@@ -5,7 +5,7 @@ type EventBusProducer interface {
 	Send([]byte) error
 
 	// async send msg
-	SendAsync([]byte) error
+	SendAsync([]byte)
 
 	// close producer
 	Close()

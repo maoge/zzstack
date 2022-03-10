@@ -1,4 +1,4 @@
-package dao
+package metadao
 
 import (
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"

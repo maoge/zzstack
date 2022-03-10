@@ -6,18 +6,18 @@ import (
 	"time"
 
 	"github.com/apache/pulsar-client-go/pulsar"
+	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 type PulsarProducer struct {
-	client   pulsar.Client
-	producer pulsar.Producer
+	client   *pulsar.Client
+	producer *pulsar.Producer
 }
 
-func CreatePulsarProducer() *PulsarProducer {
-	addr := fmt.Sprintf("pulsar://%v", global.GLOBAL_RES.Config.EventbusAddress)
+func CreatePulsarProducer() EventBusProducer {
+	addr := fmt.Sprintf("pulsar://%v", config.META_SVR_CONFIG.EventbusAddress)
 	pulsarClient, err := pulsar.NewClient(pulsar.ClientOptions{
 		URL:               addr,
 		OperationTimeout:  3 * time.Second,
@@ -43,27 +43,35 @@ func CreatePulsarProducer() *PulsarProducer {
 		utils.LOGGER.Fatal(errInfo)
 	}
 
-	return &PulsarProducer{
-		client:   pulsarClient,
-		producer: pulsarProducer,
+	return PulsarProducer{
+		client:   &pulsarClient,
+		producer: &pulsarProducer,
 	}
 
 }
 
-func (m *PulsarProducer) Send(data []byte) error {
+func (m PulsarProducer) Send(data []byte) error {
 	msg := &pulsar.ProducerMessage{
 		Value: data,
 	}
-	_, err := m.producer.Send(context.Background(), msg)
+	_, err := (*m.producer).Send(context.Background(), msg)
 	return err
 }
 
-func (m *PulsarProducer) SendAsync(data []byte) {
+func (m PulsarProducer) SendAsync(data []byte) {
 	msg := &pulsar.ProducerMessage{
 		Payload: data,
 	}
 
-	m.producer.SendAsync(context.Background(), msg, asyncSendCallBack)
+	(*m.producer).SendAsync(context.Background(), msg, asyncSendCallBack)
+}
+
+func (m PulsarProducer) Close() {
+	(*m.producer).Close()
+	(*m.client).Close()
+
+	m.producer = nil
+	m.client = nil
 }
 
 func asyncSendCallBack(_ pulsar.MessageID, _ *pulsar.ProducerMessage, err error) {
@@ -72,9 +80,4 @@ func asyncSendCallBack(_ pulsar.MessageID, _ *pulsar.ProducerMessage, err error)
 		utils.LOGGER.Fatal(errInfo)
 	}
 	return
-}
-
-func (m *PulsarProducer) Close() {
-	m.producer.Close()
-	m.client.Close()
 }
