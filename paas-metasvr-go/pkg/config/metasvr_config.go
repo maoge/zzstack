@@ -6,12 +6,16 @@ import (
 	"time"
 
 	ini "gopkg.in/ini.v1"
+
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 var META_SVR_CONFIG *MetaSvrConfig
 
 type MetaSvrConfig struct {
 	GoMaxPorc int `json:"go_max_porc,omitempty"`
+
+	MetaServId string `json:"meta_serv_id,omitempty"`
 
 	WebApiAddress string `json:"web_api_address,omitempty"`
 	WebApiUseSSL  bool   `json:"web_api_use_ssl,omitempty"`
@@ -67,6 +71,8 @@ func NewConfig() *MetaSvrConfig {
 		os.Exit(1)
 	}
 
+	metaServId := utils.GenUUID()
+
 	goMaxPorc := cfg.Section("System").Key("go_max_porc").MustInt(16)
 
 	webApiAddress := cfg.Section("System").Key("web_api_address").MustString("0.0.0.0:9090")
@@ -113,6 +119,7 @@ func NewConfig() *MetaSvrConfig {
 
 	return &MetaSvrConfig{
 		GoMaxPorc:     goMaxPorc,
+		MetaServId:    metaServId,
 		WebApiAddress: webApiAddress,
 		WebApiUseSSL:  webApiUseSSL,
 

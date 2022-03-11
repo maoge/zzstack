@@ -2,6 +2,7 @@ package eventbus
 
 import (
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
+	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
@@ -10,15 +11,17 @@ import (
 var EVENTBUS EventBus
 
 type EventBus interface {
-	init()
+	Init()
 
-	send([]byte) error
+	// async send msg
+	Publish([]byte)
 
-	sendAsync([]byte)
+	PublishEvent(*proto.PaasEvent)
 
-	receive() (interface{}, error)
+	// blocking receive msg when received
+	Receive() (interface{}, error)
 
-	close()
+	Close()
 }
 
 func InitEventBus() {

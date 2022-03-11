@@ -9,7 +9,6 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/db/pool"
 
-	// "github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/redis"
 )
 
@@ -20,7 +19,6 @@ type MetaSvrGlobalRes struct {
 
 	ldbDbPool *pool.LdbDbPool
 	redisPool *redis.RedisPool
-	// eventbus  eventbus.EventBus
 }
 
 func (g *MetaSvrGlobalRes) Init() {
@@ -28,7 +26,6 @@ func (g *MetaSvrGlobalRes) Init() {
 
 	g.initDBPool()
 	g.initRedisPool()
-	// g.initEventBus()
 }
 
 func (g *MetaSvrGlobalRes) initDBPool() {
@@ -47,13 +44,6 @@ func (g *MetaSvrGlobalRes) initRedisPool() {
 
 	g.redisPool = redis.NewRedisPool()
 }
-
-// func (g *MetaSvrGlobalRes) initEventBus() {
-// 	g.Mut.Lock()
-// 	defer g.Mut.Unlock()
-
-// 	g.eventbus = eventbus.CreateEventBus(consts.EVENTBUS_PULSAR).(eventbus.EventBus)
-// }
 
 func (g *MetaSvrGlobalRes) GetDbPool() *pool.DbPool {
 	return g.ldbDbPool.GetDbPool()

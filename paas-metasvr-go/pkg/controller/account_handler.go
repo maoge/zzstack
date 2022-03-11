@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/accdao"
-	"github.com/maoge/paas-metasvr-go/pkg/meta/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/proto"
 )
 
 type AccountHandler struct {

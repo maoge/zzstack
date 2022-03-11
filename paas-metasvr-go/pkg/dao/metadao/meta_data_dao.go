@@ -4,7 +4,7 @@ import (
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
 
 	"github.com/maoge/paas-metasvr-go/pkg/global"
-	"github.com/maoge/paas-metasvr-go/pkg/meta/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/proto"
 )
 
 var (

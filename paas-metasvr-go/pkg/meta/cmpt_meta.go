@@ -6,9 +6,12 @@ import (
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
-	"github.com/maoge/paas-metasvr-go/pkg/meta/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/dao/redisdao"
+	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
+	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 	"github.com/maoge/paas-metasvr-go/pkg/utils/multimap/setmultimap"
+	_ "github.com/tidwall/gjson"
 )
 
 var CMPT_META = &CmptMeta{}
@@ -373,16 +376,17 @@ func (m *CmptMeta) AddAccSession(accSession *proto.AccountSession, isLocalOnly b
 	m.accSessionMap[accSession.ACC_NAME] = accSession
 	m.magicKeyMap[accSession.MAGIC_KEY] = accSession
 
-	// TODO broadcast cluster event
 	if !isLocalOnly {
-		// JsonObject msgBody = new JsonObject();
-		// msgBody.put(FixHeader.HEADER_ACC_NAME,  accSession.getAccName());
-		// msgBody.put(FixHeader.HEADER_MAGIC_KEY, accSession.getMagicKey());
-		// msgBody.put(FixHeader.HEADER_SESSION_TIMEOUT, accSession.getSessionTimeOut());
+		msgBodyMap := make(map[string]interface{})
+		msgBodyMap[consts.HEADER_ACC_NAME] = accSession.ACC_NAME
+		msgBodyMap[consts.HEADER_MAGIC_KEY] = accSession.MAGIC_KEY
+		msgBodyMap[consts.HEADER_SESSION_TIMEOUT] = accSession.SESSION_TIMEOUT
 
-		// EventBean ev = new EventBean(EventType.EVENT_ADD_SESSON, msgBody.toString(), "");
-		// EventBusMsg.publishEvent(ev);
-		// MetaDataDao.putSessionToRedis(accSession);
+		msgBody := utils.Struct2Json(msgBodyMap)
+		event := proto.NewPaasEvent(consts.EVENT_ADD_SESSON.CODE, msgBody, "") // EVENT_ADD_SESSON - 10020
+
+		eventbus.EVENTBUS.PublishEvent(event)
+		redisdao.PutSessionToRedis(accSession)
 	}
 }
 
@@ -390,12 +394,14 @@ func (m *CmptMeta) RemoveTtlSession(accName, magicKey string, isLocalOnly bool) 
 	delete(m.accSessionMap, accName)
 	delete(m.magicKeyMap, magicKey)
 
-	// TODO broadcast cluster event
 	if !isLocalOnly {
-		// JsonObject msgBody = new JsonObject();
-		// msgBody.put(FixHeader.HEADER_ACC_NAME,  accName);
-		// msgBody.put(FixHeader.HEADER_MAGIC_KEY, magicKey);
-		// EventBean ev = new EventBean(EventType.EVENT_REMOVE_SESSON, msgBody.toString(), "");
-		// EventBusMsg.publishEvent(ev);
+		msgBodyMap := make(map[string]interface{})
+		msgBodyMap[consts.HEADER_ACC_NAME] = accName
+		msgBodyMap[consts.HEADER_MAGIC_KEY] = magicKey
+
+		msgBody := utils.Struct2Json(msgBodyMap)
+		event := proto.NewPaasEvent(consts.EVENT_REMOVE_SESSON.CODE, msgBody, "") // EVENT_REMOVE_SESSON - 10021
+
+		eventbus.EVENTBUS.PublishEvent(event)
 	}
 }
