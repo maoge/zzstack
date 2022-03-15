@@ -116,8 +116,8 @@ public class CmptMeta {
     }
 
     public void release() {
+        lock.lock();
         try {
-            lock.lock();
             metaServRootMap.clear();
             metaAttrIdMap.clear();
             metaAttrNameMap.clear();
@@ -191,8 +191,8 @@ public class CmptMeta {
         Map<String, PaasService> tmepMetaServiceMap = new ConcurrentHashMap<String, PaasService>();
         loadMetaService(tmepMetaServiceMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tmepMetaServiceMap.isEmpty()) {
                 Map<String, PaasService> oldMetaServiceMap = metaServiceMap;
                 metaServiceMap = tmepMetaServiceMap;
@@ -211,8 +211,8 @@ public class CmptMeta {
         Map<String,  PaasMetaAttr> tempMetaAttrNameMap = new ConcurrentHashMap<String, PaasMetaAttr>();
         loadMetaAttr(tempMetaAttrIdMap, tempMetaAttrNameMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tempMetaAttrIdMap.isEmpty() && !tempMetaAttrNameMap.isEmpty()) {
                 Map<Integer, PaasMetaAttr> oldMetaAttrIdMap = metaAttrIdMap;
                 Map<String, PaasMetaAttr> oldMetaAttrNameMap = metaAttrNameMap;
@@ -234,8 +234,8 @@ public class CmptMeta {
         Map<String, PaasMetaCmpt> tempMetaCmptNameMap = new ConcurrentHashMap<String, PaasMetaCmpt>();
         loadMetaCmpt(tempMetaCmptIdMap, tempMetaCmptNameMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tempMetaCmptIdMap.isEmpty() && !tempMetaCmptNameMap.isEmpty()) {
                 Map<Integer, PaasMetaCmpt> oldMetaCmptIdMap = metaCmptIdMap;
                 Map<String, PaasMetaCmpt> oldMetaCmptNameMap = metaCmptNameMap;
@@ -256,8 +256,8 @@ public class CmptMeta {
         Multimap<Integer, Integer> tempMetaCmptAttrMMap = ArrayListMultimap.create();
         loadMetaCmptAttr(tempMetaCmptAttrMMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tempMetaCmptAttrMMap.isEmpty()) {
                 Multimap<Integer, Integer> oldMetaCmptAttrMMap = metaCmptAttrMMap;
                 metaCmptAttrMMap = tempMetaCmptAttrMMap;
@@ -276,8 +276,8 @@ public class CmptMeta {
         loadMetaInst(tempMetaInstMap);
         loadMetaInstAttr(tempMetaInstAttrMMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tempMetaInstMap.isEmpty() && !tempMetaInstAttrMMap.isEmpty()) {
                 Map<String, PaasInstance> oldMetaInstMap = metaInstMap;
                 Multimap<String, PaasInstAttr> oldMetaInstAttrMMap = metaInstAttrMMap;
@@ -298,8 +298,8 @@ public class CmptMeta {
         Multimap<String, PaasTopology> tempMetaTopoMMap = ArrayListMultimap.create();
         loadMetaTopo(tempMetaTopoMMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tempMetaTopoMMap.isEmpty()) {
                 Multimap<String, PaasTopology> oldMetaTopoMMap = metaTopoMMap;
                 metaTopoMMap = tempMetaTopoMMap;
@@ -318,8 +318,8 @@ public class CmptMeta {
         loadDeployHost(tempMetaDeployHostMap);
         loadDeployFile(tempMetaDeployFileMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tempMetaDeployHostMap.isEmpty() && !tempMetaDeployFileMap.isEmpty()) {
                 Map<Integer, PaasDeployHost> oldMetaDeployHostMap = metaDeployHostMap;
                 Map<Integer, PaasDeployFile> oldMetaDeployFileMap = metaDeployFileMap;
@@ -342,8 +342,8 @@ public class CmptMeta {
         loadMetaServer(tempMetaServerMap);
         loadMetaSsh(tempMetaSshMMap);
         
+        lock.lock();
         try {
-            lock.lock();
             if (!tempMetaServerMap.isEmpty() && !tempMetaSshMMap.isEmpty()) {
                 Map<String,  PaasServer> oldMetaServerMap = metaServerMap;
                 Multimap<String, PaasSsh> oldMetaSshMMap = metaSshMMap;
@@ -547,9 +547,8 @@ public class CmptMeta {
     public Vector<PaasMetaAttr> getCmptAttrs(int cmptId) {
         Vector<PaasMetaAttr> attrVec = null;
         
+        lock.lock();
         try {
-            lock.lock();
-        
             Collection<Integer> attrIdList = metaCmptAttrMMap.get(cmptId);
             if (attrIdList == null)
                 return null;
@@ -651,9 +650,8 @@ public class CmptMeta {
     }
 
     public void addInstAttr(PaasInstAttr instAttr) {
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<PaasInstAttr> attrCollection = metaInstAttrMMap.get(instAttr.getInstId());
             int attrId = instAttr.getAttrId();
             PaasInstAttr attrOld = null;
@@ -680,9 +678,8 @@ public class CmptMeta {
     }
     
     public void updInstAttr(PaasInstAttr instAttr) {
+        lock.lock();
         try {
-            lock.lock();
-        
             int attrId = instAttr.getAttrId();
             Collection<PaasInstAttr> attrs = metaInstAttrMMap.get(instAttr.getInstId());
             for (PaasInstAttr attr : attrs) {
@@ -701,9 +698,8 @@ public class CmptMeta {
 
     public boolean delInstAttr(String instId) {
         boolean ret = false;
+        lock.lock();
         try {
-            lock.lock();
-            
             ret = metaInstAttrMMap.removeAll(instId) != null;
         } catch(Exception e) {
             logger.error("delInstAttr caught excetpion:{}", e.getMessage(), e);
@@ -715,9 +711,8 @@ public class CmptMeta {
 
     public Collection<PaasInstAttr> getInstAttrs(String instId) {
         Collection<PaasInstAttr> attrs = null;
+        lock.lock();
         try {
-            lock.lock();
-            
             attrs = metaInstAttrMMap.get(instId);
         } catch(Exception e) {
             logger.error("getInstAttrs caught excetpion:{}", e.getMessage(), e);
@@ -729,9 +724,8 @@ public class CmptMeta {
     
     public final PaasInstAttr getInstAttr(String instId, int attrId) {
         PaasInstAttr ret = null;
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<PaasInstAttr> attrs = metaInstAttrMMap.get(instId);
             for (PaasInstAttr attr : attrs) {
                 if (attr.getAttrId() == attrId) {
@@ -749,8 +743,8 @@ public class CmptMeta {
     }
 
     public void addTopo(PaasTopology topo) {
+        lock.lock();
         try {
-            lock.lock();
             metaTopoMMap.put(topo.getInstId1(), topo);
         } catch(Exception e) {
             logger.error("addTopo caught excetpion:{}", e.getMessage(), e);
@@ -760,9 +754,8 @@ public class CmptMeta {
     }
     
     public void modTopo(PaasTopology topo) {
+        lock.lock();
         try {
-            lock.lock();
-            
             String parentID = topo.getInstId1();
             PaasInstance inst = metaInstMap.get(parentID);
             if (inst.getCmptId() == 801) {  // 'HA_CONTAINER'
@@ -778,8 +771,8 @@ public class CmptMeta {
     }
 
     public void delTopo(String parentId) {
+        lock.lock();
         try {
-            lock.lock();
             metaTopoMMap.removeAll(parentId);
         } catch(Exception e) {
             logger.error("delTopo parentId:{} caught excetpion:{}", parentId, e.getMessage(), e);
@@ -789,8 +782,8 @@ public class CmptMeta {
     }
     
     public void delTopo(String parentId, String instId) {
+        lock.lock();
         try {
-            lock.lock();
             metaTopoMMap.removeAll(instId);
     
             Collection<PaasTopology> parentSubs = metaTopoMMap.get(parentId);
@@ -811,8 +804,8 @@ public class CmptMeta {
     }
     
     public void delAllSubTopo(String parentId) {
+        lock.lock();
         try {
-            lock.lock();
             metaTopoMMap.removeAll(parentId);
         } catch(Exception e) {
             logger.error("delAllSubTopo parentId:{}, caught excetpion:{}", parentId, e.getMessage(), e);
@@ -847,9 +840,8 @@ public class CmptMeta {
     }
     
     public void getInstRelations(String instId, Vector<PaasTopology> relations) {
+        lock.lock();
         try {
-            lock.lock();
-
             Collection<PaasTopology> topos = metaTopoMMap.get(instId);
             if (topos == null)
                 return;
@@ -866,9 +858,8 @@ public class CmptMeta {
     
     public boolean isTopoRelationExists(String parentId) {
         boolean res = false;
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<PaasTopology> topos = metaTopoMMap.get(parentId);
             if (topos != null && topos.size() > 0) {
                 res = true;
@@ -883,9 +874,8 @@ public class CmptMeta {
     
     public boolean isTopoRelationExists(String parentId, String subId) {
         boolean res = false;
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<PaasTopology> topos = metaTopoMMap.get(parentId);
             for (PaasTopology topo : topos) {
                 res = subId.equals(topo.getInstId2());
@@ -911,10 +901,8 @@ public class CmptMeta {
 
     public boolean isServerNull(String serverIp) {
         boolean result = false;
-        
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<PaasSsh> sshList = metaSshMMap.get(serverIp);
             if (sshList == null)
                 return true;
@@ -928,9 +916,8 @@ public class CmptMeta {
     }
 
     public void addSsh(PaasSsh ssh) {
+        lock.lock();
         try {
-            lock.lock();
-            
             metaSshMMap.put(ssh.getServerIp(), ssh);
         } finally {
             lock.unlock();
@@ -938,9 +925,8 @@ public class CmptMeta {
     }
 
     public void delSsh(String serverIp, String sshId) {
+        lock.lock();
         try {
-            lock.lock();
-
             Collection<PaasSsh> sshList = metaSshMMap.get(serverIp);
             if (sshList == null)
                 return;
@@ -961,9 +947,8 @@ public class CmptMeta {
     }
 
     public void modSsh(String serverIp, String sshId, String sshName, String sshPwd, int sshPort) {
+        lock.lock();
         try {
-            lock.lock();
-        
             Collection<PaasSsh> sshList = metaSshMMap.get(serverIp);
             if (sshList == null)
                 return;
@@ -987,8 +972,8 @@ public class CmptMeta {
 
     public PaasSsh getSshById(String sshId) {
         PaasSsh ssh = null;
+        lock.lock();
         try {
-            lock.lock();
             Collection<Entry<String, PaasSsh>> entrys = metaSshMMap.entries();
             for (Entry<String, PaasSsh> entry : entrys) {
                 PaasSsh ref = entry.getValue();
@@ -1054,9 +1039,8 @@ public class CmptMeta {
     
     public boolean isInstAttrExists(String instID, int attrID) {
         boolean res = false;
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<PaasInstAttr> attrs = metaInstAttrMMap.get(instID);
             
             for (PaasInstAttr attr : attrs) {
@@ -1076,10 +1060,8 @@ public class CmptMeta {
     
     public JsonArray getSurpportSSHList(String servClazz) {
         JsonArray res = new JsonArray();
-        
+        lock.lock();
         try {
-            lock.lock();
-        
             Set<Entry<String, PaasServer>> entrySet = metaServerMap.entrySet();
             for (Entry<String, PaasServer> entry : entrySet) {
                 String serverIP = entry.getKey();
@@ -1121,9 +1103,8 @@ public class CmptMeta {
     
     public JsonArray getServListFromCache(String servType) {
         JsonArray res = new JsonArray();
+        lock.lock();
         try {
-            lock.lock();
-            
             Set<Entry<String, PaasService>> entrySet = metaServiceMap.entrySet();
             for (Entry<String, PaasService> entry : entrySet) {
                 PaasService serv = entry.getValue();
@@ -1367,10 +1348,8 @@ public class CmptMeta {
     
     public boolean isSshExists(String sshName, String servIp, String servClazz) {
         boolean result = false;
-        
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<PaasSsh> sshList = metaSshMMap.get(servIp);
             if (sshList == null || sshList.isEmpty())
                 return false;
@@ -1392,11 +1371,9 @@ public class CmptMeta {
     }
     
     public boolean isSshUsing(String sshId) {
-        
         boolean result = false;
+        lock.lock();
         try {
-            lock.lock();
-            
             Collection<Entry<String, PaasInstAttr>> entries = metaInstAttrMMap.entries();
             for (Entry<String, PaasInstAttr> entry : entries) {
                 PaasInstAttr attr = entry.getValue();

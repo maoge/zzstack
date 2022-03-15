@@ -105,9 +105,8 @@ public class DBSrcPool {
     public void close() {
         stopChecker();
 
+        lock.lock();
         try {
-            lock.lock();
-
             if (validDBMap != null) {
                 Set<Entry<String, DataSourcePool>> entrySet = validDBMap.entrySet();
                 for (Entry<String, DataSourcePool> entry : entrySet) {
@@ -152,9 +151,8 @@ public class DBSrcPool {
 
     public DataSourcePool getDataSourcePool() throws DBException {
         DataSourcePool connPool = null;
+        lock.lock();
         try {
-            lock.lock();
-
             if (validIdList.size() == 0) {
                 throw new DBException("db source is empty", new Throwable(), DBERRINFO.e1);
             }
@@ -184,9 +182,8 @@ public class DBSrcPool {
     }
 
     public void removeBrokenPool(String id) {
+        lock.lock();
         try {
-            lock.lock();
-
             if (validDBMap.containsKey(id)) {
                 validIdList.remove(id);
                 DataSourcePool connPool = validDBMap.remove(id);
@@ -209,9 +206,8 @@ public class DBSrcPool {
     }
 
     public void mergeRecoveredPool(String id) {
+        lock.lock();
         try {
-            lock.lock();
-
             if (invalidDBMap.containsKey(id)) {
                 invalidIdList.remove(id);
                 DataSourcePool connPool = invalidDBMap.remove(id);
@@ -240,9 +236,8 @@ public class DBSrcPool {
         InstancePoolImpl instancePool = new InstancePoolImpl(url, username, passwd, dbType, jdbc);
         logger.info("Create pool to: {}", url);
 
+        lock.lock();
         try {
-            lock.lock();
-
             if (instancePool.check()) {
                 this.validDBMap.put(url, instancePool);
                 this.validIdList.add(url);
@@ -260,9 +255,8 @@ public class DBSrcPool {
     public void removePool(String id) throws Exception {
         logger.info("Remove pool to " + id);
         DataSourcePool pool = null;
+        lock.lock();
         try {
-            lock.lock();
-
             if (this.validIdList.contains(id)) {
                 pool = this.validDBMap.get(id);
                 this.validDBMap.remove(id);

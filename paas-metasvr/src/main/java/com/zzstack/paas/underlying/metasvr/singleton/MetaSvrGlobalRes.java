@@ -60,8 +60,8 @@ public class MetaSvrGlobalRes {
 
     public static MetaSvrGlobalRes get() {
         if (theInstance == null) {
+            intanceLock.lock();
             try {
-                intanceLock.lock();
                 if (theInstance == null) {
                     theInstance = new MetaSvrGlobalRes();
                     theInstance.init();
@@ -85,9 +85,8 @@ public class MetaSvrGlobalRes {
     }
 
     public static void release() {
+        intanceLock.lock();
         try {
-            intanceLock.lock();
-
             if (theInstance == null)
                 return;
 
@@ -258,9 +257,8 @@ public class MetaSvrGlobalRes {
 
     public JedisCluster getRedisClient() {
         JedisCluster client = null;
+        intanceLock.lock();
         try {
-            intanceLock.lock();
-
             if (theInstance != null)
                 client = theInstance.jedisCluster;
         } catch (Exception e) {
@@ -277,9 +275,8 @@ public class MetaSvrGlobalRes {
     
     public Producer<byte[]> getProducer() {
         Producer<byte[]> pulsarProducer = null;
+        intanceLock.lock();
         try {
-            intanceLock.lock();
-
             if (theInstance != null)
                 pulsarProducer = theInstance.producer;
         } catch (Exception e) {

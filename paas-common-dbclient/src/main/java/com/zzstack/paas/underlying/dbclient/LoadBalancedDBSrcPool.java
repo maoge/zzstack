@@ -64,8 +64,8 @@ public class LoadBalancedDBSrcPool {
         if (dbPool != null)
             return dbPool;
         
+        lock.lock();
         try {
-            lock.lock();
             dbPool = new LoadBalancedDBSrcPool(DEFAULT_DB_NAME);
             dbPool.init(false, null);
             instMap.put(DEFAULT_DB_NAME, dbPool);
@@ -81,8 +81,8 @@ public class LoadBalancedDBSrcPool {
         if (dbPool != null)
             return dbPool;
         
+        lock.lock();
         try {
-            lock.lock();
             dbPool = new LoadBalancedDBSrcPool(dbName);
             dbPool.init(false, null);
             instMap.put(dbName, dbPool);
@@ -98,8 +98,8 @@ public class LoadBalancedDBSrcPool {
         if (dbPool != null)
             return dbPool;
         
+        lock.lock();
         try {
-            lock.lock();
             Object o = PaasTopoParser.parseServiceTopo(topoStr, params);
             DBConfig dbConfParseFromTopo = (DBConfig) o;
             
@@ -115,9 +115,8 @@ public class LoadBalancedDBSrcPool {
     }
     
     public static void destroy() {
+        lock.lock();
         try {
-            lock.lock();
-            
             Set<Entry<String, LoadBalancedDBSrcPool>> entrySet = instMap.entrySet();
             for (Entry<String, LoadBalancedDBSrcPool> entry : entrySet) {
                 LoadBalancedDBSrcPool dbPool = entry.getValue();
@@ -134,9 +133,8 @@ public class LoadBalancedDBSrcPool {
     }
     
     public static void destry(String dbName) {
+        lock.lock();
         try {
-            lock.lock();
-            
             if (instMap.containsKey(dbName)) {
                 LoadBalancedDBSrcPool dbPool = instMap.remove(dbName);
                 dbPool.close();
@@ -152,10 +150,9 @@ public class LoadBalancedDBSrcPool {
     
     private boolean init(boolean initFromPaas, DBConfig dbConfParseFromTopo) {
         boolean ret = true;
+        lock.lock();
 
         try {
-            lock.lock();
-            
             if (!isInited) {
                 if (initFromPaas) {
                     dbConf = dbConfParseFromTopo;
@@ -194,25 +191,11 @@ public class LoadBalancedDBSrcPool {
     }
     
     public DBSrcPool getDBSrcPool() {
-        try {
-            lock.lock();
-
-            return dbSrcPool;
-            
-        } finally {
-            lock.unlock();
-        }
+        return dbSrcPool;
     }
     
     public DataSource getDataSource() {
-        try {
-            lock.lock();
-            
-            return dbSrcPool.getDataSource();
-            
-        } finally {
-            lock.unlock();
-        }
+        return dbSrcPool.getDataSource();
     }
     
     private void close() {

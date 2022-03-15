@@ -64,9 +64,8 @@ public class MetaSvrConfigFatory {
         if (theInstance != null)
             return theInstance;
         
+        lock.lock();
         try {
-            lock.lock();
-            
             if (theInstance == null) {
                 theInstance = new MetaSvrConfigFatory(metasvrUrls, user, passwd);
             }

@@ -44,8 +44,8 @@ public class MetaSvrUrls {
     }
     
     public void addToValidUrls(String url) {
+        lock.lock();
         try {
-            lock.lock();
             validUrls.add(url);
         } finally {
             lock.unlock();
@@ -53,8 +53,8 @@ public class MetaSvrUrls {
     }
     
     public void moveToValidUrls(String url) {
+        lock.lock();
         try {
-            lock.lock();
             if (invalidUrls.remove(url)) {
                 validUrls.add(url);
             }
@@ -64,8 +64,8 @@ public class MetaSvrUrls {
     }
     
     public void moveToInvalidUrls(String url) {
+        lock.lock();
         try {
-            lock.lock();
             if (validUrls.remove(url)) {
                 invalidUrls.add(url);
                 logger.info("{} is broken ......", url);
@@ -87,8 +87,8 @@ public class MetaSvrUrls {
     
     public boolean isValidUrlsEmpty() {
         boolean result = false;
+        lock.lock();
         try {
-            lock.lock();
             result = validUrls.isEmpty();
         } finally {
             lock.unlock();
@@ -99,8 +99,8 @@ public class MetaSvrUrls {
     
     public boolean isInvalidUrlsEmpty() {
         boolean result = false;
+        lock.lock();
         try {
-            lock.lock();
             result = invalidUrls.isEmpty();
         } finally {
             lock.unlock();
@@ -111,8 +111,8 @@ public class MetaSvrUrls {
     
     public String getRandomValidUrl() {
         String result = null;
+        lock.lock();
         try {
-            lock.lock();
             int size = validUrls.size();
             if (size > 1) {
                 int idx = (int) (metaSvrIdx.incrementAndGet() % size);
@@ -129,9 +129,8 @@ public class MetaSvrUrls {
     }
     
     public void startChecker() {
+        lock.lock();
         try {
-            lock.lock();
-            
             if (checker == null) {
                 checker = new BrokenUrlChecker(this);
             }

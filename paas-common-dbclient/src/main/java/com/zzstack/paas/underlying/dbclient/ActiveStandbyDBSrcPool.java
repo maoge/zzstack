@@ -68,8 +68,8 @@ public class ActiveStandbyDBSrcPool {
         if (dbPool != null)
             return dbPool;
         
+        lock.lock();
         try {
-            lock.lock();
             dbPool = new ActiveStandbyDBSrcPool(DEFAULT_DB_NAME);
             dbPool.init(false, null);
             instMap.put(DEFAULT_DB_NAME, dbPool);
@@ -85,8 +85,8 @@ public class ActiveStandbyDBSrcPool {
         if (dbPool != null)
             return dbPool;
         
+        lock.lock(); 
         try {
-            lock.lock();
             dbPool = new ActiveStandbyDBSrcPool(dbName);
             dbPool.init(false, null);
             instMap.put(dbName, dbPool);
@@ -102,8 +102,8 @@ public class ActiveStandbyDBSrcPool {
         if (dbPool != null)
             return dbPool;
         
+        lock.lock();
         try {
-            lock.lock();
             Object o = PaasTopoParser.parseServiceTopo(topoStr, params);
             DBConfig dbConfParseFromTopo = (DBConfig) o;
             
@@ -119,9 +119,8 @@ public class ActiveStandbyDBSrcPool {
     }
     
     public static void destroy() {
+        lock.lock();
         try {
-            lock.lock();
-            
             Set<Entry<String, ActiveStandbyDBSrcPool>> entrySet = instMap.entrySet();
             for (Entry<String, ActiveStandbyDBSrcPool> entry : entrySet) {
                 ActiveStandbyDBSrcPool dbPool = entry.getValue();
@@ -144,9 +143,8 @@ public class ActiveStandbyDBSrcPool {
     private boolean init(boolean initFromPaas, DBConfig dbConfParseFromTopo) {
         boolean ret = true;
 
+        lock.lock();
         try {
-            lock.lock();
-            
             if (!isInited) {
                 if (initFromPaas) {
                     dbConf = dbConfParseFromTopo;
@@ -198,9 +196,8 @@ public class ActiveStandbyDBSrcPool {
     }
 
     public DBSrcPool getDBSrcPool() {
+        lock.lock();
         try {
-            lock.lock();
-
             if (dbInUseType == EnumDBInUse.master) {
                 return masterDBSrcPool;
             } else {
@@ -213,9 +210,8 @@ public class ActiveStandbyDBSrcPool {
     }
 
     public DataSource getDataSource() {
+        lock.lock();
         try {
-            lock.lock();
-            
             if (dbInUseType == EnumDBInUse.master) {
                 return masterDBSrcPool.getDataSource();
             } else {
@@ -261,9 +257,8 @@ public class ActiveStandbyDBSrcPool {
             return true;
         }
 
+        lock.lock();
         try {
-            lock.lock();
-            
             logger.info("ActiveStandbyDBSrcPool switchDBType dbInUseType:{}", dbType.name());
             
             // dbPool.close();

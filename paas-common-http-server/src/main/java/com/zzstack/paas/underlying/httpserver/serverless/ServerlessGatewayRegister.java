@@ -62,9 +62,8 @@ public class ServerlessGatewayRegister {
     
     private String getGateway() {
         String addr = null;
+        lock.lock();
         try {
-            lock.lock();
-            
             int i = (int) (index++ % validSize.get());
             addr = validGwList.get(i);
         } finally {

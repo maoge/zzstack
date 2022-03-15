@@ -54,9 +54,9 @@ public class ServiceData {
 	    if (theInstance != null) {
 	        return theInstance;
 	    }
-	    
+        
+        intanceLock.lock();
 		try {
-			intanceLock.lock();
 			if (theInstance != null) {
 				return theInstance;
 			} else {

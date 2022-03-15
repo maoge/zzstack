@@ -38,20 +38,25 @@ public class ClusterServiceImpl implements ClusterService {
         if (raftNode.getLeaderId() != -1
                 && raftNode.getLeaderId() != raftNode.getLocalServer().getServerId()
                 && leaderId != raftNode.getLeaderId()) {
+            
             leaderLock.lock();
-            if (leaderId != -1 && leaderRpcClient != null) {
-                leaderRpcClient.stop();
-                leaderRpcClient = null;
-                leaderId = -1;
+
+            try {
+                if (leaderId != -1 && leaderRpcClient != null) {
+                    leaderRpcClient.stop();
+                    leaderRpcClient = null;
+                    leaderId = -1;
+                }
+                leaderId = raftNode.getLeaderId();
+                Peer peer = raftNode.getPeerMap().get(leaderId);
+                Endpoint endpoint = new Endpoint(peer.getServer().getEndpoint().getHost(),
+                        peer.getServer().getEndpoint().getPort());
+                RpcClientOptions rpcClientOptions = new RpcClientOptions();
+                rpcClientOptions.setGlobalThreadPoolSharing(true);
+                leaderRpcClient = new RpcClient(endpoint, rpcClientOptions);
+            } finally {
+                leaderLock.unlock();
             }
-            leaderId = raftNode.getLeaderId();
-            Peer peer = raftNode.getPeerMap().get(leaderId);
-            Endpoint endpoint = new Endpoint(peer.getServer().getEndpoint().getHost(),
-                    peer.getServer().getEndpoint().getPort());
-            RpcClientOptions rpcClientOptions = new RpcClientOptions();
-            rpcClientOptions.setGlobalThreadPoolSharing(true);
-            leaderRpcClient = new RpcClient(endpoint, rpcClientOptions);
-            leaderLock.unlock();
         }
     }
 

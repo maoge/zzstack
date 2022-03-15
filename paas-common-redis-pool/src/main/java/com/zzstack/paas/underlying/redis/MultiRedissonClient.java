@@ -34,9 +34,8 @@ public class MultiRedissonClient {
         if (balancer != null)
             return balancer;
         
+        lock.lock();
         try {
-            lock.lock();
-            
             balancer = RedissonConfParser.fromYaml(name);
             entryMap.put(name, balancer);
         } catch (Exception e) {
@@ -55,9 +54,8 @@ public class MultiRedissonClient {
         if (balancer != null)
             return balancer;
 
+        lock.lock();
         try {
-            lock.lock();
-
             Object o = PaasTopoParser.parseServiceTopo(topoStr, params);
             CacheRedisHaConf redissonConf = (CacheRedisHaConf) o;
             balancer = RedissonConfParser.fromRedissonConf(redissonConf);
@@ -73,9 +71,8 @@ public class MultiRedissonClient {
     }
     
     public static void destroy() {
+        lock.lock();
         try {
-            lock.lock();
-            
             Set<Entry<String, WeightedRRLoadBalancer>> entrySet = entryMap.entrySet();
             for (Entry<String, WeightedRRLoadBalancer> entry : entrySet) {
                 WeightedRRLoadBalancer balancer = entry.getValue();

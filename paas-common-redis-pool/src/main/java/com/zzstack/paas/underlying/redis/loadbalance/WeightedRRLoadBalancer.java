@@ -53,8 +53,8 @@ public class WeightedRRLoadBalancer {
         }
         Integer total = 0;
         Node nodeOfMaxWeight = null;
+        lock.lock();
         try {
-            lock.lock();
             for (Node node : nodes) {
                 total += node.getEffectiveWeight();
                 node.setCurrentWeight(node.getCurrentWeight() + node.getEffectiveWeight());
@@ -93,8 +93,8 @@ public class WeightedRRLoadBalancer {
         if (!checkResetWeight(weightMap))
             return false;
         
+        lock.lock();
         try {
-            lock.lock();
             for (Node node : nodes) {
                 String id = node.getId();
                 Integer weight = weightMap.get(id);

@@ -57,9 +57,8 @@ public class EventDispatcher {
     }
     
     public void start() {
+        lock.lock();
         try {
-            lock.lock();
-            
             eventThread = new Thread(eventRunner);
             eventThread.setName("EventBusDispatcher");
             eventThread.setDaemon(true);
@@ -70,8 +69,8 @@ public class EventDispatcher {
     }
 
     public void stop() {
+        lock.lock();
         try {
-            lock.lock();
             if (eventRunner != null) {
                 eventRunner.stopRunning();
                 eventRunner = null;

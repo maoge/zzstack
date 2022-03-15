@@ -28,8 +28,8 @@ public class SequenceId {
         if (theInstance != null)
             return theInstance;
         
+        intanceLock.lock();
         try {
-            intanceLock.lock();
             if (theInstance == null) {
                 theInstance = new SequenceId();
             }

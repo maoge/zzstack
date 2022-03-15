@@ -33,8 +33,8 @@ public class GlobalRes {
             return theInstance;
         }
 
+        lock.lock();
         try {
-            lock.lock();
             if (theInstance != null) {
                 return theInstance;
             } else {

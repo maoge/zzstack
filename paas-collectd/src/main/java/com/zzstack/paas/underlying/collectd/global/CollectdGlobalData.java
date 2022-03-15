@@ -37,8 +37,8 @@ public class CollectdGlobalData {
     }
 
     public static CollectdGlobalData get() {
+        intanceLock.lock();
         try {
-            intanceLock.lock();
             if (theInstance != null) {
                 return theInstance;
             } else {
@@ -53,8 +53,8 @@ public class CollectdGlobalData {
     }
 
     public static void destroy() {
+        intanceLock.lock();
         try {
-            intanceLock.lock();
             if (theInstance != null) {
                 if (theInstance.serverMarshell != null) {
                     theInstance.serverMarshell.destroy();
