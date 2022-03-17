@@ -37,3 +37,11 @@ type GetOpLogCntParam struct {
 	START_TS int64  `json:"START_TS" binding:"required"`
 	END_TS   int64  `json:"END_TS" binding:"required"`
 }
+
+type GetOpLogListParam struct {
+	USER        string `json:"USER" binding:"required"`
+	START_TS    int64  `json:"START_TS" binding:"required"`
+	END_TS      int64  `json:"END_TS" binding:"required"`
+	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
+	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+}

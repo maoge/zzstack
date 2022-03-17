@@ -47,7 +47,7 @@ func (h *AccountHandler) ModPassWord() {
 		err := c.MustBindWith(&modPasswdParam, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
-
+			return
 		}
 		resultBean := proto.NewResultBean()
 		accdao.ModPasswd(&modPasswdParam, resultBean)
@@ -65,6 +65,20 @@ func (h *AccountHandler) GetOpLogCnt() {
 		}
 		resultBean := proto.NewResultBean()
 		accdao.GetOpLogCnt(&getOpLogCntParam, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *AccountHandler) GetOpLogList() {
+	h.group.POST("/paas/account/getOpLogList", func(c *gin.Context) {
+		var getOpLogListParam proto.GetOpLogListParam
+		err := c.MustBindWith(&getOpLogListParam, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+		resultBean := proto.NewResultBean()
+		accdao.GetOpLogList(&getOpLogListParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }

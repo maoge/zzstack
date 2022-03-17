@@ -17,6 +17,8 @@ import (
 var (
 	UPD_ACC_PASSWD   = "UPDATE t_account SET PASSWD = ? WHERE ACC_NAME = ?"
 	SEL_OP_LOG_COUNT = "SELECT count(1) COUNT FROM t_meta_oplogs WHERE 1=1 %s"
+	SEL_OP_LOG_LIST  = `SELECT ACC_NAME, EVENT_TYPE, OP_DETAIL, INSERT_TIME FROM t_meta_oplogs 
+	                     WHERE 1=1 AND ACC_NAME = '?' AND INSERT_TIME >= ? AND INSERT_TIME <= ? ORDER BY INSERT_TIME ASC ?, ?`
 )
 
 func Login(loginParam *proto.LoginParam, resultBean *proto.ResultBean) bool {
@@ -112,9 +114,9 @@ func ModPasswd(modPasswdParam *proto.ModPasswdParam, resultBean *proto.ResultBea
 }
 
 func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *proto.ResultBean) {
-	where := fmt.Sprintf("AND ACC_NAME = '%v' AND INSERT_TIME >= %v AND INSERT_TIME <= %v ",
+	sqlWhere := fmt.Sprintf("AND ACC_NAME = '%s' AND INSERT_TIME >= %d AND INSERT_TIME <= %d ",
 		getOpLogCntParam.USER, getOpLogCntParam.START_TS, getOpLogCntParam.END_TS)
-	sql := fmt.Sprintf(SEL_OP_LOG_COUNT, where)
+	sql := fmt.Sprintf(SEL_OP_LOG_COUNT, sqlWhere)
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
 	out := proto.Count{}
@@ -124,6 +126,25 @@ func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *proto.Res
 		resultBean.RET_INFO = out.COUNT
 	} else {
 		errInfo := fmt.Sprintf("accName:%v GetOpLogCnt fail, %v", getOpLogCntParam.USER, err.Error())
+		utils.LOGGER.Error(errInfo)
+
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = err.Error()
+	}
+}
+
+func GetOpLogList(getOpLogListParam *proto.GetOpLogListParam, resultBean *proto.ResultBean) {
+	start := getOpLogListParam.PAGE_SIZE * (getOpLogListParam.PAGE_NUMBER - 1)
+	sql := fmt.Sprintf(SEL_OP_LOG_LIST, getOpLogListParam.USER, getOpLogListParam.START_TS,
+		getOpLogListParam.END_TS, start, getOpLogListParam.PAGE_SIZE)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	data, err := crud.SelectAsMapSlice(dbPool, &sql)
+	if err == nil {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = data
+	} else {
+		errInfo := fmt.Sprintf("accName:%v GetOpLogList fail, %v", getOpLogListParam.USER, err.Error())
 		utils.LOGGER.Error(errInfo)
 
 		resultBean.RET_CODE = consts.REVOKE_NOK
