@@ -17,25 +17,54 @@ func NewAccountHandler(g *gin.RouterGroup) *AccountHandler {
 	return &AccountHandler{group: g}
 }
 
-func (m *AccountHandler) Login() {
-	m.group.POST("/paas/account/login", func(c *gin.Context) {
-		// bodyAsByteArray, err := ioutil.ReadAll(c.Request.Body)
-		// if err != nil {
-		// 	c.JSON(200, gin.H{"ret_code": "-1", "ret_info": "bad request"})
-		// } else {
-		// 	// utils.LOGGER.Info(fmt.Sprintf("%v", string(jsonData)))
-		// 	//jsonBody := string(bodyAsByteArray)
-		// 	c.JSON(200, jsonBody)
-		// }
-
-		var user proto.AccUser
-		err := c.MustBindWith(&user, binding.JSON)
+func (h *AccountHandler) Login() {
+	h.group.POST("/paas/account/login", func(c *gin.Context) {
+		var loginParam proto.LoginParam
+		err := c.MustBindWith(&loginParam, binding.JSON)
 		if err == nil {
 			resultBean := proto.NewResultBean()
-			accdao.Login(&user, resultBean)
+			accdao.Login(&loginParam, resultBean)
 			c.JSON(http.StatusOK, resultBean)
 		} else {
-			c.String(http.StatusBadRequest, "参数绑定失败"+err.Error())
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 		}
+	})
+}
+
+func (h *AccountHandler) ModPassWord() {
+	h.group.POST("/paas/account/modPassWord", func(c *gin.Context) {
+		/*bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(200, gin.H{"ret_code": "-1", "ret_info": "bad request"})
+			return
+		}
+
+		jsonBody := string(bodyBytes)
+		utils.LOGGER.Info(fmt.Sprintf("%v", string(jsonBody)))
+		c.JSON(200, jsonBody)*/
+
+		var modPasswdParam proto.ModPasswdParam
+		err := c.MustBindWith(&modPasswdParam, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+
+		}
+		resultBean := proto.NewResultBean()
+		accdao.ModPasswd(&modPasswdParam, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *AccountHandler) GetOpLogCnt() {
+	h.group.POST("/paas/account/getOpLogCnt", func(c *gin.Context) {
+		var getOpLogCntParam proto.GetOpLogCntParam
+		err := c.MustBindWith(&getOpLogCntParam, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+		resultBean := proto.NewResultBean()
+		accdao.GetOpLogCnt(&getOpLogCntParam, resultBean)
+		c.JSON(http.StatusOK, resultBean)
 	})
 }

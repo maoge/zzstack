@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
+	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 
-	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/route"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"

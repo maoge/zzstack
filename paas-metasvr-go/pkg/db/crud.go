@@ -249,3 +249,35 @@ func TxNamedInsert(pool *pool.DbPool, sql *string, args *map[string]interface{})
 
 	return tx.NamedExec(*sql, *args)
 }
+
+// for update with param list bind with ?
+//     "update person set first_name = ?, last_name = ?, email = ? where id = ?"
+func Update(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+	return pool.DB.Exec(pool.DB.Rebind(*sql), args...)
+}
+
+func TxUpdate(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+	tx, err := pool.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit()
+
+	return tx.Exec(pool.DB.Rebind(*sql), args...)
+}
+
+// for insert with named param bind:
+//     "update person set first_name = :first, last_name = :last, email = :email where id = :id"
+func NamedUpdate(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+	return pool.DB.NamedExec(*sql, *args)
+}
+
+func TxNamedUpdate(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+	tx, err := pool.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit()
+
+	return tx.NamedExec(*sql, *args)
+}

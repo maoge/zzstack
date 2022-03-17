@@ -13,28 +13,28 @@ type PulsarBusImpl struct {
 func NewPulsarBusImpl() EventBus {
 	pulsarBus := PulsarBusImpl{}
 	pulsarBus.Init()
-	return pulsarBus
+	return &pulsarBus
 }
 
-func (p PulsarBusImpl) Init() {
+func (p *PulsarBusImpl) Init() {
 	p.producer = CreatePulsarProducer()
 	p.consumer = CreatePulsarConsumer()
 }
 
-func (p PulsarBusImpl) Publish(data []byte) {
+func (p *PulsarBusImpl) Publish(data []byte) {
 	p.producer.SendAsync(data)
 }
 
-func (p PulsarBusImpl) PublishEvent(event *proto.PaasEvent) {
+func (p *PulsarBusImpl) PublishEvent(event *proto.PaasEvent) {
 	eventMsg := utils.Struct2Json(event)
 	p.producer.SendAsync([]byte(eventMsg))
 }
 
-func (p PulsarBusImpl) Receive() (interface{}, error) {
+func (p *PulsarBusImpl) Receive() (interface{}, error) {
 	return p.consumer.Receive()
 }
 
-func (p PulsarBusImpl) Close() {
+func (p *PulsarBusImpl) Close() {
 	p.producer.Close()
 	p.consumer.Close()
 }

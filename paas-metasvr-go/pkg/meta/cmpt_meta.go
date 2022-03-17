@@ -405,3 +405,16 @@ func (m *CmptMeta) RemoveTtlSession(accName, magicKey string, isLocalOnly bool) 
 		eventbus.EVENTBUS.PublishEvent(event)
 	}
 }
+
+func (m *CmptMeta) GetSessionByMagicKey(magicKey string) *proto.AccountSession {
+	return m.magicKeyMap[magicKey]
+}
+
+func (m *CmptMeta) GetAccNameByMagicKey(magicKey string) string {
+	accSession := m.magicKeyMap[magicKey]
+	if accSession != nil {
+		return accSession.ACC_NAME
+	} else {
+		return ""
+	}
+}

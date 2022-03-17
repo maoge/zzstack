@@ -4,7 +4,7 @@ import "github.com/maoge/paas-metasvr-go/pkg/consts"
 
 type ResultBean struct {
 	RET_CODE int
-	RET_INFO string
+	RET_INFO interface{}
 }
 
 func NewResultBean() *ResultBean {

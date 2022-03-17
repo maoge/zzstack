@@ -3,12 +3,15 @@ module github.com/maoge/paas-metasvr-go
 go 1.17
 
 require (
+	github.com/Valiben/gin_unit_test v0.0.0-20181205064931-674aee46d090
 	github.com/apache/pulsar-client-go v0.8.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v7 v7.4.1
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/satori/go.uuid v1.2.0
+	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.14.0
 	go.uber.org/zap v1.21.0
 	gopkg.in/ini.v1 v1.66.4
@@ -29,7 +32,6 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
-	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
@@ -57,7 +59,6 @@ require (
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect

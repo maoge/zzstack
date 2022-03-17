@@ -1,31 +1,42 @@
 package accdao
 
 import (
+	"fmt"
+
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/redisdao"
+	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
+	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
+
+	crud "github.com/maoge/paas-metasvr-go/pkg/db"
 )
 
-func Login(accUser *proto.AccUser, resultBean *proto.ResultBean) bool {
-	account := meta.CMPT_META.GetAccount(accUser.USER)
+var (
+	UPD_ACC_PASSWD   = "UPDATE t_account SET PASSWD = ? WHERE ACC_NAME = ?"
+	SEL_OP_LOG_COUNT = "SELECT count(1) COUNT FROM t_meta_oplogs WHERE 1=1 %s"
+)
+
+func Login(loginParam *proto.LoginParam, resultBean *proto.ResultBean) bool {
+	account := meta.CMPT_META.GetAccount(loginParam.USER)
 	if account == nil {
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = consts.ERR_ACCOUNT_NOT_EXISTS
 		return false
 	}
 
-	encrypt := utils.GeneratePasswd(accUser.USER, accUser.PASSWORD)
+	encrypt := utils.GeneratePasswd(loginParam.USER, loginParam.PASSWORD)
 	if encrypt != account.PASSWD {
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = consts.ERR_PWD_INCORRECT
 		return false
 	}
 
-	session := meta.CMPT_META.GetAccSession(accUser.USER)
+	session := meta.CMPT_META.GetAccSession(loginParam.USER)
 	if session == nil {
-		key := utils.GetRedisSessionKey(accUser.USER)
+		key := utils.GetRedisSessionKey(loginParam.USER)
 		session = redisdao.GetSessionFromRedis(key)
 
 		resultBean.RET_CODE = consts.REVOKE_OK
@@ -33,12 +44,12 @@ func Login(accUser *proto.AccUser, resultBean *proto.ResultBean) bool {
 
 		if session == nil {
 			magicKey := utils.GenUUID()
-			newSession := proto.NewAccountSession(accUser.USER, magicKey)
+			newSession := proto.NewAccountSession(loginParam.USER, magicKey)
 			meta.CMPT_META.AddAccSession(newSession, false)
 		} else {
 			if !session.IsSessionValid() {
 				// remove the old and add new on
-				resultBean.RET_INFO = createSession(accUser.USER, session.MAGIC_KEY)
+				resultBean.RET_INFO = createSession(loginParam.USER, session.MAGIC_KEY)
 			} else {
 				// local cache not exists, fill from redis to local cache
 				meta.CMPT_META.AddAccSession(session, true)
@@ -53,7 +64,7 @@ func Login(accUser *proto.AccUser, resultBean *proto.ResultBean) bool {
 
 	// if session ttl, create new
 	if !session.IsSessionValid() {
-		resultBean.RET_INFO = createSession(accUser.USER, session.MAGIC_KEY)
+		resultBean.RET_INFO = createSession(loginParam.USER, session.MAGIC_KEY)
 	}
 
 	return true
@@ -67,4 +78,55 @@ func createSession(accName, oldMagicKey string) string {
 	meta.CMPT_META.AddAccSession(newSession, false)
 
 	return magicKey
+}
+
+func ModPasswd(modPasswdParam *proto.ModPasswdParam, resultBean *proto.ResultBean) {
+	accSession := meta.CMPT_META.GetSessionByMagicKey(modPasswdParam.MAGIC_KEY)
+	if accSession == nil || !accSession.IsSessionValid() {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_LOGIN_TIMOUT_OR_NOT_LOGINED
+		return
+	}
+	accName := accSession.ACC_NAME
+	passwd := modPasswdParam.PASSWORD
+	encrypt := utils.GeneratePasswd(accName, passwd)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &UPD_ACC_PASSWD, encrypt, accName)
+	if err == nil {
+		msgBodyMap := make(map[string]interface{})
+		msgBodyMap[consts.HEADER_ACC_NAME] = accName
+		msgBodyMap[consts.HEADER_PASSWORD] = encrypt
+
+		msgBody := utils.Struct2Json(msgBodyMap)
+		event := proto.NewPaasEvent(consts.EVENT_MOD_ACC_PASSWD.CODE, msgBody, "")
+
+		eventbus.EVENTBUS.PublishEvent(event)
+	} else {
+		errInfo := fmt.Sprintf("accName:%v ModPasswd fail, %v", accName, err.Error())
+		utils.LOGGER.Error(errInfo)
+
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = err.Error()
+	}
+}
+
+func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *proto.ResultBean) {
+	where := fmt.Sprintf("AND ACC_NAME = '%v' AND INSERT_TIME >= %v AND INSERT_TIME <= %v ",
+		getOpLogCntParam.USER, getOpLogCntParam.START_TS, getOpLogCntParam.END_TS)
+	sql := fmt.Sprintf(SEL_OP_LOG_COUNT, where)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	out := proto.Count{}
+	err := crud.SelectAsObject(dbPool, &out, &sql)
+	if err == nil {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = out.COUNT
+	} else {
+		errInfo := fmt.Sprintf("accName:%v GetOpLogCnt fail, %v", getOpLogCntParam.USER, err.Error())
+		utils.LOGGER.Error(errInfo)
+
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = err.Error()
+	}
 }
