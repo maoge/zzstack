@@ -22,4 +22,7 @@ func Init(e *gin.Engine) {
 
 	accountHandler := controller.NewAccountHandler(defaultGroup)
 	RegisterController(accountHandler)
+
+	alarmHandler := controller.NewAlarmHandler(defaultGroup)
+	RegisterController(alarmHandler)
 }

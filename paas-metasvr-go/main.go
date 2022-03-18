@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 
@@ -30,6 +31,7 @@ func diableLog() {
 }
 
 func initial() {
+	consts.InitEventMap()
 	utils.Init()
 	config.InitMetaSvrConf()
 	global.GLOBAL_RES.Init()

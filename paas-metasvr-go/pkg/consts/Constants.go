@@ -16,6 +16,10 @@ var (
 	STR_SAVED                         = "0"
 	POS_DEFAULT_VALUE   int           = -1
 
+	ALARM_UNDEALED = "0"
+	ALARM_DEALED   = "1"
+	ALARM_ALL      = "-1"
+
 	REVOKE_OK              int = 0
 	REVOKE_NOK             int = -1
 	REVOKE_NOK_QUEUE_EXIST int = -2

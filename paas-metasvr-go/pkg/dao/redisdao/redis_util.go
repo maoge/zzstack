@@ -56,3 +56,18 @@ func RedisSet(key, val string) error {
 		return err.RedisErr{ErrInfo: consts.ERR_REDIS_POOL_NIL}
 	}
 }
+
+func RedisDel(key string) error {
+	client := global.GLOBAL_RES.GetRedisClusterClient()
+	if client != nil {
+		cmd := client.Do("del", key)
+		_, err := cmd.Result()
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	} else {
+		return err.RedisErr{ErrInfo: consts.ERR_REDIS_POOL_NIL}
+	}
+}

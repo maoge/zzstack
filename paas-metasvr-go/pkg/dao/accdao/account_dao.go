@@ -16,9 +16,9 @@ import (
 
 var (
 	UPD_ACC_PASSWD   = "UPDATE t_account SET PASSWD = ? WHERE ACC_NAME = ?"
-	SEL_OP_LOG_COUNT = "SELECT count(1) COUNT FROM t_meta_oplogs WHERE 1=1 %s"
+	SEL_OP_LOG_COUNT = `SELECT count(1) COUNT FROM t_meta_oplogs WHERE 1=1 AND ACC_NAME = ? AND INSERT_TIME >= ? AND INSERT_TIME <= ?`
 	SEL_OP_LOG_LIST  = `SELECT ACC_NAME, EVENT_TYPE, OP_DETAIL, INSERT_TIME FROM t_meta_oplogs 
-	                     WHERE 1=1 AND ACC_NAME = '?' AND INSERT_TIME >= ? AND INSERT_TIME <= ? ORDER BY INSERT_TIME ASC ?, ?`
+                         WHERE 1=1 AND ACC_NAME = ? AND INSERT_TIME >= ? AND INSERT_TIME <= ? ORDER BY INSERT_TIME ASC LIMIT ?, ?`
 )
 
 func Login(loginParam *proto.LoginParam, resultBean *proto.ResultBean) bool {
@@ -114,13 +114,13 @@ func ModPasswd(modPasswdParam *proto.ModPasswdParam, resultBean *proto.ResultBea
 }
 
 func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *proto.ResultBean) {
-	sqlWhere := fmt.Sprintf("AND ACC_NAME = '%s' AND INSERT_TIME >= %d AND INSERT_TIME <= %d ",
-		getOpLogCntParam.USER, getOpLogCntParam.START_TS, getOpLogCntParam.END_TS)
-	sql := fmt.Sprintf(SEL_OP_LOG_COUNT, sqlWhere)
+	user := getOpLogCntParam.USER
+	startTs := getOpLogCntParam.START_TS
+	endTs := getOpLogCntParam.END_TS
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
 	out := proto.Count{}
-	err := crud.SelectAsObject(dbPool, &out, &sql)
+	err := crud.SelectAsObject(dbPool, &out, &SEL_OP_LOG_COUNT, user, startTs, endTs)
 	if err == nil {
 		resultBean.RET_CODE = consts.REVOKE_OK
 		resultBean.RET_INFO = out.COUNT
@@ -134,12 +134,14 @@ func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *proto.Res
 }
 
 func GetOpLogList(getOpLogListParam *proto.GetOpLogListParam, resultBean *proto.ResultBean) {
+	user := getOpLogListParam.USER
+	startTs := getOpLogListParam.START_TS
+	endTs := getOpLogListParam.END_TS
 	start := getOpLogListParam.PAGE_SIZE * (getOpLogListParam.PAGE_NUMBER - 1)
-	sql := fmt.Sprintf(SEL_OP_LOG_LIST, getOpLogListParam.USER, getOpLogListParam.START_TS,
-		getOpLogListParam.END_TS, start, getOpLogListParam.PAGE_SIZE)
+	pageSize := getOpLogListParam.PAGE_SIZE
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
-	data, err := crud.SelectAsMapSlice(dbPool, &sql)
+	data, err := crud.SelectAsMapSlice(dbPool, &SEL_OP_LOG_LIST, user, startTs, endTs, start, pageSize)
 	if err == nil {
 		resultBean.RET_CODE = consts.REVOKE_OK
 		resultBean.RET_INFO = data
