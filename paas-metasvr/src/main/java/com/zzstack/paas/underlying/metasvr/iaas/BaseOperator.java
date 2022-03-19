@@ -1,6 +1,7 @@
 package com.zzstack.paas.underlying.metasvr.iaas;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -129,11 +130,11 @@ public class BaseOperator {
     }
 
     public static float roundFloat(float val, int precision) {
-        return new BigDecimal(val).setScale(precision, BigDecimal.ROUND_HALF_UP).floatValue();
+        return new BigDecimal(val).setScale(precision, RoundingMode.HALF_UP).floatValue();
     }
 
     public static float roundDoubleAsFloat(double val, int precision) {
-        return new BigDecimal(val).setScale(precision, BigDecimal.ROUND_HALF_UP).floatValue();
+        return new BigDecimal(val).setScale(precision, RoundingMode.HALF_UP).floatValue();
     }
 
 }
