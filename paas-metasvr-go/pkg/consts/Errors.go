@@ -32,4 +32,6 @@ var (
 	ERR_PAAS_SERVICE_INIT_FAIL       = "paas service init fail ......"
 	ERR_LOGIN_TIMOUT_OR_NOT_LOGINED  = "登陆认证过期或未登陆，请重新登陆再改密!"
 	ERR_CLEAR_ALARM_REDIS_CACHE_FAIL = "clear alarm redis cache fail ......"
+	ERR_DB                           = "db error"
+	ERR_NO_DEL_DEPLOYED_SERV         = "cannot delete deployed service ......"
 )

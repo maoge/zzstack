@@ -5,193 +5,22 @@ import (
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
+	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
+	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
+	"github.com/tidwall/gjson"
 
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 )
 
 var (
-	SQL_SEL_ACCOUNT        = "select ACC_ID,ACC_NAME,PHONE_NUM,MAIL,PASSWD,CREATE_TIME from t_account"
-	SQL_SEL_META_ATTR      = "SELECT ATTR_ID,ATTR_NAME,ATTR_NAME_CN,AUTO_GEN FROM t_meta_attr ORDER BY ATTR_ID"
-	SQL_SEL_META_CMPT      = "SELECT CMPT_ID,CMPT_NAME,CMPT_NAME_CN,IS_NEED_DEPLOY,SERV_TYPE,SERV_CLAZZ,NODE_JSON_TYPE,SUB_CMPT_ID FROM t_meta_cmpt ORDER BY CMPT_ID"
-	SQL_SEL_META_INST      = "SELECT INST_ID,CMPT_ID,IS_DEPLOYED,POS_X,POS_Y,WIDTH,HEIGHT,ROW_,COL_ FROM t_meta_instance"
-	SQL_SEL_META_CMPT_ATTR = "SELECT CMPT_ID,ATTR_ID FROM t_meta_cmpt_attr ORDER BY CMPT_ID,ATTR_ID"
-	SQL_SEL_META_INST_ATTR = "SELECT INST_ID,ATTR_ID,ATTR_NAME,ATTR_VALUE FROM t_meta_instance_attr"
-	SQL_SEL_META_SERVICE   = "SELECT INST_ID,SERV_NAME,SERV_CLAZZ,SERV_TYPE,VERSION,IS_DEPLOYED,IS_PRODUCT,CREATE_TIME,USER,PASSWORD,PSEUDO_DEPLOY_FLAG FROM t_meta_service"
-	SQL_SEL_META_TOPO      = "SELECT INST_ID1,INST_ID2,TOPO_TYPE FROM t_meta_topology"
-	SQL_SEL_META_DEP_HOST  = "SELECT HOST_ID,IP_ADDRESS,USER_NAME,USER_PWD,SSH_PORT,CREATE_TIME FROM t_meta_deploy_host"
-	SQL_SEL_META_DEP_FILE  = "SELECT FILE_ID,HOST_ID,SERV_TYPE,VERSION,FILE_NAME,FILE_DIR,CREATE_TIME FROM t_meta_deploy_file"
-	SQL_SEL_META_SERVER    = "SELECT SERVER_IP,SERVER_NAME FROM t_meta_server"
-	SQL_SEL_META_SSH       = "SELECT SSH_ID,SSH_NAME,SSH_PWD,SSH_PORT,SERV_CLAZZ,SERVER_IP FROM t_meta_ssh"
-	SQL_SEL_META_CMPT_VER  = "SELECT SERV_TYPE, VERSION from t_meta_cmpt_versions order by SERV_TYPE, VERSION"
-	SQL_COUNT_SERVICE_LIST = "SELECT count(1) COUNT FROM t_meta_service WHERE 1=1 %s"
-	SQL_SEL_SERVICE_LIST   = "SELECT INST_ID, SERV_NAME, SERV_TYPE, SERV_CLAZZ, VERSION, IS_DEPLOYED, IS_PRODUCT FROM t_meta_service WHERE 1=1 %s ORDER BY CREATE_TIME limit ?, ?"
+	SQL_COUNT_SERVICE_LIST       = "SELECT count(1) COUNT FROM t_meta_service WHERE 1=1 %s"
+	SQL_SEL_SERVICE_LIST         = "SELECT INST_ID, SERV_NAME, SERV_TYPE, SERV_CLAZZ, VERSION, IS_DEPLOYED, IS_PRODUCT FROM t_meta_service WHERE 1=1 %s ORDER BY CREATE_TIME limit ?, ?"
+	SQL_COUNT_SERV_TYPE_VER_LIST = "SELECT count(1) COUNT FROM t_meta_cmpt_versions WHERE 1=1 %s"
+	SQL_SEL_SERV_TYPE_VER_LIST   = "SELECT SERV_TYPE, VERSION FROM t_meta_cmpt_versions WHERE 1=1 %s ORDER BY SERV_TYPE, VERSION limit ?, ?"
+	SQL_ADD_SERVICE              = "INSERT INTO t_meta_service(INST_ID, SERV_NAME, SERV_CLAZZ, SERV_TYPE, VERSION, IS_DEPLOYED, IS_PRODUCT, CREATE_TIME, USER, PASSWORD, PSEUDO_DEPLOY_FLAG) VALUES(?,?,?,?,?,?,?,?,?,?,?)"
 )
-
-func LoadAccount() ([]*proto.Account, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	accSlice := make([]*proto.Account, 0)
-	err := crud.SelectAsSlice(dbPool, &accSlice, &SQL_SEL_ACCOUNT)
-	if err != nil {
-		return nil, err
-	}
-
-	return accSlice, nil
-}
-
-func LoadMetaAttr() ([]*proto.PaasMetaAttr, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	attrSlice := make([]*proto.PaasMetaAttr, 0)
-	err := crud.SelectAsSlice(dbPool, &attrSlice, &SQL_SEL_META_ATTR)
-	if err != nil {
-		return nil, err
-	}
-
-	return attrSlice, nil
-}
-
-func LoadMetaCmpt() ([]*proto.PaasMetaCmpt, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	cmptSlice := make([]*proto.PaasMetaCmpt, 0)
-	err := crud.SelectAsSlice(dbPool, &cmptSlice, &SQL_SEL_META_CMPT)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, item := range cmptSlice {
-		item.InitSubCmptSet()
-	}
-
-	return cmptSlice, nil
-}
-
-func LoadMetaInst() ([]*proto.PaasInstance, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	instSlice := make([]*proto.PaasInstance, 0)
-	err := crud.SelectAsSlice(dbPool, &instSlice, &SQL_SEL_META_INST)
-	if err != nil {
-		return nil, err
-	}
-
-	return instSlice, nil
-}
-
-func LoadMetaCmptAttr() ([]*proto.PaasCmptAttr, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	cmptAttrSlice := make([]*proto.PaasCmptAttr, 0)
-	err := crud.SelectAsSlice(dbPool, &cmptAttrSlice, &SQL_SEL_META_CMPT_ATTR)
-	if err != nil {
-		return nil, err
-	}
-
-	return cmptAttrSlice, nil
-}
-
-func LoadMetaInstAttr() ([]*proto.PaasInstAttr, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	instAttrSlice := make([]*proto.PaasInstAttr, 0)
-	err := crud.SelectAsSlice(dbPool, &instAttrSlice, &SQL_SEL_META_INST_ATTR)
-	if err != nil {
-		return nil, err
-	}
-
-	return instAttrSlice, nil
-}
-
-func LoadMetaService() ([]*proto.PaasService, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	serviceSlice := make([]*proto.PaasService, 0)
-	err := crud.SelectAsSlice(dbPool, &serviceSlice, &SQL_SEL_META_SERVICE)
-	if err != nil {
-		return nil, err
-	}
-
-	return serviceSlice, nil
-}
-
-func LoadMetaTopo() ([]*proto.PaasTopology, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	topoSlice := make([]*proto.PaasTopology, 0)
-	err := crud.SelectAsSlice(dbPool, &topoSlice, &SQL_SEL_META_TOPO)
-	if err != nil {
-		return nil, err
-	}
-
-	return topoSlice, nil
-}
-
-func LoadDeployHost() ([]*proto.PaasDeployHost, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	deployHostSlice := make([]*proto.PaasDeployHost, 0)
-	err := crud.SelectAsSlice(dbPool, &deployHostSlice, &SQL_SEL_META_DEP_HOST)
-	if err != nil {
-		return nil, err
-	}
-
-	return deployHostSlice, nil
-}
-
-func LoadDeployFile() ([]*proto.PaasDeployFile, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	deployFileSlice := make([]*proto.PaasDeployFile, 0)
-	err := crud.SelectAsSlice(dbPool, &deployFileSlice, &SQL_SEL_META_DEP_FILE)
-	if err != nil {
-		return nil, err
-	}
-
-	return deployFileSlice, nil
-}
-
-func LoadMetaServer() ([]*proto.PaasServer, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	serverSlice := make([]*proto.PaasServer, 0)
-	err := crud.SelectAsSlice(dbPool, &serverSlice, &SQL_SEL_META_SERVER)
-	if err != nil {
-		return nil, err
-	}
-
-	return serverSlice, nil
-}
-
-func LoadMetaSsh() ([]*proto.PaasSsh, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	sshSlice := make([]*proto.PaasSsh, 0)
-	err := crud.SelectAsSlice(dbPool, &sshSlice, &SQL_SEL_META_SSH)
-	if err != nil {
-		return nil, err
-	}
-
-	return sshSlice, nil
-}
-
-func LoadMetaCmptVersion() ([]*proto.PaasCmptVer, error) {
-	dbPool := global.GLOBAL_RES.GetDbPool()
-
-	cmptVerSlice := make([]*proto.PaasCmptVer, 0)
-	err := crud.SelectAsSlice(dbPool, &cmptVerSlice, &SQL_SEL_META_CMPT_VER)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, item := range cmptVerSlice {
-		item.InitVerList()
-	}
-
-	return cmptVerSlice, nil
-}
 
 func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *proto.ResultBean) {
 	sqlWhere := ""
@@ -223,5 +52,539 @@ func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBea
 
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = err.Error()
+	}
+}
+
+func GetServiceList(getServiceListParam *proto.GetServiceListParam, resultBean *proto.ResultBean) {
+	sqlWhere := ""
+	servInstId := getServiceListParam.SERV_INST_ID
+	servName := getServiceListParam.SERV_NAME
+	servClazz := getServiceListParam.SERV_CLAZZ
+	servType := getServiceListParam.SERV_TYPE
+	pageSize := getServiceListParam.PAGE_SIZE
+	pageNum := getServiceListParam.PAGE_NUMBER
+	start := pageSize * (pageNum - 1)
+
+	if servInstId != "" {
+		sqlWhere += fmt.Sprintf(" AND INST_ID = '%s' ", servInstId)
+	}
+	if servName != "" {
+		sqlWhere += fmt.Sprintf(" AND SERV_NAME = '%s' ", servName)
+	}
+	if servClazz != "" {
+		sqlWhere += fmt.Sprintf(" AND SERV_CLAZZ = '%s' ", servClazz)
+	}
+	if servType != "" {
+		sqlWhere += fmt.Sprintf(" AND SERV_TYPE = '%s' ", servType)
+	}
+
+	sql := fmt.Sprintf(SQL_SEL_SERVICE_LIST, sqlWhere)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	data, err := crud.SelectAsMapSlice(dbPool, &sql, start, pageSize)
+
+	if err == nil {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = data
+	} else {
+		errInfo := fmt.Sprintf("GetServiceList fail, %v", err.Error())
+		utils.LOGGER.Error(errInfo)
+
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = err.Error()
+	}
+}
+
+func GetServTypeVerCount(getServTypeVerCountParam *proto.GetServTypeVerCountParam, resultBean *proto.ResultBean) {
+	sqlWhere := ""
+	servType := getServTypeVerCountParam.SERV_TYPE
+
+	if servType != "" {
+		sqlWhere += fmt.Sprintf("  AND SERV_TYPE = '%s' ", servType)
+	}
+
+	sql := fmt.Sprintf(SQL_COUNT_SERV_TYPE_VER_LIST, sqlWhere)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	out := proto.Count{}
+	err := crud.SelectAsObject(dbPool, &out, &sql)
+	if err == nil {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = out.COUNT
+	} else {
+		errInfo := fmt.Sprintf("GetServTypeVerCount fail, %v", err.Error())
+		utils.LOGGER.Error(errInfo)
+
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = err.Error()
+	}
+}
+
+func GetServTypeVerListByPage(param *proto.GetServTypeVerListByPageParam, resultBean *proto.ResultBean) {
+	sqlWhere := ""
+
+	servType := param.SERV_TYPE
+	pageSize := param.PAGE_SIZE
+	pageNum := param.PAGE_NUMBER
+	start := pageSize * (pageNum - 1)
+
+	if servType != "" {
+		sqlWhere += fmt.Sprintf(" AND SERV_TYPE = '%s' ", servType)
+	}
+
+	sql := fmt.Sprintf(SQL_SEL_SERV_TYPE_VER_LIST, sqlWhere)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	data, err := crud.SelectAsMapSlice(dbPool, &sql, start, pageSize)
+
+	if err == nil {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = data
+	} else {
+		errInfo := fmt.Sprintf("GetServTypeVerListByPage fail, %v", err.Error())
+		utils.LOGGER.Error(errInfo)
+
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = err.Error()
+	}
+}
+
+func GetClickHouseDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+	servInstId := param.SERV_INST_ID
+
+	relations := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstId, relations)
+
+	if len(relations) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+		return
+	}
+
+	ret := false
+	for _, relation := range relations {
+		toeId := relation.GetToe(servInstId)
+		instance := meta.CMPT_META.GetInstance(toeId)
+		if instance == nil {
+			continue
+		}
+
+		cmptId := instance.CMPT_ID
+		// 102 -> 'GRAFANA'
+		if cmptId == 102 {
+			httpPort := meta.CMPT_META.GetInstAttr(toeId, 122).ATTR_VALUE // 122 -> 'HTTP_PORT'
+			sshId := meta.CMPT_META.GetInstAttr(toeId, 116).ATTR_VALUE    // 116 -> 'SSH_ID'
+			ssh := meta.CMPT_META.GetSshById(sshId)
+			serverIp := ssh.SERVER_IP
+
+			url := fmt.Sprintf("http://%s:%s", serverIp, httpPort)
+
+			resultBean.RET_CODE = consts.REVOKE_OK
+			resultBean.RET_INFO = url
+
+			ret = true
+			break
+		}
+	}
+
+	if !ret {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = ""
+	}
+}
+
+func GetVoltDBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+	servInstId := param.SERV_INST_ID
+
+	relations := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstId, relations)
+
+	if len(relations) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+		return
+	}
+
+	ret := false
+	for _, relation := range relations {
+		toeId := relation.GetToe(servInstId)
+		voltdbContainer := meta.CMPT_META.GetInstance(toeId)
+		if voltdbContainer == nil {
+			continue
+		}
+
+		cmptId := voltdbContainer.CMPT_ID
+		// 291 -> 'VOLTDB_CONTAINER'
+		if cmptId == 291 {
+			subRelations := make([]*proto.PaasTopology, 0)
+			meta.CMPT_META.GetInstRelations(voltdbContainer.INST_ID, subRelations)
+			if len(subRelations) == 0 {
+				continue
+			}
+
+			for _, item := range subRelations {
+				voltdbInstId := item.GetToe(voltdbContainer.INST_ID)
+				voltdb := meta.CMPT_META.GetInstance(voltdbInstId)
+				if voltdbInstId != "" && voltdb.IsDeployed() {
+					httpPort := meta.CMPT_META.GetInstAttr(toeId, 256).ATTR_VALUE // 'VOLT_WEB_PORT'
+					sshId := meta.CMPT_META.GetInstAttr(toeId, 116).ATTR_VALUE    // 116 -> 'SSH_ID'
+					ssh := meta.CMPT_META.GetSshById(sshId)
+					serverIp := ssh.SERVER_IP
+
+					url := fmt.Sprintf("http://%s:%s", serverIp, httpPort)
+
+					resultBean.RET_CODE = consts.REVOKE_OK
+					resultBean.RET_INFO = url
+
+					ret = true
+					break
+				}
+			}
+		}
+	}
+
+	if !ret {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = ""
+	}
+}
+
+func GetRocketMQDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+	servInstId := param.SERV_INST_ID
+
+	relations := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstId, relations)
+
+	if len(relations) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+		return
+	}
+
+	ret := false
+	for _, relation := range relations {
+		toeId := relation.GetToe(servInstId)
+		instance := meta.CMPT_META.GetInstance(toeId)
+		if instance == nil {
+			continue
+		}
+
+		cmptId := instance.CMPT_ID
+		// 246 -> 'ROCKETMQ_CONSOLE'
+		if cmptId == 246 {
+			consolePort := meta.CMPT_META.GetInstAttr(toeId, 249).ATTR_VALUE // 249 -> 'CONSOLE_PORT'
+			sshId := meta.CMPT_META.GetInstAttr(toeId, 116).ATTR_VALUE       // 116 -> 'SSH_ID'
+			ssh := meta.CMPT_META.GetSshById(sshId)
+			serverIp := ssh.SERVER_IP
+
+			url := fmt.Sprintf("http://%s:%s", serverIp, consolePort)
+
+			resultBean.RET_CODE = consts.REVOKE_OK
+			resultBean.RET_INFO = url
+
+			ret = true
+			break
+		}
+	}
+
+	if !ret {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = ""
+	}
+}
+
+func GetTiDBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+	servInstId := param.SERV_INST_ID
+
+	relations := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstId, relations)
+
+	if len(relations) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+		return
+	}
+
+	ret := false
+	for _, relation := range relations {
+		toeId := relation.GetToe(servInstId)
+		instance := meta.CMPT_META.GetInstance(toeId)
+		if instance == nil {
+			continue
+		}
+
+		cmptId := instance.CMPT_ID
+		// 217 -> 'DASHBOARD_PROXY'
+		if cmptId == 217 {
+			dashboardPort := meta.CMPT_META.GetInstAttr(toeId, 230).ATTR_VALUE // 230 -> 'DASHBOARD_PORT'
+			sshId := meta.CMPT_META.GetInstAttr(toeId, 116).ATTR_VALUE         // 116 -> 'SSH_ID'
+			ssh := meta.CMPT_META.GetSshById(sshId)
+			serverIp := ssh.SERVER_IP
+
+			url := fmt.Sprintf("http://%s:%s/dashboard", serverIp, dashboardPort)
+
+			resultBean.RET_CODE = consts.REVOKE_OK
+			resultBean.RET_INFO = url
+
+			ret = true
+			break
+		}
+	}
+
+	if !ret {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = ""
+	}
+}
+
+func GetPulsarDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+	servInstId := param.SERV_INST_ID
+
+	relations := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstId, relations)
+
+	if len(relations) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+		return
+	}
+
+	ret := false
+	for _, relation := range relations {
+		toeId := relation.GetToe(servInstId)
+		instance := meta.CMPT_META.GetInstance(toeId)
+		if instance == nil {
+			continue
+		}
+
+		cmptId := instance.CMPT_ID
+		// 263 -> 'PULSAR_MANAGER'
+		if cmptId == 263 {
+			httpPort := meta.CMPT_META.GetInstAttr(toeId, 270).ATTR_VALUE // 270 -> 'PULSAR_MGR_PORT'
+			sshId := meta.CMPT_META.GetInstAttr(toeId, 116).ATTR_VALUE    // 116 -> 'SSH_ID'
+			ssh := meta.CMPT_META.GetSshById(sshId)
+			serverIp := ssh.SERVER_IP
+
+			url := fmt.Sprintf("http://%s:%s/ui/index.html", serverIp, httpPort)
+
+			resultBean.RET_CODE = consts.REVOKE_OK
+			resultBean.RET_INFO = url
+
+			ret = true
+			break
+		}
+	}
+
+	if !ret {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = ""
+	}
+}
+
+func GetYBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+	servInstId := param.SERV_INST_ID
+
+	relations := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstId, relations)
+
+	if len(relations) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+		return
+	}
+
+	var ybMasterContainerID string
+	for _, relation := range relations {
+		toeId := relation.GetToe(servInstId)
+		instance := meta.CMPT_META.GetInstance(toeId)
+		if instance == nil {
+			continue
+		}
+
+		cmptId := instance.CMPT_ID
+		// 301 -> 'YB_MASTER_CONTAINER'
+		if cmptId == 301 {
+			ybMasterContainerID = toeId
+			break
+		}
+	}
+
+	ret := false
+	if ybMasterContainerID != "" {
+		subRelations := make([]*proto.PaasTopology, 0)
+		meta.CMPT_META.GetInstRelations(ybMasterContainerID, subRelations)
+
+		for _, relation := range subRelations {
+			toeId := relation.GetToe(servInstId)
+			instance := meta.CMPT_META.GetInstance(toeId)
+			if instance == nil {
+				continue
+			}
+
+			webServPort := meta.CMPT_META.GetInstAttr(toeId, 275).ATTR_VALUE // 270 -> 'WEBSERVER_PORT'
+			sshId := meta.CMPT_META.GetInstAttr(toeId, 116).ATTR_VALUE       // 116 -> 'SSH_ID'
+			ssh := meta.CMPT_META.GetSshById(sshId)
+			serverIp := ssh.SERVER_IP
+
+			url := fmt.Sprintf("http://%s:%s", serverIp, webServPort)
+
+			resultBean.RET_CODE = consts.REVOKE_OK
+			resultBean.RET_INFO = url
+
+			ret = true
+			break
+		}
+	}
+
+	if !ret {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = ""
+	}
+}
+
+func AddService(param *proto.AddServiceParam, instId string, magicKey string, resultBean *proto.ResultBean) {
+	servName := param.SERV_NAME
+	servClazz := param.SERV_CLAZZ
+	servType := param.SERV_TYPE
+	version := param.VERSION
+	isProduct := param.IS_PRODUCT
+	user := param.USER
+	password := param.PASSWORD
+	ts := utils.CurrentTimeMilli()
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.TxInsert(dbPool, &SQL_ADD_SERVICE, instId, servName, servClazz, servType, version, consts.STR_FALSE, isProduct,
+		ts, user, password, consts.DEPLOY_FLAG_PHYSICAL)
+	if err != nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DB
+		return
+	}
+
+	resultBean.RET_CODE = consts.REVOKE_OK
+	resultBean.RET_INFO = ""
+
+	// add to local cache
+	service := &proto.PaasService{
+		INST_ID:            instId,
+		SERV_NAME:          servName,
+		SERV_CLAZZ:         servClazz,
+		SERV_TYPE:          servType,
+		VERSION:            version,
+		IS_DEPLOYED:        consts.STR_FALSE,
+		IS_PRODUCT:         isProduct,
+		CREATE_TIME:        ts,
+		USER:               user,
+		PASSWORD:           password,
+		PSEUDO_DEPLOY_FLAG: consts.DEPLOY_FLAG_PHYSICAL,
+	}
+	meta.CMPT_META.AddService(service)
+
+	msgBody := utils.Struct2Json(service)
+	event := proto.NewPaasEvent(consts.EVENT_ADD_SERVICE.CODE, msgBody, magicKey)
+
+	eventbus.EVENTBUS.PublishEvent(event)
+}
+
+func DelService(instId string, magicKey string, resultBean *proto.ResultBean) {
+	serv := meta.CMPT_META.GetService(instId)
+	if serv == nil {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = consts.ERR_METADATA_NOT_FOUND
+		return
+	} else {
+		if serv.IsDeployed() {
+			errInfo := fmt.Sprintf("service: %v, service_name: %v, is_deployed: %v, is_product: %v", instId, serv.SERV_NAME, serv.IsDeployed(), serv.IsProduct())
+			utils.LOGGER.Error(errInfo)
+
+			resultBean.RET_CODE = consts.REVOKE_NOK
+			resultBean.RET_INFO = consts.ERR_NO_DEL_DEPLOYED_SERV
+			return
+		}
+	}
+
+	// recursive get all subpath item meta data
+	childArr := make([]*proto.PaasNode, 0)
+	getChildNodeExcludingServRoot(instId, childArr)
+
+	events := make([]*proto.PaasEvent, 0)
+	if enumDelService("", instId, childArr, resultBean, events, magicKey) {
+		for _, ev := range events {
+			eventbus.EVENTBUS.PublishEvent(ev)
+			result := gjson.Parse(ev.MSG_BODY)
+			id := result.Get(consts.HEADER_INST_ID).Str
+			switch ev.EVENT_CODE {
+			case consts.EVENT_DEL_SERVICE.CODE:
+				meta.CMPT_META.DelService(instId)
+			case consts.EVENT_DEL_INSTANCE.CODE:
+				meta.CMPT_META.DelInstance(id)
+			case consts.EVENT_DEL_INST_ATTR.CODE:
+				meta.CMPT_META.DelInstAttr(id)
+			case consts.EVENT_DEL_TOPO.CODE:
+				supId := result.Get(consts.HEADER_PARENT_ID).Str
+				meta.CMPT_META.DelTopo(supId, id)
+			default:
+				errInfo := fmt.Sprintf("untracked event: %+v", ev)
+				utils.LOGGER.Error(errInfo)
+			}
+		}
+
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+	} else {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DB
+	}
+}
+
+func enumDelService(parentId string, instId string, subNodes []*proto.PaasNode, resultBean *proto.ResultBean, events []*proto.PaasEvent, magicKey string) bool {
+	// TODO
+	return true
+}
+
+func getChildNodeExcludingServRoot(instId string, subNodes []*proto.PaasNode) {
+	topos := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(instId, topos)
+	if len(topos) == 0 {
+		return
+	}
+
+	for _, topo := range topos {
+		toeId := topo.GetToe(instId)
+		if toeId == "" {
+			continue
+		}
+
+		toeInst := meta.CMPT_META.GetInstance(toeId)
+		if toeInst == nil {
+			continue
+		}
+
+		toeCmpt := meta.CMPT_META.GetCmptById(toeInst.CMPT_ID)
+		if meta.CMPT_META.IsServRootCmpt(toeCmpt.SERV_TYPE, toeCmpt.CMPT_NAME) {
+			continue
+		}
+
+		childNodes := make([]*proto.PaasNode, 0)
+		getChildNodeExcludingServRoot(toeId, childNodes)
+
+		node := new(proto.PaasNode)
+		node.INST_ID = toeId
+
+		instance := meta.CMPT_META.GetInstance(toeId)
+		if instance != nil {
+			cmpt := meta.CMPT_META.GetCmptById(instance.CMPT_ID)
+			// node.put("text", cmpt.getCmptNameCn() + " (" + instance.getInstId() + ")");
+			text := fmt.Sprintf("%v  (%v)", cmpt.CMPT_NAME_CN, instance.INST_ID)
+			node.TEXT = text
+		} else {
+			node.TEXT = toeId
+		}
+
+		if len(childNodes) > 0 {
+			node.NODES = childNodes
+		}
+
+		subNodes = append(subNodes, node)
 	}
 }

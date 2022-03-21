@@ -10,7 +10,7 @@ type PaasService struct {
 	VERSION            string `db:"VERSION"`
 	IS_DEPLOYED        string `db:"IS_DEPLOYED"`
 	IS_PRODUCT         string `db:"IS_PRODUCT"`
-	CREATE_TIME        uint64 `db:"CREATE_TIME"`
+	CREATE_TIME        int64  `db:"CREATE_TIME"`
 	USER               string `db:"USER"`
 	PASSWORD           string `db:"PASSWORD"`
 	PSEUDO_DEPLOY_FLAG string `db:"PSEUDO_DEPLOY_FLAG"`

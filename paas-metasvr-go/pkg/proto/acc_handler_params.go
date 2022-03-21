@@ -79,3 +79,31 @@ type GetServiceListParam struct {
 	PAGE_SIZE    int    `json:"PAGE_SIZE" binding:"required"`
 	PAGE_NUMBER  int    `json:"PAGE_NUMBER" binding:"required"`
 }
+
+type GetServTypeVerCountParam struct {
+	SERV_TYPE string `json:"SERV_TYPE" binding:"omitempty"`
+}
+
+type GetServTypeVerListByPageParam struct {
+	SERV_TYPE   string `json:"SERV_TYPE" binding:"omitempty"`
+	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
+	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+}
+
+type GetDashboardAddrParam struct {
+	SERV_INST_ID string `json:"SERV_INST_ID" binding:"required"`
+}
+
+type AddServiceParam struct {
+	SERV_NAME  string `json:"SERV_NAME" binding:"required"`
+	SERV_CLAZZ string `json:"SERV_CLAZZ" binding:"required"`
+	SERV_TYPE  string `json:"SERV_TYPE" binding:"required"`
+	VERSION    string `json:"VERSION" binding:"required"`
+	IS_PRODUCT string `json:"IS_PRODUCT" binding:"required"`
+	USER       string `json:"USER" binding:"required"`
+	PASSWORD   string `json:"PASSWORD" binding:"required"`
+}
+
+type DelServiceParam struct {
+	INST_ID string `json:"INST_ID" binding:"required"`
+}

@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/redisdao"
 	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
@@ -108,7 +107,7 @@ func (m *CmptMeta) reloadAll() {
 }
 
 func (m *CmptMeta) loadAccount() {
-	accSlice, err := metadao.LoadAccount()
+	accSlice, err := LoadAccount()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -151,7 +150,7 @@ func (m *CmptMeta) loadMetaServRoot() {
 }
 
 func (m *CmptMeta) loadMetaAttr() {
-	attrSlice, err := metadao.LoadMetaAttr()
+	attrSlice, err := LoadMetaAttr()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -170,7 +169,7 @@ func (m *CmptMeta) loadMetaAttr() {
 }
 
 func (m *CmptMeta) loadMetaCmpt() {
-	cmptSlice, err := metadao.LoadMetaCmpt()
+	cmptSlice, err := LoadMetaCmpt()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -189,7 +188,7 @@ func (m *CmptMeta) loadMetaCmpt() {
 }
 
 func (m *CmptMeta) loadMetaCmptAttr() {
-	cmptAttrSlice, err := metadao.LoadMetaCmptAttr()
+	cmptAttrSlice, err := LoadMetaCmptAttr()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -206,7 +205,7 @@ func (m *CmptMeta) loadMetaCmptAttr() {
 }
 
 func (m *CmptMeta) loadMetaInst() {
-	instSlice, err := metadao.LoadMetaInst()
+	instSlice, err := LoadMetaInst()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -223,7 +222,7 @@ func (m *CmptMeta) loadMetaInst() {
 }
 
 func (m *CmptMeta) loadMetaInstAttr() {
-	instAttrSlice, err := metadao.LoadMetaInstAttr()
+	instAttrSlice, err := LoadMetaInstAttr()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -240,7 +239,7 @@ func (m *CmptMeta) loadMetaInstAttr() {
 }
 
 func (m *CmptMeta) loadMetaService() {
-	serviceSlice, err := metadao.LoadMetaService()
+	serviceSlice, err := LoadMetaService()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -257,7 +256,7 @@ func (m *CmptMeta) loadMetaService() {
 }
 
 func (m *CmptMeta) loadMetaTopo() {
-	topoSlice, err := metadao.LoadMetaTopo()
+	topoSlice, err := LoadMetaTopo()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -274,7 +273,7 @@ func (m *CmptMeta) loadMetaTopo() {
 }
 
 func (m *CmptMeta) loadDeployHost() {
-	deployHostSlice, err := metadao.LoadDeployHost()
+	deployHostSlice, err := LoadDeployHost()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -291,7 +290,7 @@ func (m *CmptMeta) loadDeployHost() {
 }
 
 func (m *CmptMeta) loadDeployFile() {
-	deployFileSlice, err := metadao.LoadDeployFile()
+	deployFileSlice, err := LoadDeployFile()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -308,7 +307,7 @@ func (m *CmptMeta) loadDeployFile() {
 }
 
 func (m *CmptMeta) loadMetaServer() {
-	serverSlice, err := metadao.LoadMetaServer()
+	serverSlice, err := LoadMetaServer()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -325,7 +324,7 @@ func (m *CmptMeta) loadMetaServer() {
 }
 
 func (m *CmptMeta) loadMetaSsh() {
-	sshSlice, err := metadao.LoadMetaSsh()
+	sshSlice, err := LoadMetaSsh()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -342,7 +341,7 @@ func (m *CmptMeta) loadMetaSsh() {
 }
 
 func (m *CmptMeta) loadMetaCmptVersion() {
-	cmptVerSlice, err := metadao.LoadMetaCmptVersion()
+	cmptVerSlice, err := LoadMetaCmptVersion()
 	if err == nil {
 		m.mut.Lock()
 		defer m.mut.Unlock()
@@ -438,4 +437,112 @@ func (m *CmptMeta) GetMetaData2Json() interface{} {
 	metaMap["metaCmptVerMap"] = utils.Struct2Json(m.metaCmptVerMap)
 
 	return &metaMap
+}
+
+func (m *CmptMeta) GetInstRelations(servInstId string, relations []*proto.PaasTopology) {
+	dataArr, found := m.metaTopoMMap.Get(servInstId)
+	if !found {
+		return
+	}
+
+	for _, rawItem := range dataArr {
+		item := rawItem.(*proto.PaasTopology)
+		relations = append(relations, item)
+	}
+}
+
+func (m *CmptMeta) GetInstance(instId string) *proto.PaasInstance {
+	return m.metaInstMap["instId"]
+}
+
+func (m *CmptMeta) DelInstance(instId string) {
+	delete(m.metaInstMap, instId)
+}
+
+func (m *CmptMeta) GetCmptById(cmptId int) *proto.PaasMetaCmpt {
+	return m.metaCmptIdMap[cmptId]
+}
+
+func (m *CmptMeta) GetInstAttr(instId string, attrId int) *proto.PaasInstAttr {
+	dataArr, found := m.metaInstAttrMMap.Get(instId)
+	if !found {
+		return nil
+	}
+
+	var result *proto.PaasInstAttr
+	for _, rawItem := range dataArr {
+		item := rawItem.(*proto.PaasInstAttr)
+		if item.ATTR_ID == attrId {
+			result = item
+			break
+		}
+	}
+
+	return result
+}
+
+func (m *CmptMeta) DelInstAttr(instId string) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaInstAttrMMap.RemoveAll(instId)
+}
+
+func (m *CmptMeta) GetSshById(sshId string) *proto.PaasSsh {
+	var result *proto.PaasSsh
+
+	entries := m.metaSshMMap.Entries()
+	for _, entry := range entries {
+		ssh := entry.Value.(*proto.PaasSsh)
+		if ssh.SSH_ID == sshId {
+			result = ssh
+		}
+	}
+
+	return result
+}
+
+func (m *CmptMeta) AddService(service *proto.PaasService) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaServiceMap[service.INST_ID] = service
+}
+
+func (m *CmptMeta) GetService(instId string) *proto.PaasService {
+	return m.metaServiceMap[instId]
+}
+
+func (m *CmptMeta) DelService(instId string) {
+	delete(m.metaServiceMap, instId)
+}
+
+func (m *CmptMeta) DelTopo(parentId, instId string) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaTopoMMap.RemoveAll(instId)
+
+	parentSubs, found := m.metaTopoMMap.Get(parentId)
+	if !found {
+		return
+	}
+
+	for _, rawItem := range parentSubs {
+		topo := rawItem.(*proto.PaasTopology)
+		toeId := topo.GetToe(parentId)
+		if toeId == instId {
+			m.metaTopoMMap.Remove(parentId, topo)
+			break
+		}
+	}
+}
+
+func (m *CmptMeta) IsServRootCmpt(servType, cmptName string) bool {
+	servRootCmptName := m.metaServRootMap[servType]
+	if servRootCmptName == "" {
+		return false
+	}
+
+	return servRootCmptName == cmptName
 }
