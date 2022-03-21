@@ -1,7 +1,11 @@
 package metadao
 
 import (
+	"fmt"
+
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
@@ -21,6 +25,8 @@ var (
 	SQL_SEL_META_SERVER    = "SELECT SERVER_IP,SERVER_NAME FROM t_meta_server"
 	SQL_SEL_META_SSH       = "SELECT SSH_ID,SSH_NAME,SSH_PWD,SSH_PORT,SERV_CLAZZ,SERVER_IP FROM t_meta_ssh"
 	SQL_SEL_META_CMPT_VER  = "SELECT SERV_TYPE, VERSION from t_meta_cmpt_versions order by SERV_TYPE, VERSION"
+	SQL_COUNT_SERVICE_LIST = "SELECT count(1) COUNT FROM t_meta_service WHERE 1=1 %s"
+	SQL_SEL_SERVICE_LIST   = "SELECT INST_ID, SERV_NAME, SERV_TYPE, SERV_CLAZZ, VERSION, IS_DEPLOYED, IS_PRODUCT FROM t_meta_service WHERE 1=1 %s ORDER BY CREATE_TIME limit ?, ?"
 )
 
 func LoadAccount() ([]*proto.Account, error) {
@@ -185,5 +191,37 @@ func LoadMetaCmptVersion() ([]*proto.PaasCmptVer, error) {
 	}
 
 	return cmptVerSlice, nil
+}
 
+func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *proto.ResultBean) {
+	sqlWhere := ""
+	servName := getServiceCountParam.SERV_NAME
+	servClazz := getServiceCountParam.SERV_CLAZZ
+	servType := getServiceCountParam.SERV_TYPE
+
+	if servName != "" {
+		sqlWhere += fmt.Sprintf(" AND SERV_NAME='%s' ", servName)
+	}
+	if servClazz != "" {
+		sqlWhere += fmt.Sprintf(" AND SERV_CLAZZ='%s' ", servClazz)
+	}
+	if servType != "" {
+		sqlWhere += fmt.Sprintf(" AND SERV_TYPE='%s' ", servType)
+	}
+
+	sql := fmt.Sprintf(SQL_COUNT_SERVICE_LIST, sqlWhere)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	out := proto.Count{}
+	err := crud.SelectAsObject(dbPool, &out, &sql)
+	if err == nil {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = out.COUNT
+	} else {
+		errInfo := fmt.Sprintf("GetServiceCount fail, %v", err.Error())
+		utils.LOGGER.Error(errInfo)
+
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = err.Error()
+	}
 }

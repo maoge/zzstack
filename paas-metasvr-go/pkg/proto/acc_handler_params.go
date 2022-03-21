@@ -64,3 +64,18 @@ type ClearAlarmParam struct {
 	ALARM_TYPE    int    `json:"ALARM_TYPE" binding:"required"`
 	DEAL_ACC_NAME string `json:"DEAL_ACC_NAME" binding:"required"`
 }
+
+type GetServiceCountParam struct {
+	SERV_NAME  string `json:"SERV_NAME" binding:"omitempty"`
+	SERV_CLAZZ string `json:"SERV_CLAZZ" binding:"omitempty"`
+	SERV_TYPE  string `json:"SERV_TYPE" binding:"omitempty"`
+}
+
+type GetServiceListParam struct {
+	SERV_INST_ID string `json:"SERV_INST_ID" binding:"omitempty"`
+	SERV_NAME    string `json:"SERV_NAME" binding:"omitempty"`
+	SERV_CLAZZ   string `json:"SERV_CLAZZ" binding:"omitempty"`
+	SERV_TYPE    string `json:"SERV_TYPE" binding:"omitempty"`
+	PAGE_SIZE    int    `json:"PAGE_SIZE" binding:"required"`
+	PAGE_NUMBER  int    `json:"PAGE_NUMBER" binding:"required"`
+}

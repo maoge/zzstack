@@ -25,4 +25,7 @@ func Init(e *gin.Engine) {
 
 	alarmHandler := controller.NewAlarmHandler(defaultGroup)
 	RegisterController(alarmHandler)
+
+	metaDataHandler := controller.NewMetaDataHandler(defaultGroup)
+	RegisterController(metaDataHandler)
 }

@@ -418,3 +418,24 @@ func (m *CmptMeta) GetAccNameByMagicKey(magicKey string) string {
 		return ""
 	}
 }
+
+func (m *CmptMeta) GetMetaData2Json() interface{} {
+	var metaMap map[string]interface{}
+	metaMap = make(map[string]interface{})
+
+	metaMap["metaServRootMap"] = utils.Struct2Json(m.metaServRootMap)
+	metaMap["metaAttrIdMap"] = utils.Struct2Json(m.metaAttrIdMap)
+	metaMap["metaCmptIdMap"] = utils.Struct2Json(m.metaCmptIdMap)
+	metaMap["metaCmptAttrMMap"] = utils.Struct2Json(m.metaCmptAttrMMap)
+	metaMap["metaInstMap"] = utils.Struct2Json(m.metaInstMap)
+	metaMap["metaInstAttrMMap"] = utils.Struct2Json(m.metaInstAttrMMap)
+	metaMap["metaServiceMap"] = utils.Struct2Json(m.metaServiceMap)
+	metaMap["metaTopoMMap"] = utils.Struct2Json(m.metaTopoMMap)
+	metaMap["metaDeployHostMap"] = utils.Struct2Json(m.metaDeployHostMap)
+	metaMap["metaDeployFileMap"] = utils.Struct2Json(m.metaDeployFileMap)
+	metaMap["metaServerMap"] = utils.Struct2Json(m.metaServerMap)
+	metaMap["metaSshMMap"] = utils.Struct2Json(m.metaSshMMap)
+	metaMap["metaCmptVerMap"] = utils.Struct2Json(m.metaCmptVerMap)
+
+	return &metaMap
+}
