@@ -772,10 +772,6 @@ public class MetaDataDao {
                         break;
                     }
                 }
-                
-                if (ret) {
-                    break;
-                }
             }
         }
         
