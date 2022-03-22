@@ -207,3 +207,239 @@ func (h *MetaDataHandler) DelService() {
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
+
+func (h *MetaDataHandler) ModService() {
+	h.group.POST("/paas/metadata/modService", func(c *gin.Context) {
+		var param proto.ModServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		magicKey := utils.GetMagicKey(c)
+		resultBean := proto.NewResultBean()
+		metadao.ModService(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) ModServiceVersion() {
+	h.group.POST("/paas/metadata/modServiceVersion", func(c *gin.Context) {
+		var param proto.ModServiceVersionParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		magicKey := utils.GetMagicKey(c)
+		resultBean := proto.NewResultBean()
+		metadao.ModServiceVersion(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetServerCount() {
+	h.group.POST("/paas/metadata/getServerCount", func(c *gin.Context) {
+		var param proto.GetServerCountParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		metadao.GetServerCnt(&param, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetServerList() {
+	h.group.POST("/paas/metadata/getServerList", func(c *gin.Context) {
+		var param proto.GetServerListParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		metadao.GetServerList(&param, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) AddServer() {
+	h.group.POST("/paas/metadata/addServer", func(c *gin.Context) {
+		var param proto.AddServerParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		magicKey := utils.GetMagicKey(c)
+		resultBean := proto.NewResultBean()
+
+		metadao.AddServer(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) DelServer() {
+	h.group.POST("/paas/metadata/delServer", func(c *gin.Context) {
+		var param proto.DelServerParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servIp := param.SERVER_IP
+		magicKey := utils.GetMagicKey(c)
+		resultBean := proto.NewResultBean()
+
+		metadao.DelServer(servIp, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetSSHCountByIP() {
+	h.group.POST("/paas/metadata/getSSHCountByIP", func(c *gin.Context) {
+		var param proto.GetSSHCountByIPParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servIp := param.SERVER_IP
+		resultBean := proto.NewResultBean()
+
+		metadao.GetSshCntByIp(servIp, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetSSHListByIP() {
+	h.group.POST("/paas/metadata/getSSHListByIP", func(c *gin.Context) {
+		var param proto.GetSSHListByIPParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+
+		metadao.GetSshListByIp(&param, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) AddSSH() {
+	h.group.POST("/paas/metadata/addSSH", func(c *gin.Context) {
+		var param proto.AddSSHParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+
+		metadao.AddSsh(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) ModSSH() {
+	h.group.POST("/paas/metadata/modSSH", func(c *gin.Context) {
+		var param proto.ModSSHParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+
+		metadao.ModSSH(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) DelSSH() {
+	h.group.POST("/paas/metadata/delSSH", func(c *gin.Context) {
+		var param proto.DelSSHParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+
+		metadao.DelSSH(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetUserByServiceType() {
+	h.group.POST("/paas/metadata/getUserByServiceType", func(c *gin.Context) {
+		var param proto.GetUserByServiceTypeParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		servClazz := param.SERV_CLAZZ
+
+		data := meta.CMPT_META.GetSurpportSSHList(servClazz)
+		resultBean.RET_INFO = data
+
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetServList() {
+	h.group.POST("/paas/metadata/getServList", func(c *gin.Context) {
+		var param proto.GetServListParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		servType := param.SERV_TYPE
+
+		data := meta.CMPT_META.GetServListFromCache(servType)
+		resultBean.RET_INFO = data
+
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) LoadServiceTopo() {
+	h.group.POST("/paas/metadata/loadServiceTopo", func(c *gin.Context) {
+		var param proto.LoadServiceTopoParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		instId := param.INST_ID
+
+		metadao.LoadServiceTopo(instId, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}

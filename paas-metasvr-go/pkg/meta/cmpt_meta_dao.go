@@ -20,6 +20,7 @@ var (
 	SQL_SEL_META_SERVER    = "SELECT SERVER_IP,SERVER_NAME FROM t_meta_server"
 	SQL_SEL_META_SSH       = "SELECT SSH_ID,SSH_NAME,SSH_PWD,SSH_PORT,SERV_CLAZZ,SERVER_IP FROM t_meta_ssh"
 	SQL_SEL_META_CMPT_VER  = "SELECT SERV_TYPE, VERSION from t_meta_cmpt_versions order by SERV_TYPE, VERSION"
+	SQL_SEL_SERVICE_BY_ID  = "SELECT INST_ID,SERV_NAME,SERV_CLAZZ,SERV_TYPE,IS_DEPLOYED,IS_PRODUCT,CREATE_TIME,USER,PASSWORD,PSEUDO_DEPLOY_FLAG,VERSION FROM t_meta_service WHERE INST_ID = ?"
 )
 
 func LoadAccount() ([]*proto.Account, error) {
@@ -184,4 +185,11 @@ func LoadMetaCmptVersion() ([]*proto.PaasCmptVer, error) {
 	}
 
 	return cmptVerSlice, nil
+}
+
+func GetServiceById(instID string) (*proto.PaasService, error) {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	service := new(proto.PaasService)
+	err := crud.SelectAsObject(dbPool, service, &SQL_SEL_SERVICE_BY_ID, instID)
+	return service, err
 }

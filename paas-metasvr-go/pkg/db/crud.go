@@ -266,13 +266,45 @@ func TxUpdate(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, 
 	return tx.Exec(pool.DB.Rebind(*sql), args...)
 }
 
-// for insert with named param bind:
+// for update with named param bind:
 //     "update person set first_name = :first, last_name = :last, email = :email where id = :id"
 func NamedUpdate(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
 	return pool.DB.NamedExec(*sql, *args)
 }
 
 func TxNamedUpdate(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+	tx, err := pool.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit()
+
+	return tx.NamedExec(*sql, *args)
+}
+
+// for delete with param list bind with ?
+//     "delete from person where id = ?"
+func Delete(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+	return pool.DB.Exec(pool.DB.Rebind(*sql), args...)
+}
+
+func TxDelete(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+	tx, err := pool.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit()
+
+	return tx.Exec(pool.DB.Rebind(*sql), args...)
+}
+
+// for delete with named param bind:
+//     "delete from person where id = :id"
+func NamedDelete(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
+	return pool.DB.NamedExec(*sql, *args)
+}
+
+func TxNamedDelete(pool *pool.DbPool, sql *string, args *map[string]interface{}) (sql.Result, error) {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return nil, err

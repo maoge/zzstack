@@ -34,4 +34,7 @@ var (
 	ERR_CLEAR_ALARM_REDIS_CACHE_FAIL = "clear alarm redis cache fail ......"
 	ERR_DB                           = "db error"
 	ERR_NO_DEL_DEPLOYED_SERV         = "cannot delete deployed service ......"
+	ERR_SERVER_IP_EXISTS             = "server ip exists ......"
+	ERR_SERVER_NOT_NULL              = "server contains sub ssh, can not delete ......"
+	ERR_SSH_IS_USING                 = "ssh resource is using, can not delete ......"
 )

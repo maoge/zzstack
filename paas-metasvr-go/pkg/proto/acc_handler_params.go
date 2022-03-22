@@ -107,3 +107,79 @@ type AddServiceParam struct {
 type DelServiceParam struct {
 	INST_ID string `json:"INST_ID" binding:"required"`
 }
+
+type ModServiceParam struct {
+	INST_ID    string `json:"INST_ID" binding:"required"`
+	SERV_NAME  string `json:"SERV_NAME" binding:"required"`
+	VERSION    string `json:"VERSION" binding:"required"`
+	IS_PRODUCT string `json:"IS_PRODUCT" binding:"required"`
+}
+
+type ModServiceVersionParam struct {
+	INST_ID string `json:"INST_ID" binding:"required"`
+	VERSION string `json:"VERSION" binding:"required"`
+}
+
+type GetServerCountParam struct {
+	SERVER_IP   string `json:"SERVER_IP" binding:"omitempty"`
+	SERVER_NAME string `json:"SERVER_NAME" binding:"omitempty"`
+}
+
+type GetServerListParam struct {
+	SERVER_IP   string `json:"SERVER_IP" binding:"omitempty"`
+	SERVER_NAME string `json:"SERVER_NAME" binding:"omitempty"`
+	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
+	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+}
+
+type AddServerParam struct {
+	SERVER_IP   string `json:"SERVER_IP" binding:"required"`
+	SERVER_NAME string `json:"SERVER_NAME" binding:"required"`
+}
+
+type DelServerParam struct {
+	SERVER_IP string `json:"SERVER_IP" binding:"required"`
+}
+
+type GetSSHCountByIPParam struct {
+	SERVER_IP string `json:"SERVER_IP" binding:"required"`
+}
+
+type GetSSHListByIPParam struct {
+	SERVER_IP   string `json:"SERVER_IP" binding:"required"`
+	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
+	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+}
+
+type AddSSHParam struct {
+	SSH_NAME   string `json:"SSH_NAME" binding:"required"`
+	SSH_PWD    string `json:"SSH_PWD" binding:"required"`
+	SSH_PORT   int    `json:"SSH_PORT" binding:"required"`
+	SERV_CLAZZ string `json:"SERV_CLAZZ" binding:"required"`
+	SERVER_IP  string `json:"SERVER_IP" binding:"required"`
+}
+
+type ModSSHParam struct {
+	SSH_NAME  string `json:"SSH_NAME" binding:"required"`
+	SSH_PWD   string `json:"SSH_PWD" binding:"required"`
+	SSH_PORT  int    `json:"SSH_PORT" binding:"required"`
+	SSH_ID    string `json:"SSH_ID" binding:"required"`
+	SERVER_IP string `json:"SERVER_IP" binding:"required"`
+}
+
+type DelSSHParam struct {
+	SSH_ID    string `json:"SSH_ID" binding:"required"`
+	SERVER_IP string `json:"SERVER_IP" binding:"required"`
+}
+
+type GetUserByServiceTypeParam struct {
+	SERV_CLAZZ string `json:"SERV_CLAZZ" binding:"required"`
+}
+
+type GetServListParam struct {
+	SERV_TYPE string `json:"SERV_TYPE" binding:"required"`
+}
+
+type LoadServiceTopoParam struct {
+	INST_ID string `json:"INST_ID" binding:"required"`
+}

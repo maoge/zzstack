@@ -364,14 +364,23 @@ func (m *CmptMeta) loadMetaCmptVersion() {
 }
 
 func (m *CmptMeta) GetAccount(user string) *proto.Account {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	return m.accountMap[user]
 }
 
 func (m *CmptMeta) GetAccSession(user string) *proto.AccountSession {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	return m.accSessionMap[user]
 }
 
 func (m *CmptMeta) AddAccSession(accSession *proto.AccountSession, isLocalOnly bool) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	m.accSessionMap[accSession.ACC_NAME] = accSession
 	m.magicKeyMap[accSession.MAGIC_KEY] = accSession
 
@@ -390,6 +399,9 @@ func (m *CmptMeta) AddAccSession(accSession *proto.AccountSession, isLocalOnly b
 }
 
 func (m *CmptMeta) RemoveTtlSession(accName, magicKey string, isLocalOnly bool) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	delete(m.accSessionMap, accName)
 	delete(m.magicKeyMap, magicKey)
 
@@ -406,10 +418,16 @@ func (m *CmptMeta) RemoveTtlSession(accName, magicKey string, isLocalOnly bool) 
 }
 
 func (m *CmptMeta) GetSessionByMagicKey(magicKey string) *proto.AccountSession {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	return m.magicKeyMap[magicKey]
 }
 
 func (m *CmptMeta) GetAccNameByMagicKey(magicKey string) string {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	accSession := m.magicKeyMap[magicKey]
 	if accSession != nil {
 		return accSession.ACC_NAME
@@ -419,6 +437,9 @@ func (m *CmptMeta) GetAccNameByMagicKey(magicKey string) string {
 }
 
 func (m *CmptMeta) GetMetaData2Json() interface{} {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	var metaMap map[string]interface{}
 	metaMap = make(map[string]interface{})
 
@@ -440,6 +461,9 @@ func (m *CmptMeta) GetMetaData2Json() interface{} {
 }
 
 func (m *CmptMeta) GetInstRelations(servInstId string, relations []*proto.PaasTopology) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	dataArr, found := m.metaTopoMMap.Get(servInstId)
 	if !found {
 		return
@@ -452,7 +476,10 @@ func (m *CmptMeta) GetInstRelations(servInstId string, relations []*proto.PaasTo
 }
 
 func (m *CmptMeta) GetInstance(instId string) *proto.PaasInstance {
-	return m.metaInstMap["instId"]
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	return m.metaInstMap[instId]
 }
 
 func (m *CmptMeta) DelInstance(instId string) {
@@ -464,6 +491,9 @@ func (m *CmptMeta) GetCmptById(cmptId int) *proto.PaasMetaCmpt {
 }
 
 func (m *CmptMeta) GetInstAttr(instId string, attrId int) *proto.PaasInstAttr {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
 	dataArr, found := m.metaInstAttrMMap.Get(instId)
 	if !found {
 		return nil
@@ -479,6 +509,24 @@ func (m *CmptMeta) GetInstAttr(instId string, attrId int) *proto.PaasInstAttr {
 	}
 
 	return result
+}
+
+func (m *CmptMeta) GetInstAttrs(instId string) []*proto.PaasInstAttr {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	attrs := make([]*proto.PaasInstAttr, 0)
+	values, found := m.metaInstAttrMMap.Get(instId)
+	if !found {
+		return attrs
+	}
+
+	for _, rawItem := range values {
+		attr := rawItem.(*proto.PaasInstAttr)
+		attrs = append(attrs, attr)
+	}
+
+	return attrs
 }
 
 func (m *CmptMeta) DelInstAttr(instId string) {
@@ -545,4 +593,216 @@ func (m *CmptMeta) IsServRootCmpt(servType, cmptName string) bool {
 	}
 
 	return servRootCmptName == cmptName
+}
+
+func (m *CmptMeta) IsInstServRootCmpt(instID string) bool {
+	inst := m.metaInstMap[instID]
+	if inst == nil {
+		return false
+	}
+
+	cmptID := inst.CMPT_ID
+	cmpt := m.metaCmptIdMap[cmptID]
+	if cmpt == nil {
+		return false
+	}
+
+	return m.IsServRootCmpt(cmpt.SERV_TYPE, cmpt.CMPT_NAME)
+}
+
+func (m *CmptMeta) ReloadService(instID string) {
+	service, err := GetServiceById(instID)
+	if err != nil {
+		m.metaServiceMap[instID] = service
+	} else {
+		errMsg := fmt.Sprintf("ReloadService: %s, error: %v", instID, err.Error())
+		utils.LOGGER.Error(errMsg)
+	}
+}
+
+func (m *CmptMeta) IsServerIpExists(servIp string) bool {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	_, found := m.metaServerMap[servIp]
+	return found
+}
+
+func (m *CmptMeta) IsServerNull(servIp string) bool {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	value, found := m.metaSshMMap.Get(servIp)
+	if !found {
+		return true
+	}
+
+	if len(value) > 0 {
+		return false
+	} else {
+		return true
+	}
+}
+
+func (m *CmptMeta) AddServer(server *proto.PaasServer) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaServerMap[server.SERVER_IP] = server
+}
+
+func (m *CmptMeta) IsSshExists(sshName, servIp, servClazz string) bool {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	values, found := m.metaSshMMap.Get(servIp)
+	if !found {
+		return false
+	}
+
+	for _, rawItem := range values {
+		item := rawItem.(*proto.PaasSsh)
+		if item.SSH_NAME == sshName && item.SERV_CLAZZ == servClazz {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *CmptMeta) AddSsh(ssh *proto.PaasSsh) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaSshMMap.Put(ssh.SERVER_IP, ssh)
+}
+
+func (m *CmptMeta) ModSsh(serverIp string, sshId string, sshName string, sshPwd string, sshPort int) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	values, found := m.metaSshMMap.Get(serverIp)
+	if !found {
+		return
+	}
+
+	for _, rawItem := range values {
+		ssh := rawItem.(*proto.PaasSsh)
+		if ssh.SSH_ID == sshId {
+			ssh.SSH_NAME = sshName
+			ssh.SSH_PWD = sshPwd
+			ssh.SSH_PORT = sshPort
+			break
+		}
+	}
+}
+
+func (m *CmptMeta) DelSsh(servIp, sshId string) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	values, found := m.metaSshMMap.Get(servIp)
+	if !found {
+		return
+	}
+
+	for _, rawItem := range values {
+		ssh := rawItem.(*proto.PaasSsh)
+		if ssh.SSH_ID == sshId {
+			m.metaSshMMap.Remove(servIp, ssh)
+			break
+		}
+	}
+}
+
+func (m *CmptMeta) IsSshUsing(sshId string) bool {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	values := m.metaInstAttrMMap.Values()
+	for _, value := range values {
+		attr := value.(*proto.PaasInstAttr)
+
+		// 116 -> 'SSH_ID'
+		if attr.ATTR_ID == 116 && attr.ATTR_VALUE == sshId {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *CmptMeta) GetSurpportSSHList(servClazz string) []map[string]interface{} {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	res := make([]map[string]interface{}, 0)
+	for serverIP := range m.metaServerMap {
+		sshList, found := m.metaSshMMap.Get(serverIP)
+		if !found {
+			continue
+		}
+
+		var subSSH []map[string]string
+		for _, rawSsh := range sshList {
+			ssh := rawSsh.(*proto.PaasSsh)
+			if ssh.SERV_CLAZZ != servClazz {
+				continue
+			}
+
+			if subSSH == nil {
+				subSSH = make([]map[string]string, 0)
+			}
+
+			item := make(map[string]string)
+			item[consts.HEADER_SSH_NAME] = ssh.SSH_NAME
+			item[consts.HEADER_SSH_ID] = ssh.SSH_ID
+
+			subSSH = append(subSSH, item)
+		}
+
+		if subSSH != nil {
+			node := make(map[string]interface{})
+			node[consts.HEADER_SERVER_IP] = serverIP
+			node[consts.HEADER_SSH_LIST] = subSSH
+			res = append(res, node)
+		}
+	}
+
+	return res
+}
+
+func (m *CmptMeta) GetServListFromCache(servType string) []map[string]interface{} {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	res := make([]map[string]interface{}, 0)
+	for servInstId, service := range m.metaServiceMap {
+		// 未部署服务不加入可用服务列表
+		if !service.IsDeployed() {
+			continue
+		}
+
+		instance := m.metaInstMap[servInstId]
+		_, found := m.metaTopoMMap.Get(servInstId)
+
+		// 只录了服务还未做初始化
+		if instance == nil || !found {
+			continue
+		}
+
+		if service.SERV_TYPE == servType {
+			node := make(map[string]interface{})
+			node[consts.HEADER_SERV_NAME] = service.SERV_NAME
+			node[consts.HEADER_INST_ID] = service.INST_ID
+
+			res = append(res, node)
+		}
+	}
+
+	return res
+}
+
+func (m *CmptMeta) LoadServiceTopo(instId string, resultBean *proto.ResultBean) {
+
 }
