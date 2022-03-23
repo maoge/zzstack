@@ -1,6 +1,3 @@
-/**
- * Created by guozh on 2018/3/1.
- */
 var Util = window.Util = {
     initLoading : function(){
         if(!this.$backuDrop){

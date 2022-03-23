@@ -90,10 +90,6 @@ function loadServiceList() {
                             return { hided:true };
                         }
                     }
-                    
-                    // if(row.IS_DEPLOYED == 0 || row.SERV_TYPE != 'SMS_GATEWAY' || row.SERV_TYPE != 'SMS_QUERY_SERVICE') {
-                    //    return { hided:true };
-                    // }
                 },
                 onClick:function(_button, row, _index) {
                     $('#MOD_INST_ID1').val(row.INST_ID);
