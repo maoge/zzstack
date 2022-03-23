@@ -42,8 +42,8 @@ type GetOpLogListParam struct {
 	USER        string `json:"USER" binding:"required"`
 	START_TS    int64  `json:"START_TS" binding:"required"`
 	END_TS      int64  `json:"END_TS" binding:"required"`
-	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
-	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+	PAGE_SIZE   int    `json:"pageSize" binding:"required"`
+	PAGE_NUMBER int    `json:"pageNumber" binding:"required"`
 }
 
 type GetAlarmCountParam struct {
@@ -54,8 +54,8 @@ type GetAlarmListParam struct {
 	SERV_INST_ID string `json:"SERV_INST_ID" binding:"omitempty"`
 	INST_ID      string `json:"INST_ID" binding:"omitempty"`
 	DEAL_FLAG    string `json:"DEAL_FLAG" binding:"omitempty,oneof=0 1"`
-	PAGE_SIZE    int    `json:"PAGE_SIZE" binding:"required"`
-	PAGE_NUMBER  int    `json:"PAGE_NUMBER" binding:"required"`
+	PAGE_SIZE    int    `json:"pageSize" binding:"required"`
+	PAGE_NUMBER  int    `json:"pageNumber" binding:"required"`
 }
 
 type ClearAlarmParam struct {
@@ -76,8 +76,8 @@ type GetServiceListParam struct {
 	SERV_NAME    string `json:"SERV_NAME" binding:"omitempty"`
 	SERV_CLAZZ   string `json:"SERV_CLAZZ" binding:"omitempty"`
 	SERV_TYPE    string `json:"SERV_TYPE" binding:"omitempty"`
-	PAGE_SIZE    int    `json:"PAGE_SIZE" binding:"required"`
-	PAGE_NUMBER  int    `json:"PAGE_NUMBER" binding:"required"`
+	PAGE_SIZE    int    `json:"pageSize" binding:"required"`
+	PAGE_NUMBER  int    `json:"pageNumber" binding:"required"`
 }
 
 type GetServTypeVerCountParam struct {
@@ -86,8 +86,8 @@ type GetServTypeVerCountParam struct {
 
 type GetServTypeVerListByPageParam struct {
 	SERV_TYPE   string `json:"SERV_TYPE" binding:"omitempty"`
-	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
-	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+	PAGE_SIZE   int    `json:"pageSize" binding:"required"`
+	PAGE_NUMBER int    `json:"pageNumber" binding:"required"`
 }
 
 type GetDashboardAddrParam struct {
@@ -128,8 +128,8 @@ type GetServerCountParam struct {
 type GetServerListParam struct {
 	SERVER_IP   string `json:"SERVER_IP" binding:"omitempty"`
 	SERVER_NAME string `json:"SERVER_NAME" binding:"omitempty"`
-	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
-	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+	PAGE_SIZE   int    `json:"pageSize" binding:"required"`
+	PAGE_NUMBER int    `json:"pageNumber" binding:"required"`
 }
 
 type AddServerParam struct {
@@ -147,8 +147,8 @@ type GetSSHCountByIPParam struct {
 
 type GetSSHListByIPParam struct {
 	SERVER_IP   string `json:"SERVER_IP" binding:"required"`
-	PAGE_SIZE   int    `json:"PAGE_SIZE" binding:"required"`
-	PAGE_NUMBER int    `json:"PAGE_NUMBER" binding:"required"`
+	PAGE_SIZE   int    `json:"pageSize" binding:"required"`
+	PAGE_NUMBER int    `json:"pageNumber" binding:"required"`
 }
 
 type AddSSHParam struct {
@@ -180,6 +180,11 @@ type GetServListParam struct {
 	SERV_TYPE string `json:"SERV_TYPE" binding:"required"`
 }
 
-type LoadServiceTopoParam struct {
+type LoadMetaParam struct {
 	INST_ID string `json:"INST_ID" binding:"required"`
+}
+
+type SaveServiceTopoSkeletonParam struct {
+	SERV_TYPE string                 `json:"SERV_TYPE" binding:"required"`
+	TOPO_JSON map[string]interface{} `json:"TOPO_JSON" binding:"required"`
 }

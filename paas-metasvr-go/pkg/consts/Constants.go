@@ -14,6 +14,8 @@ var (
 	STR_WARN                                         = "2"
 	STR_DEPLOYED                                     = "1"
 	STR_SAVED                                        = "0"
+	TOPO_TYPE_LINK                     int           = 1
+	TOPO_TYPE_CONTAIN                  int           = 2
 	POS_DEFAULT_VALUE                  int           = -1
 	DEPLOY_FLAG_PHYSICAL                             = "1" // 物理部署
 	DEPLOY_FLAG_PSEUDO                               = "2" // 伪部署

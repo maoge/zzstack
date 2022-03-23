@@ -50,15 +50,23 @@ func (h *MetaDataHandler) GetServiceCount() {
 
 func (h *MetaDataHandler) GetServiceList() {
 	h.group.POST("/paas/metadata/getServiceList", func(c *gin.Context) {
-		var getServiceListParam proto.GetServiceListParam
-		err := c.MustBindWith(&getServiceListParam, binding.JSON)
+		var param proto.GetServiceListParam
+		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
 		resultBean := proto.NewResultBean()
-		metadao.GetServiceList(&getServiceListParam, resultBean)
+		metadao.GetServiceList(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetServTypeVerList() {
+	h.group.POST("/paas/metadata/getServTypeVerList", func(c *gin.Context) {
+		result := make(map[string]interface{})
+		meta.CMPT_META.GetServTypeVerList(&result)
+		c.JSON(http.StatusOK, result)
 	})
 }
 
@@ -429,7 +437,7 @@ func (h *MetaDataHandler) GetServList() {
 
 func (h *MetaDataHandler) LoadServiceTopo() {
 	h.group.POST("/paas/metadata/loadServiceTopo", func(c *gin.Context) {
-		var param proto.LoadServiceTopoParam
+		var param proto.LoadMetaParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
@@ -440,6 +448,42 @@ func (h *MetaDataHandler) LoadServiceTopo() {
 		instId := param.INST_ID
 
 		metadao.LoadServiceTopo(instId, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) LoadInstanceMeta() {
+	h.group.POST("/paas/metadata/loadInstanceMeta", func(c *gin.Context) {
+		var param proto.LoadMetaParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		instId := param.INST_ID
+
+		metadao.LoadInstanceMeta(instId, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) SaveServiceTopoSkeleton() {
+	h.group.POST("/paas/metadata/saveServiceTopoSkeleton", func(c *gin.Context) {
+		var param proto.SaveServiceTopoSkeletonParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+		servType := param.SERV_TYPE
+		topoMap := param.TOPO_JSON
+
+		metadao.SaveServTopoSkeleton(servType, topoMap, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }

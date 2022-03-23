@@ -1663,7 +1663,8 @@ public class MetaDataDao {
     
     private static boolean enumSavePos(String cmptName, JsonObject json, JsonObject retval, Vector<EventBean> events, String magicKey) {
         CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        if (cmptMeta.getCmptByName(cmptName) == null)
+        PaasMetaCmpt rootCmpt = cmptMeta.getCmptByName(cmptName);
+        if (rootCmpt == null)
             return true;
 
         if (json.containsKey(FixHeader.HEADER_INST_ID) && json.containsKey(FixHeader.HEADER_POS)) {
@@ -1682,7 +1683,7 @@ public class MetaDataDao {
                 c.putSqlBean(sqlBean);
 
                 if (c.executeUpdate()) {
-                    PaasInstance instance = new PaasInstance(instId, 0, false, CONSTS.STR_FALSE, pos.getX(), pos.getY(), pos.getWidth(),
+                    PaasInstance instance = new PaasInstance(instId, rootCmpt.getCmptId(), false, CONSTS.STR_FALSE, pos.getX(), pos.getY(), pos.getWidth(),
                             pos.getHeight(), pos.getRow(), pos.getCol());
 
                     // add to local cache

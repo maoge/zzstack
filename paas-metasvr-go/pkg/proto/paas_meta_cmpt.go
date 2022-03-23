@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
@@ -41,4 +42,8 @@ func (m *PaasMetaCmpt) InitSubCmptSet() {
 
 func (m *PaasMetaCmpt) HaveSubComponent() bool {
 	return m.SUB_CMPT_SET != nil && len(m.SUB_CMPT_SET) > 0
+}
+
+func (m *PaasMetaCmpt) IsNeedDeploy() bool {
+	return m.IS_NEED_DEPLOY == consts.STR_TRUE
 }

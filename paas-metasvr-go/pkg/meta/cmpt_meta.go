@@ -460,7 +460,7 @@ func (m *CmptMeta) GetMetaData2Json() interface{} {
 	return &metaMap
 }
 
-func (m *CmptMeta) GetInstRelations(servInstId string, relations []*proto.PaasTopology) {
+func (m *CmptMeta) GetInstRelations(servInstId string, relations *[]*proto.PaasTopology) {
 	m.mut.Lock()
 	defer m.mut.Unlock()
 
@@ -471,7 +471,7 @@ func (m *CmptMeta) GetInstRelations(servInstId string, relations []*proto.PaasTo
 
 	for _, rawItem := range dataArr {
 		item := rawItem.(*proto.PaasTopology)
-		relations = append(relations, item)
+		*relations = append(*relations, item)
 	}
 }
 
@@ -488,6 +488,32 @@ func (m *CmptMeta) DelInstance(instId string) {
 
 func (m *CmptMeta) GetCmptById(cmptId int) *proto.PaasMetaCmpt {
 	return m.metaCmptIdMap[cmptId]
+}
+
+func (m *CmptMeta) GetCmptByName(cmptName string) *proto.PaasMetaCmpt {
+	return m.metaCmptNameMap[cmptName]
+}
+
+func (m *CmptMeta) GetCmptAttrs(cmptId int) []*proto.PaasMetaAttr {
+	attrSlice := make([]*proto.PaasMetaAttr, 0)
+
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	attrIdList, found := m.metaCmptAttrMMap.Get(cmptId)
+	if !found {
+		return attrSlice
+	}
+
+	for _, attrIdRaw := range attrIdList {
+		attrId := attrIdRaw.(int)
+		data, found := m.metaAttrIdMap[attrId]
+		if found {
+			attrSlice = append(attrSlice, data)
+		}
+	}
+
+	return attrSlice
 }
 
 func (m *CmptMeta) GetInstAttr(instId string, attrId int) *proto.PaasInstAttr {
@@ -803,6 +829,93 @@ func (m *CmptMeta) GetServListFromCache(servType string) []map[string]interface{
 	return res
 }
 
-func (m *CmptMeta) LoadServiceTopo(instId string, resultBean *proto.ResultBean) {
+func (m *CmptMeta) GetServRootCmpt(servType string) string {
+	return m.metaServRootMap[servType]
+}
+
+func (m *CmptMeta) GetServTypeVerList(result *map[string]interface{}) {
+	cmptVerMap := make(map[string]interface{})
+	for key, value := range m.metaCmptVerMap {
+		cmptVerMap[key] = value.ToJsonMap()
+	}
+	(*result)[consts.HEADER_RET_CODE] = consts.REVOKE_OK
+	(*result)["metaCmptVerMap"] = cmptVerMap
+}
+
+func (m *CmptMeta) UpdInstPos(inst *proto.PaasInstance) {
+	instPtr := m.metaInstMap[inst.INST_ID]
+	if instPtr != nil {
+		instPtr.POS_X = inst.POS_X
+		instPtr.POS_Y = inst.POS_Y
+		instPtr.WIDTH = inst.WIDTH
+		instPtr.HEIGHT = inst.HEIGHT
+		instPtr.ROW = inst.ROW
+		instPtr.COL = inst.COL
+	}
+}
+
+func (m *CmptMeta) AddInstance(instance *proto.PaasInstance) {
+	m.metaInstMap[instance.INST_ID] = instance
+}
+
+func (m *CmptMeta) AddInstAttr(instAttr *proto.PaasInstAttr) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	attrCollection, found := m.metaInstAttrMMap.Get(instAttr.INST_ID)
+	attrId := instAttr.ATTR_ID
+
+	var attrOld *proto.PaasInstAttr = nil
+	if found {
+		for _, attrRaw := range attrCollection {
+			attr := attrRaw.(*proto.PaasInstAttr)
+			if attr.ATTR_ID == attrId {
+				attrOld = attr
+				break
+			}
+		}
+	}
+
+	if attrOld == nil {
+		m.metaInstAttrMMap.Put(instAttr.INST_ID, instAttr)
+	} else {
+		attrOld.ATTR_VALUE = instAttr.ATTR_VALUE
+	}
+
+}
+
+func (m *CmptMeta) AddTopo(topo *proto.PaasTopology) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaTopoMMap.Put(topo.INST_ID1, topo)
+}
+
+func (m *CmptMeta) IsTopoRelationExists(parentId, subId string) bool {
+	res := false
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	topos, found := m.metaTopoMMap.Get(parentId)
+	if !found {
+		return false
+	}
+
+	for _, topoRaw := range topos {
+		topo := topoRaw.(*proto.PaasTopology)
+		if topo.INST_ID2 == subId {
+			res = true
+			break
+		}
+	}
+
+	return res
+}
+
+func (m *CmptMeta) DelAllSubTopo(parentId string) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaTopoMMap.RemoveAll(parentId)
 
 }

@@ -2,6 +2,8 @@ package proto
 
 import (
 	"strings"
+
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 )
 
 type PaasCmptVer struct {
@@ -18,4 +20,20 @@ func (m *PaasCmptVer) InitVerList() {
 
 func (m *PaasCmptVer) AddVersion(version string) {
 	m.VER_LIST = append(m.VER_LIST, version)
+}
+
+func (m *PaasCmptVer) ToJsonMap() map[string]interface{} {
+	versionSlice := ""
+	for _, s := range m.VER_LIST {
+		if versionSlice != "" {
+			versionSlice += ","
+		}
+
+		versionSlice += s
+	}
+
+	result := make(map[string]interface{})
+	result[consts.HEADER_SERV_TYPE] = m.SERV_TYPE
+	result[consts.HEADER_VERSION] = versionSlice
+	return result
 }
