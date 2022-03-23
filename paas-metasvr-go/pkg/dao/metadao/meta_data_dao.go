@@ -1242,7 +1242,7 @@ func enumSavePos(cmptName string, topoMap map[string]interface{},
 	for key, val := range topoMap {
 		subCmptName := key
 		itemKind := reflect.TypeOf(val).Kind()
-		if itemKind == reflect.Struct {
+		if itemKind == reflect.Map {
 			subMap := val.(map[string]interface{})
 			subInstIdRaw := subMap[consts.HEADER_INST_ID]
 			if subInstIdRaw == nil {

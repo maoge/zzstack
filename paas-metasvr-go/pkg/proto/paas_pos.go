@@ -24,8 +24,8 @@ func NewPaasPos(x, y int) *PaasPos {
 }
 
 func GetPos(posMap *map[string]interface{}) *PaasPos {
-	x := (*posMap)[consts.HEADER_X].(int)
-	y := (*posMap)[consts.HEADER_Y].(int)
+	x := int((*posMap)[consts.HEADER_X].(float64))
+	y := int((*posMap)[consts.HEADER_Y].(float64))
 
 	rowRaw := (*posMap)["row"]
 	colRaw := (*posMap)["col"]
@@ -34,16 +34,16 @@ func GetPos(posMap *map[string]interface{}) *PaasPos {
 
 	pos := NewPaasPos(x, y)
 	if rowRaw != nil {
-		pos.Row = rowRaw.(int)
+		pos.Row = int(rowRaw.(float64))
 	}
 	if colRaw != nil {
-		pos.Col = colRaw.(int)
+		pos.Col = int(colRaw.(float64))
 	}
 	if widthRaw != nil {
-		pos.Width = widthRaw.(int)
+		pos.Width = int(widthRaw.(float64))
 	}
 	if heightRaw != nil {
-		pos.Height = heightRaw.(int)
+		pos.Height = int(heightRaw.(float64))
 	}
 
 	return pos
