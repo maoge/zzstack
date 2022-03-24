@@ -41,7 +41,9 @@ var (
 	SQL_INS_INSTANCE             = "INSERT INTO t_meta_instance(INST_ID,CMPT_ID,IS_DEPLOYED,POS_X,POS_Y,WIDTH,HEIGHT,ROW_,COL_) VALUES(?,?,?,?,?,?,?,?,?)"
 	SQL_INS_INSTANCE_ATTR        = "INSERT INTO t_meta_instance_attr(INST_ID,ATTR_ID,ATTR_NAME,ATTR_VALUE) VALUES(?,?,?,?)"
 	SQL_INS_TOPOLOGY             = "INSERT INTO t_meta_topology(INST_ID1,INST_ID2,TOPO_TYPE) VALUES(?,?,?)"
+	SQL_UPD_TOPOLOGY             = "update t_meta_topology set INST_ID2 = ? where INST_ID1 = ?"
 	SQL_DEL_ALL_SUB_TOPOLOGY     = "DELETE FROM t_meta_topology WHERE (INST_ID1 = ? AND TOPO_TYPE = 1) OR (INST_ID1 = ? and TOPO_TYPE = 2)"
+	SQL_MOD_ATTR                 = "UPDATE t_meta_instance_attr SET ATTR_VALUE = ? WHERE INST_ID = ? AND ATTR_ID = ?"
 )
 
 func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *proto.ResultBean) {
@@ -171,7 +173,7 @@ func GetServTypeVerListByPage(param *proto.GetServTypeVerListByPageParam, result
 	}
 }
 
-func GetClickHouseDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+func GetClickHouseDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -215,7 +217,7 @@ func GetClickHouseDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *
 	}
 }
 
-func GetVoltDBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+func GetVoltDBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -271,7 +273,7 @@ func GetVoltDBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *prot
 	}
 }
 
-func GetRocketMQDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+func GetRocketMQDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -315,7 +317,7 @@ func GetRocketMQDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *pr
 	}
 }
 
-func GetTiDBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+func GetTiDBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -359,7 +361,7 @@ func GetTiDBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.
 	}
 }
 
-func GetPulsarDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+func GetPulsarDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -403,7 +405,7 @@ func GetPulsarDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *prot
 	}
 }
 
-func GetYBDashboardAddr(param *proto.GetDashboardAddrParam, resultBean *proto.ResultBean) {
+func GetYBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -531,7 +533,7 @@ func DelService(instId string, magicKey string, resultBean *proto.ResultBean) {
 	getChildNodeExcludingServRoot(instId, childArr)
 
 	events := make([]*proto.PaasEvent, 0)
-	if enumDelService("", instId, childArr, resultBean, events, magicKey) {
+	if enumDelService("", instId, childArr, resultBean, &events, magicKey) {
 		for _, ev := range events {
 			eventbus.EVENTBUS.PublishEvent(ev)
 			result := gjson.Parse(ev.MSG_BODY)
@@ -560,7 +562,7 @@ func DelService(instId string, magicKey string, resultBean *proto.ResultBean) {
 	}
 }
 
-func enumDelService(parentId string, instId string, subNodes []*proto.PaasNode, resultBean *proto.ResultBean, events []*proto.PaasEvent, magicKey string) bool {
+func enumDelService(parentId string, instId string, subNodes []*proto.PaasNode, resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
 	if len(subNodes) > 0 {
 		for _, node := range subNodes {
 			subInstId := node.INST_ID
@@ -594,13 +596,13 @@ func enumDelService(parentId string, instId string, subNodes []*proto.PaasNode, 
 		msgBody := utils.Struct2Json(msgBodyMap)
 
 		ev := proto.NewPaasEvent(consts.EVENT_DEL_SERVICE.CODE, msgBody, magicKey)
-		events = append(events, ev)
+		*events = append(*events, ev)
 	}
 
 	return true
 }
 
-func DelInstance(parentId string, instId string, resultBean *proto.ResultBean, events []*proto.PaasEvent, magicKey string) bool {
+func DelInstance(parentId string, instId string, resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
 	relations := make([]*proto.PaasTopology, 0)
 	meta.CMPT_META.GetInstRelations(instId, &relations)
 
@@ -634,7 +636,7 @@ func DelInstance(parentId string, instId string, resultBean *proto.ResultBean, e
 	delTopoBody := utils.Struct2Json(delTopoMap)
 
 	evDelTopo := proto.NewPaasEvent(consts.EVENT_DEL_TOPO.CODE, delTopoBody, magicKey)
-	events = append(events, evDelTopo)
+	*events = append(*events, evDelTopo)
 
 	// 2.1 delete instance attribute
 	crud.Delete(dbPool, &SQL_DEL_INSTANCE_ATTR, instId)
@@ -645,7 +647,7 @@ func DelInstance(parentId string, instId string, resultBean *proto.ResultBean, e
 	delInstAttrBody := utils.Struct2Json(delInstAttrMap)
 
 	evDelInstAttr := proto.NewPaasEvent(consts.EVENT_DEL_INST_ATTR.CODE, delInstAttrBody, magicKey)
-	events = append(events, evDelInstAttr)
+	*events = append(*events, evDelInstAttr)
 
 	// 3.1 delete instance
 	crud.Delete(dbPool, &SQL_DEL_INSTANCE, instId)
@@ -656,7 +658,7 @@ func DelInstance(parentId string, instId string, resultBean *proto.ResultBean, e
 	delInstBody := utils.Struct2Json(delInstMap)
 
 	evDelInst := proto.NewPaasEvent(consts.EVENT_DEL_INSTANCE.CODE, delInstBody, magicKey)
-	events = append(events, evDelInst)
+	*events = append(*events, evDelInst)
 
 	return true
 }
@@ -1127,7 +1129,7 @@ func loadInstanceAttribute(instId string, attrMap *map[string]interface{}, deplo
 	for subCmptId := range subCmpt {
 		subCmpt := meta.CMPT_META.GetCmptById(subCmptId)
 		if subCmpt == nil {
-			continue
+			return false
 		}
 
 		subCmptName := subCmpt.CMPT_NAME
@@ -1146,12 +1148,12 @@ func loadInstanceAttribute(instId string, attrMap *map[string]interface{}, deplo
 		toeId := topo.GetToe(instId)
 		subInst := meta.CMPT_META.GetInstance(toeId)
 		if subInst == nil {
-			continue
+			return false
 		}
 
 		subCmpt := meta.CMPT_META.GetCmptById(subInst.CMPT_ID)
 		if subCmpt == nil {
-			continue
+			return false
 		}
 
 		subCmptName := subCmpt.CMPT_NAME
@@ -1179,8 +1181,6 @@ func loadInstanceAttribute(instId string, attrMap *map[string]interface{}, deplo
 }
 
 func SaveServTopoSkeleton(servType string, topoMap map[string]interface{}, magicKey string, resultBean *proto.ResultBean) {
-	utils.LOGGER.Info(utils.Struct2Json(topoMap))
-
 	servRootName := meta.CMPT_META.GetServRootCmpt(servType)
 	subJson := (topoMap)[servRootName]
 	if subJson == nil {
@@ -1201,6 +1201,18 @@ func SaveServTopoSkeleton(servType string, topoMap map[string]interface{}, magic
 		// init containers
 		enumSaveSkeleton(topoMap, resultBean, &events, magicKey)
 	}
+}
+
+func ReloadMetaData(reloadType string, magicKey string, resultBean *proto.ResultBean) {
+	meta.CMPT_META.ReloadMetaData(reloadType)
+
+	// broadcast to cluster
+	msgBodyMap := make(map[string]interface{})
+	msgBodyMap[consts.HEADER_RELOAD_TYPE] = reloadType
+
+	msgBody := utils.Struct2Json(msgBodyMap)
+	event := proto.NewPaasEvent(consts.EVENT_RELOAD_METADATA.CODE, msgBody, magicKey)
+	eventbus.EVENTBUS.PublishEvent(event)
 }
 
 func enumSavePos(cmptName string, topoMap map[string]interface{},
@@ -1304,16 +1316,17 @@ func enumSaveSkeleton(topoMap interface{}, resultBean *proto.ResultBean,
 					return false
 				}
 
-				if !enumSaveSkeleton(&subNode, resultBean, events, magicKey) {
+				if !enumSaveSkeleton(subNode, resultBean, events, magicKey) {
 					return false
 				}
 			} else if cmpt.NODE_JSON_TYPE == consts.SCHEMA_ARRAY {
-				subNodeArr := val.([]map[string]interface{})
+				subNodeArr := val.([]interface{})
 				if len(subNodeArr) == 0 {
 					continue
 				}
 
-				for _, subNode := range subNodeArr {
+				for _, subNodeRaw := range subNodeArr {
+					subNode := subNodeRaw.(map[string]interface{})
 					if len(subNode) == 0 {
 						continue
 					}
@@ -1322,7 +1335,7 @@ func enumSaveSkeleton(topoMap interface{}, resultBean *proto.ResultBean,
 						return false
 					}
 
-					if !enumSaveSkeleton(&subNode, resultBean, events, magicKey) {
+					if !enumSaveSkeleton(subNode, resultBean, events, magicKey) {
 						return false
 					}
 				}
@@ -1388,12 +1401,13 @@ func addInstanceWithAttrRelation(jsonMap map[string]interface{}, cmpt *proto.Paa
 				subInstId := node[consts.HEADER_INST_ID].(string)
 				addRelation(instId, subInstId, consts.TOPO_TYPE_CONTAIN, resultBean, events, magicKey)
 			} else if subCmptNodeJsonType == consts.SCHEMA_ARRAY {
-				nodeArr := val.([]map[string]interface{})
+				nodeArr := val.([]interface{})
 				if len(nodeArr) == 0 {
 					continue
 				}
 
-				for _, subCmptItem := range nodeArr {
+				for _, subCmptItemRaw := range nodeArr {
+					subCmptItem := subCmptItemRaw.(map[string]interface{})
 					if len(subCmptItem) == 0 {
 						continue
 					}
@@ -1432,7 +1446,11 @@ func addRelation(parentId string, instId string, topoType int, resultBean *proto
 	events *[]*proto.PaasEvent, magicKey string) {
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
-	crud.Insert(dbPool, &SQL_INS_TOPOLOGY, parentId, instId, topoType)
+	_, err := crud.Insert(dbPool, &SQL_INS_TOPOLOGY, parentId, instId, topoType)
+	if err != nil {
+		errMsg := fmt.Sprintf("addRelation fail, parentId: %s, instId: %s", parentId, instId)
+		utils.LOGGER.Error(errMsg)
+	}
 
 	// add to local cache
 	topo := proto.NewPaasTopology(parentId, instId, topoType)
@@ -1441,6 +1459,26 @@ func addRelation(parentId string, instId string, topoType int, resultBean *proto
 	// broadcast event to cluster
 	msgBody := utils.Struct2Json(topo)
 	event := proto.NewPaasEvent(consts.EVENT_ADD_TOPO.CODE, msgBody, magicKey)
+	*events = append(*events, event)
+}
+
+func modRelation(parentId string, instId string, topoType int, resultBean *proto.ResultBean,
+	events *[]*proto.PaasEvent, magicKey string) {
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_UPD_TOPOLOGY, instId, parentId)
+	if err != nil {
+		errMsg := fmt.Sprintf("modRelation fail, parentId: %s, instId: %s", parentId, instId)
+		utils.LOGGER.Error(errMsg)
+	}
+
+	// update local cache
+	topo := proto.NewPaasTopology(parentId, instId, topoType)
+	meta.CMPT_META.ModTopo(topo)
+
+	// broadcast event to cluster
+	msgBody := utils.Struct2Json(topo)
+	event := proto.NewPaasEvent(consts.EVENT_MOD_TOPO.CODE, msgBody, magicKey)
 	*events = append(*events, event)
 }
 
@@ -1476,15 +1514,77 @@ func addCmptAttr(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]int
 	}
 }
 
+func modCmptAttr(instId string, cmpt *proto.PaasMetaCmpt, node *map[string]interface{},
+	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
+
+	attrs := meta.CMPT_META.GetCmptAttrs(cmpt.CMPT_ID)
+	if len(attrs) == 0 {
+		return
+	}
+
+	for _, attr := range attrs {
+		attrId := attr.ATTR_ID
+		attrName := attr.ATTR_NAME
+		if attrName == consts.HEADER_INST_ID {
+			continue
+		}
+
+		attrValRaw := (*node)[attrName]
+		var attrVal string = ""
+		if attrValRaw != nil {
+			attrVal = attrValRaw.(string)
+		}
+
+		if attrName == consts.HEADER_SERV_INST_ID {
+			// add container to service container relation
+			subServInstId := attrVal
+			if meta.CMPT_META.IsTopoExists(instId) {
+				modRelation(instId, subServInstId, consts.TOPO_TYPE_CONTAIN, resultBean, events, magicKey)
+			} else {
+				addRelation(instId, subServInstId, consts.TOPO_TYPE_CONTAIN, resultBean, events, magicKey)
+			}
+		}
+
+		// 元数据模型有可能新增组件属性, 如果都是按update方式则不能动态扩展
+		isAttrExists := meta.CMPT_META.IsInstAttrExists(instId, attrId)
+		var instAttr *proto.PaasInstAttr = nil
+		if isAttrExists {
+			// 已经存在做更新动作
+			dbPool := global.GLOBAL_RES.GetDbPool()
+			_, err := crud.Update(dbPool, &SQL_MOD_ATTR, attrVal, instId, attrId)
+			if err != nil {
+				errMsg := fmt.Sprintf("save component attribute fail, instId:%s, attrId:%d, attrName:%s, attrVal:%s", instId, attrId, attrName, attrVal)
+				utils.LOGGER.Error(errMsg)
+			}
+
+			// refresh to local cache
+			instAttr := proto.NewPaasInstAttr(instId, attrId, attrName, attrVal)
+			meta.CMPT_META.UpdInstAttr(instAttr)
+		} else {
+			// 没有对应的属性,说明组件新增了属性,此时对应做insert操作
+			dbPool := global.GLOBAL_RES.GetDbPool()
+			_, err := crud.Insert(dbPool, &SQL_INS_INSTANCE_ATTR, instId, attrId, attrName, attrVal)
+			if err != nil {
+				errMsg := fmt.Sprintf("save component attribute fail, instId:%s, attrId:%d, attrName:%s, attrVal:%s", instId, attrId, attrName, attrVal)
+				utils.LOGGER.Error(errMsg)
+			}
+
+			// refresh to local cache
+			instAttr := proto.NewPaasInstAttr(instId, attrId, attrName, attrVal)
+			meta.CMPT_META.AddInstAttr(instAttr)
+		}
+
+		// broadcast event to cluster
+		msgBody := utils.Struct2Json(instAttr)
+		ev := proto.NewPaasEvent(consts.EVENT_ADD_INST_ATTR.CODE, msgBody, magicKey)
+		*events = append(*events, ev)
+	}
+}
+
 func addInstance(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]interface{},
 	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
 
 	cmptId := cmpt.CMPT_ID
-	var deployed bool = false
-	// container not need to deploy, service instance need deploy
-	if cmpt.IsNeedDeploy() {
-		deployed = true
-	}
 
 	posRaw := (*subMap)[consts.HEADER_POS]
 	pos := proto.NewPaasPos(0, 0)
@@ -1494,14 +1594,18 @@ func addInstance(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]int
 	}
 
 	// 1. add instance
-	var isDeployed string = consts.STR_FALSE
-	if deployed {
-		isDeployed = consts.STR_TRUE
+	var isDeployed string = consts.STR_TRUE
+	if cmpt.IsNeedDeploy() {
+		isDeployed = consts.STR_FALSE
 	}
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
-	crud.Insert(dbPool, &SQL_INS_INSTANCE, instId, cmptId, isDeployed, pos.X, pos.Y,
+	_, err := crud.Insert(dbPool, &SQL_INS_INSTANCE, instId, cmptId, isDeployed, pos.X, pos.Y,
 		pos.Width, pos.Height, pos.Row, pos.Col)
+	if err != nil {
+		errMsg := fmt.Sprintf("%v", err)
+		utils.LOGGER.Error(errMsg)
+	}
 
 	instance := proto.NewPaasInstance(instId, cmptId, isDeployed, pos.X, pos.Y,
 		pos.Width, pos.Height, pos.Row, pos.Col)
@@ -1513,4 +1617,263 @@ func addInstance(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]int
 	msgBody := utils.Struct2Json(instance)
 	event := proto.NewPaasEvent(consts.EVENT_ADD_INSTANCE.CODE, msgBody, magicKey)
 	*events = append(*events, event)
+}
+
+func SaveServiceNode(parentId string, opType int, nodeJson map[string]interface{}, resultBean *proto.ResultBean, magicKey string) {
+	events := make([]*proto.PaasEvent, 0)
+	if enumSaveServiceNode(parentId, opType, nodeJson, resultBean, &events, magicKey) {
+		for _, event := range events {
+			eventbus.EVENTBUS.PublishEvent(event)
+		}
+	}
+}
+
+func DelServiceNode(parentId string, instId string, resultBean *proto.ResultBean, magicKey string) {
+	events := make([]*proto.PaasEvent, 0)
+	if DelInstance(parentId, instId, resultBean, &events, magicKey) {
+		for _, ev := range events {
+			eventbus.EVENTBUS.PublishEvent(ev)
+
+			objMap := make(map[string]interface{})
+			utils.Json2Struct([]byte(ev.MSG_BODY), &objMap)
+			id := objMap[consts.HEADER_INST_ID].(string)
+			switch ev.EVENT_CODE {
+			case consts.EVENT_DEL_INSTANCE.CODE:
+				meta.CMPT_META.DelInstance(id)
+			case consts.EVENT_DEL_INST_ATTR.CODE:
+				meta.CMPT_META.DelInstAttr(id)
+			case consts.EVENT_DEL_TOPO.CODE:
+				supId := objMap[consts.HEADER_PARENT_ID].(string)
+				meta.CMPT_META.DelTopo(supId, id)
+			default:
+				errMsg := fmt.Sprintf("undefined event: %d", ev.EVENT_CODE)
+				utils.LOGGER.Error(errMsg)
+			}
+		}
+
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+	} else {
+		errMsg := fmt.Sprintf("del_instance nok, parent_id:%s, inst_id:%s", parentId, instId)
+		utils.LOGGER.Error(errMsg)
+	}
+}
+
+func enumSaveServiceNode(parentId string, opType int, nodeJson map[string]interface{},
+	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
+
+	for cmptName, subJsonRaw := range nodeJson {
+		cmpt := meta.CMPT_META.GetCmptByName(cmptName)
+		if cmpt == nil {
+			continue
+		}
+
+		itemKind := reflect.TypeOf(subJsonRaw).Kind()
+		if itemKind != reflect.Slice {
+			resultBean.RET_CODE = consts.REVOKE_NOK
+			resultBean.RET_INFO = consts.ERR_JSONNODE_ILLEGAL
+			return false
+		}
+
+		subs := subJsonRaw.([]interface{})
+		for _, nodeRaw := range subs {
+			node := nodeRaw.(map[string]interface{})
+			instIdRaw := node[consts.HEADER_INST_ID]
+			if instIdRaw == nil {
+				continue
+			}
+
+			instId := instIdRaw.(string)
+
+			if opType == consts.OP_TYPE_ADD {
+				// 1. add instance
+				addInstance(instId, cmpt, &node, resultBean, events, magicKey)
+
+				// 2. add component attribute
+				addCmptAttr(instId, cmpt, &node, resultBean, events, magicKey)
+
+				// 3. add relation
+				addRelation(parentId, instId, consts.TOPO_TYPE_CONTAIN, resultBean, events, magicKey)
+			} else if opType == consts.OP_TYPE_MOD {
+				// mod component attribute
+				modCmptAttr(instId, cmpt, &node, resultBean, events, magicKey)
+			} else {
+				resultBean.RET_CODE = consts.REVOKE_NOK
+				resultBean.RET_INFO = consts.ERR_OP_TYPE
+				return false
+			}
+		}
+	}
+
+	resultBean.RET_CODE = consts.REVOKE_OK
+	resultBean.RET_INFO = ""
+	return true
+}
+
+func GetMetaDataTreeByInstId(instId string, resultBean *proto.ResultBean) {
+	arr := make([]map[string]interface{}, 0)
+	getChildNode(instId, &arr)
+
+	resultBean.RET_CODE = consts.REVOKE_OK
+	resultBean.RET_INFO = arr
+}
+
+func GetMetaDataNodeByInstId(instId string, resultBean *proto.ResultBean) {
+	instance := meta.CMPT_META.GetInstance(instId)
+	if instance == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_INSTANCE_NOT_FOUND
+		return
+	}
+
+	cmpt := meta.CMPT_META.GetCmptById(instance.CMPT_ID)
+	if cmpt == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_CMPT_NOT_FOUND
+		return
+	}
+
+	metaJson := make(map[string]interface{})
+	attrArr := make([]map[string]interface{}, 0)
+
+	attrs := meta.CMPT_META.GetInstAttrs(instId)
+	for _, attr := range attrs {
+		node := make(map[string]interface{})
+		node[consts.HEADER_ATTR_NAME] = attr.ATTR_NAME
+		node[consts.HEADER_ATTR_VALUE] = attr.ATTR_VALUE
+
+		if attr.ATTR_NAME == consts.HEADER_SSH_ID {
+			sshID := attr.ATTR_VALUE
+			ssh := meta.CMPT_META.GetSshById(sshID)
+
+			tmp := make(map[string]interface{})
+			tmp[consts.HEADER_ATTR_NAME] = consts.HEADER_IP
+			tmp[consts.HEADER_ATTR_NAME_CN] = consts.HEADER_IP
+			tmp[consts.HEADER_ATTR_VALUE] = ssh.SERVER_IP
+			attrArr = append(attrArr, tmp)
+		}
+
+		metaAttr := meta.CMPT_META.GetAttr(attr.ATTR_ID)
+		if metaAttr != nil {
+			node[consts.HEADER_ATTR_NAME_CN] = metaAttr.ATTR_NAME_CN
+		}
+
+		attrArr = append(attrArr, node)
+	}
+	metaJson[cmpt.CMPT_NAME_CN] = attrArr
+
+	resultBean.RET_CODE = consts.REVOKE_OK
+	resultBean.RET_INFO = metaJson
+}
+
+func GetSmsABQueueWeightInfo(servInstId string, resultBean *proto.ResultBean) {
+	instance := meta.CMPT_META.GetInstance(servInstId)
+	if instance == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_INSTANCE_NOT_FOUND
+		return
+	}
+
+	cmpt := meta.CMPT_META.GetCmptById(instance.CMPT_ID)
+	if cmpt == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_CMPT_NOT_FOUND
+		return
+	}
+
+	var attr *proto.PaasInstAttr = nil
+	topos := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstId, &topos)
+	find := false
+	// 从 sms-server | sms-process | sms-client | sms-batsave | sms-statistics 中任意一个去取REDIS_CLUSTER_QUEUE属性
+	for _, topo := range topos {
+		containerId := topo.GetToe(servInstId)
+		if containerId == "" {
+			continue
+		}
+
+		subTopos := make([]*proto.PaasTopology, 0)
+		meta.CMPT_META.GetInstRelations(containerId, &subTopos)
+		for _, subTopo := range subTopos {
+			instId := subTopo.GetToe(containerId)
+			attr := meta.CMPT_META.GetInstAttr(instId, 203) // 203 -> 'REDIS_CLUSTER_QUEUE'
+			if attr != nil {
+				find = true
+				break
+			}
+		}
+
+		if find {
+			break
+		}
+	}
+
+	if attr == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_REDIS_QUEUE_NOT_INITIALIZED
+		return
+	}
+
+	// 取到REDIS_CLUSTER_QUEUE后,对应取下面每个集群的权重信息
+	redisQueueServId := attr.ATTR_VALUE
+	queueServInst := meta.CMPT_META.GetInstance(redisQueueServId)
+	if queueServInst == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_REDIS_QUEUE_NOT_INITIALIZED
+	} else {
+		abQueueClusterTopos := make([]*proto.PaasTopology, 0)
+		meta.CMPT_META.GetInstRelations(redisQueueServId, &abQueueClusterTopos)
+		if len(abQueueClusterTopos) == 0 {
+			resultBean.RET_CODE = consts.REVOKE_NOK
+			resultBean.RET_INFO = consts.ERR_REDIS_QUEUE_NOT_INITIALIZED
+		} else {
+			retInfo := make(map[string]interface{})
+			for _, abTopo := range abQueueClusterTopos {
+				queueServId := abTopo.GetToe(redisQueueServId)
+
+				containerNameAttr := meta.CMPT_META.GetInstAttr(queueServId, 142) // 142, 'SERV_CONTAINER_NAME'
+				queueContainerAttrs := meta.CMPT_META.GetInstAttrs(queueServId)
+				item := make(map[string]interface{})
+				for _, containerAttr := range queueContainerAttrs {
+					item[containerAttr.ATTR_NAME] = containerAttr.ATTR_VALUE
+				}
+				retInfo[containerNameAttr.ATTR_VALUE] = item
+			}
+
+			resultBean.RET_CODE = consts.REVOKE_OK
+			resultBean.RET_INFO = retInfo
+		}
+	}
+}
+
+func getChildNode(instId string, arr *[]map[string]interface{}) {
+	topos := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(instId, &topos)
+	if len(topos) == 0 {
+		return
+	}
+
+	for _, topo := range topos {
+		node := make(map[string]interface{})
+		childNodes := make([]map[string]interface{}, 0)
+
+		getChildNode(topo.INST_ID2, &childNodes)
+
+		node["inst_id"] = topo.INST_ID2
+
+		instance := meta.CMPT_META.GetInstance(topo.INST_ID2)
+		if instance != nil {
+			cmpt := meta.CMPT_META.GetCmptById(instance.CMPT_ID)
+			text := fmt.Sprintf("%s (%s)", cmpt.CMPT_NAME_CN, instance.INST_ID)
+			node["text"] = text
+		} else {
+			node["text"] = topo.INST_ID2
+		}
+
+		if len(childNodes) > 0 {
+			node["nodes"] = childNodes
+		}
+
+		*arr = append(*arr, node)
+	}
 }

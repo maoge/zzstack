@@ -37,4 +37,9 @@ var (
 	ERR_SERVER_IP_EXISTS             = "server ip exists ......"
 	ERR_SERVER_NOT_NULL              = "server contains sub ssh, can not delete ......"
 	ERR_SSH_IS_USING                 = "ssh resource is using, can not delete ......"
+	ERR_JSONNODE_ILLEGAL             = "json node illegal"
+	ERR_OP_TYPE                      = "OP_TYPE error"
+	ERR_CMPT_NOT_FOUND               = "component not found ......"
+	ERR_INSTANCE_NOT_FOUND           = "instance not found ......"
+	ERR_REDIS_QUEUE_NOT_INITIALIZED  = "redis A/B cluster queue service not initialized ......"
 )

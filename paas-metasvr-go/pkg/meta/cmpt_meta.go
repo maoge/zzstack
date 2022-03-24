@@ -63,7 +63,7 @@ func (m *CmptMeta) init() {
 	m.magicKeyMap = make(map[string]*proto.AccountSession)
 }
 
-func (m *CmptMeta) reloadMetaData(dataType string) {
+func (m *CmptMeta) ReloadMetaData(dataType string) {
 	switch dataType {
 	case consts.HEADER_ALL:
 		m.reloadAll()
@@ -891,6 +891,26 @@ func (m *CmptMeta) AddTopo(topo *proto.PaasTopology) {
 	m.metaTopoMMap.Put(topo.INST_ID1, topo)
 }
 
+func (m *CmptMeta) ModTopo(topo *proto.PaasTopology) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	parentID := topo.INST_ID1
+	inst := m.metaInstMap[parentID]
+	if inst != nil && inst.CMPT_ID == 801 { // 'HA_CONTAINER'
+		m.metaTopoMMap.RemoveAll(parentID)
+	}
+
+	m.metaTopoMMap.Put(parentID, topo)
+}
+
+func (m *CmptMeta) DelAllSubTopo(parentId string) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaTopoMMap.RemoveAll(parentId)
+}
+
 func (m *CmptMeta) IsTopoRelationExists(parentId, subId string) bool {
 	res := false
 	m.mut.Lock()
@@ -912,10 +932,58 @@ func (m *CmptMeta) IsTopoRelationExists(parentId, subId string) bool {
 	return res
 }
 
-func (m *CmptMeta) DelAllSubTopo(parentId string) {
+func (m *CmptMeta) IsTopoExists(parentId string) bool {
 	m.mut.Lock()
 	defer m.mut.Unlock()
 
-	m.metaTopoMMap.RemoveAll(parentId)
+	topos, found := m.metaTopoMMap.Get(parentId)
+	if !found {
+		return false
+	}
 
+	return len(topos) > 0
+}
+
+func (m *CmptMeta) IsInstAttrExists(instId string, attrId int) bool {
+	var res bool = false
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	attrs, found := m.metaInstAttrMMap.Get(instId)
+	if !found {
+		return false
+	}
+
+	for _, attrRaw := range attrs {
+		attr := attrRaw.(*proto.PaasInstAttr)
+		if attr.ATTR_ID == attrId {
+			res = true
+			break
+		}
+	}
+
+	return res
+}
+
+func (m *CmptMeta) UpdInstAttr(instAttr *proto.PaasInstAttr) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	attrId := instAttr.ATTR_ID
+	attrArr, found := m.metaInstAttrMMap.Get(attrId)
+	if !found {
+		return
+	}
+
+	for _, attrRaw := range attrArr {
+		attr := attrRaw.(*proto.PaasInstAttr)
+		if attr.ATTR_ID == attrId {
+			attr.ATTR_VALUE = instAttr.ATTR_VALUE
+			break
+		}
+	}
+}
+
+func (m *CmptMeta) GetAttr(attrId int) *proto.PaasMetaAttr {
+	return m.metaAttrIdMap[attrId]
 }

@@ -100,7 +100,7 @@ func (h *MetaDataHandler) GetServTypeVerListByPage() {
 
 func (h *MetaDataHandler) GetClickHouseDashboardAddr() {
 	h.group.POST("/paas/metadata/getClickHouseDashboardAddr", func(c *gin.Context) {
-		var param proto.GetDashboardAddrParam
+		var param proto.ServInstParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
@@ -114,7 +114,7 @@ func (h *MetaDataHandler) GetClickHouseDashboardAddr() {
 
 func (h *MetaDataHandler) GetVoltDBDashboardAddr() {
 	h.group.POST("/paas/metadata/getVoltDBDashboardAddr", func(c *gin.Context) {
-		var param proto.GetDashboardAddrParam
+		var param proto.ServInstParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
@@ -128,7 +128,7 @@ func (h *MetaDataHandler) GetVoltDBDashboardAddr() {
 
 func (h *MetaDataHandler) GetRocketMQDashboardAddr() {
 	h.group.POST("/paas/metadata/getRocketMQDashboardAddr", func(c *gin.Context) {
-		var param proto.GetDashboardAddrParam
+		var param proto.ServInstParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
@@ -142,7 +142,7 @@ func (h *MetaDataHandler) GetRocketMQDashboardAddr() {
 
 func (h *MetaDataHandler) GetTiDBDashboardAddr() {
 	h.group.POST("/paas/metadata/getTiDBDashboardAddr", func(c *gin.Context) {
-		var param proto.GetDashboardAddrParam
+		var param proto.ServInstParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
@@ -156,7 +156,7 @@ func (h *MetaDataHandler) GetTiDBDashboardAddr() {
 
 func (h *MetaDataHandler) GetPulsarDashboardAddr() {
 	h.group.POST("/paas/metadata/getPulsarDashboardAddr", func(c *gin.Context) {
-		var param proto.GetDashboardAddrParam
+		var param proto.ServInstParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
@@ -170,7 +170,7 @@ func (h *MetaDataHandler) GetPulsarDashboardAddr() {
 
 func (h *MetaDataHandler) GetYBDashboardAddr() {
 	h.group.POST("/paas/metadata/getYBDashboardAddr", func(c *gin.Context) {
-		var param proto.GetDashboardAddrParam
+		var param proto.ServInstParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
@@ -410,7 +410,7 @@ func (h *MetaDataHandler) GetUserByServiceType() {
 		servClazz := param.SERV_CLAZZ
 
 		data := meta.CMPT_META.GetSurpportSSHList(servClazz)
-		resultBean.RET_INFO = data
+		resultBean.RET_INFO = utils.Struct2Json(data)
 
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -484,6 +484,114 @@ func (h *MetaDataHandler) SaveServiceTopoSkeleton() {
 		topoMap := param.TOPO_JSON
 
 		metadao.SaveServTopoSkeleton(servType, topoMap, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) SaveServiceNode() {
+	h.group.POST("/paas/metadata/saveServiceNode", func(c *gin.Context) {
+		var param proto.SaveServiceNodeParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+		parentId := param.PARENT_ID
+		opType := param.OP_TYPE
+		nodeJson := param.NODE_JSON
+
+		metadao.SaveServiceNode(parentId, opType, nodeJson, resultBean, magicKey)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) DelServiceNode() {
+	h.group.POST("/paas/metadata/delServiceNode", func(c *gin.Context) {
+		var param proto.DelServiceNodeParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+		parentId := param.PARENT_ID
+		instId := param.INST_ID
+
+		metadao.DelServiceNode(parentId, instId, resultBean, magicKey)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetMetaTree() {
+	h.group.POST("/paas/metadata/getMetaTree", func(c *gin.Context) {
+		var param proto.LoadMetaParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		instId := param.INST_ID
+
+		metadao.GetMetaDataTreeByInstId(instId, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetMetaData() {
+	h.group.POST("/paas/metadata/getMetaData", func(c *gin.Context) {
+		var param proto.LoadMetaParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		instId := param.INST_ID
+
+		metadao.GetMetaDataNodeByInstId(instId, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) GetSmsABQueueWeightInfo() {
+	h.group.POST("/paas/metadata/getSmsABQueueWeightInfo", func(c *gin.Context) {
+		var param proto.ServInstParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		servInstId := param.SERV_INST_ID
+
+		metadao.GetSmsABQueueWeightInfo(servInstId, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) ReloadMetaData() {
+	h.group.POST("/paas/metadata/reloadMetaData", func(c *gin.Context) {
+		var param proto.ReloadMetaDataParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+		reloadType := param.RELOAD_TYPE
+
+		metadao.ReloadMetaData(reloadType, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }

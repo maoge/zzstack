@@ -6,6 +6,9 @@ import (
 
 var (
 	DB_RECOVER_INTERVAL                time.Duration = 3 * time.Second
+	OP_TYPE_ADD                        int           = 1
+	OP_TYPE_MOD                        int           = 2
+	OP_TYPE_DEL                        int           = 3
 	INFO_OK                                          = "OK"
 	STR_TRUE                                         = "1"
 	STR_FALSE                                        = "0"

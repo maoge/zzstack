@@ -90,7 +90,7 @@ type GetServTypeVerListByPageParam struct {
 	PAGE_NUMBER int    `json:"pageNumber" binding:"required"`
 }
 
-type GetDashboardAddrParam struct {
+type ServInstParam struct {
 	SERV_INST_ID string `json:"SERV_INST_ID" binding:"required"`
 }
 
@@ -187,4 +187,19 @@ type LoadMetaParam struct {
 type SaveServiceTopoSkeletonParam struct {
 	SERV_TYPE string                 `json:"SERV_TYPE" binding:"required"`
 	TOPO_JSON map[string]interface{} `json:"TOPO_JSON" binding:"required"`
+}
+
+type ReloadMetaDataParam struct {
+	RELOAD_TYPE string `json:"RELOAD_TYPE" binding:"required"`
+}
+
+type SaveServiceNodeParam struct {
+	OP_TYPE   int                    `json:"OP_TYPE" binding:"required"`
+	PARENT_ID string                 `json:"PARENT_ID" binding:"required"`
+	NODE_JSON map[string]interface{} `json:"NODE_JSON" binding:"required"`
+}
+
+type DelServiceNodeParam struct {
+	PARENT_ID string `json:"PARENT_ID" binding:"required"`
+	INST_ID   string `json:"INST_ID" binding:"required"`
 }
