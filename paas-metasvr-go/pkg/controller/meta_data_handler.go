@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
@@ -66,6 +67,18 @@ func (h *MetaDataHandler) GetServTypeVerList() {
 	h.group.POST("/paas/metadata/getServTypeVerList", func(c *gin.Context) {
 		result := make(map[string]interface{})
 		meta.CMPT_META.GetServTypeVerList(&result)
+		c.JSON(http.StatusOK, result)
+	})
+}
+
+func (h *MetaDataHandler) GetServTypeList() {
+	h.group.POST("/paas/metadata/getServTypeList", func(c *gin.Context) {
+		servSlice := meta.CMPT_META.GetServTypeListFromLocalCache()
+
+		result := make(map[string]interface{})
+		result[consts.HEADER_RET_CODE] = consts.REVOKE_OK
+		result[consts.HEADER_SERV_TYPE] = servSlice
+
 		c.JSON(http.StatusOK, result)
 	})
 }
@@ -574,6 +587,74 @@ func (h *MetaDataHandler) GetSmsABQueueWeightInfo() {
 		servInstId := param.SERV_INST_ID
 
 		metadao.GetSmsABQueueWeightInfo(servInstId, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) AdjustSmsABQueueWeightInfo() {
+	h.group.POST("/paas/metadata/adjustSmsABQueueWeightInfo", func(c *gin.Context) {
+		var param proto.AdjustSmsABQueueParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+
+		metadao.AdjustSmsABQueueWeightInfo(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) SwitchSmsDBType() {
+	h.group.POST("/paas/metadata/switchSmsDBType", func(c *gin.Context) {
+		var param proto.SwitchSmsDBTypeParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+
+		metadao.SwitchSmsDBType(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) AddCmptVersion() {
+	h.group.POST("/paas/metadata/addCmptVersion", func(c *gin.Context) {
+		var param proto.CmptVersionParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+
+		metadao.AddCmptVersion(&param, magicKey, resultBean)
+		c.JSON(http.StatusOK, resultBean)
+	})
+}
+
+func (h *MetaDataHandler) DelCmptVersion() {
+	h.group.POST("/paas/metadata/delCmptVersion", func(c *gin.Context) {
+		var param proto.CmptVersionParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		resultBean := proto.NewResultBean()
+		magicKey := utils.GetMagicKey(c)
+
+		metadao.DelCmptVersion(&param, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }

@@ -6,6 +6,12 @@ import (
 
 var (
 	DB_RECOVER_INTERVAL                time.Duration = 3 * time.Second
+	SMS_CONSOLE_PASSWD                               = "21232f297a57a5a743894a0e4a801fc3"
+	CMD_ADJUST_REDIS_WEIGHT                          = "AdjustRedisWeight"
+	CMD_SWITCH_DB_TYPE                               = "SwitchDBType"
+	REDIS_CLUSTER_A                                  = "RedisClusterA"
+	REDIS_CLUSTER_B                                  = "RedisClusterB"
+	NOTIFY_RETRY_CNT                   int           = 3
 	OP_TYPE_ADD                        int           = 1
 	OP_TYPE_MOD                        int           = 2
 	OP_TYPE_DEL                        int           = 3

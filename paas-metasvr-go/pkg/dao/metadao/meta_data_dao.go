@@ -2,8 +2,11 @@ package metadao
 
 import (
 	"fmt"
+	"net"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
@@ -44,6 +47,8 @@ var (
 	SQL_UPD_TOPOLOGY             = "update t_meta_topology set INST_ID2 = ? where INST_ID1 = ?"
 	SQL_DEL_ALL_SUB_TOPOLOGY     = "DELETE FROM t_meta_topology WHERE (INST_ID1 = ? AND TOPO_TYPE = 1) OR (INST_ID1 = ? and TOPO_TYPE = 2)"
 	SQL_MOD_ATTR                 = "UPDATE t_meta_instance_attr SET ATTR_VALUE = ? WHERE INST_ID = ? AND ATTR_ID = ?"
+	SQL_INS_CMPT_VER             = "INSERT INTO t_meta_cmpt_versions(SERV_TYPE,VERSION) VALUES(?,?)"
+	SQL_DEL_CMPT_VER             = "DELETE FROM t_meta_cmpt_versions WHERE SERV_TYPE=? AND VERSION=?"
 )
 
 func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *proto.ResultBean) {
@@ -1844,6 +1849,369 @@ func GetSmsABQueueWeightInfo(servInstId string, resultBean *proto.ResultBean) {
 			resultBean.RET_INFO = retInfo
 		}
 	}
+}
+
+func AdjustSmsABQueueWeightInfo(param *proto.AdjustSmsABQueueParam, magicKey string, resultBean *proto.ResultBean) {
+	servInstID := param.SERV_INST_ID
+	queueServInstID := param.QUEUE_SERV_INST_ID
+	topoJson := param.TOPO_JSON
+
+	servInst := meta.CMPT_META.GetInstance(queueServInstID)
+	if servInst == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_INSTANCE_NOT_FOUND
+		return
+	}
+
+	topos := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(queueServInstID, &topos)
+	if len(topos) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_REDIS_QUEUE_NOT_INITIALIZED
+		return
+	}
+
+	// "RedisClusterA" | "RedisClusterB"
+	clusterARaw := topoJson[consts.REDIS_CLUSTER_A]
+	clusterBRaw := topoJson[consts.REDIS_CLUSTER_B]
+	if clusterARaw == nil || clusterBRaw == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_REDIS_A_OR_B_MISSING
+		return
+	}
+
+	clusterA := clusterARaw.(map[string]interface{})
+	clusterB := clusterBRaw.(map[string]interface{})
+
+	instAId := clusterA[consts.HEADER_INST_ID].(string)
+	instBId := clusterB[consts.HEADER_INST_ID].(string)
+
+	weightA := clusterA[consts.HEADER_WEIGHT].(string)
+	weightB := clusterB[consts.HEADER_WEIGHT].(string)
+
+	// update database
+	dbPool := global.GLOBAL_RES.GetDbPool()
+
+	_, err := crud.Update(dbPool, &SQL_MOD_ATTR, weightA, instAId, 141) // 141 -> 'WEIGHT'
+	if err != nil {
+		errMsg := fmt.Sprintf("SQL_MOD_ATTR fail")
+		utils.LOGGER.Error(errMsg)
+	}
+
+	_, err = crud.Update(dbPool, &SQL_MOD_ATTR, weightB, instBId, 141) // 141 -> 'WEIGHT
+	if err != nil {
+		errMsg := fmt.Sprintf("SQL_MOD_ATTR fail")
+		utils.LOGGER.Error(errMsg)
+	}
+
+	// update local cache
+	meta.CMPT_META.AdjustSmsABQueueWeightInfo(instAId, weightA, instBId, weightB)
+
+	// broadcast event bus to synchronize local cache
+	msgBodyMap := make(map[string]interface{})
+	msgBodyMap[consts.HEADER_INST_ID_A] = instAId
+	msgBodyMap[consts.HEADER_WEIGHT_A] = weightA
+	msgBodyMap[consts.HEADER_INST_ID_B] = instBId
+	msgBodyMap[consts.HEADER_WEIGHT_B] = weightB
+
+	msgBody := utils.Struct2Json(msgBodyMap)
+	event := proto.NewPaasEvent(consts.EVENT_AJUST_QUEUE_WEIGHT.CODE, msgBody, magicKey)
+	eventbus.EVENTBUS.PublishEvent(event)
+
+	// 依次遍历每个sms服务下的每个模块的web console接口, 指定调整权重操作
+	servTopoRetVal := proto.NewResultBean()
+	if LoadServiceTopo(servInstID, servTopoRetVal) {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_LOAD_SERV_TOPO_FAIL
+		return
+	}
+
+	servTopo := servTopoRetVal.RET_INFO.(map[string]interface{})
+
+	cmd := consts.CMD_ADJUST_REDIS_WEIGHT
+	msg := fmt.Sprintf("%s:%s,%s:%s", consts.REDIS_CLUSTER_A, weightA, consts.REDIS_CLUSTER_B, weightB)
+	data := [2]string{cmd, msg}
+	buff := ""
+	for _, s := range data {
+		buff += "\t"
+		buff += s
+		buff += "\r\n"
+	}
+	byteBuff := []byte(buff)
+
+	if enumSmsTopoToSendData(&servTopo, byteBuff) {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+	} else {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_AJUST_REDIS_WEIGHT_PARTAIL_OK
+	}
+}
+
+func SwitchSmsDBType(param *proto.SwitchSmsDBTypeParam, magicKey string, resultBean *proto.ResultBean) {
+	servInstID := param.DB_SERV_INST_ID
+	dbServInstID := param.DB_SERV_INST_ID
+	dbType := param.ACTIVE_DB_TYPE
+	dbName := param.DB_NAME
+
+	smsServInst := meta.CMPT_META.GetInstance(servInstID) // PaasInstance
+	if smsServInst == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_SMS_INSTANCE_NOT_FOUND
+		return
+	}
+
+	// Collection<PaasTopology> smsTopos = meta.getInstRelations();
+	smsTopos := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstID, &smsTopos)
+	if len(smsTopos) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_SMS_SERV_NOT_INITIALIZED
+		return
+	}
+
+	dbServInst := meta.CMPT_META.GetInstance(dbServInstID) // PaasInstance
+	if dbServInst == nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DB_INSTANCE_NOT_FOUND
+		return
+	}
+
+	dbServTopos := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(dbServInstID, &dbServTopos)
+	if len(dbServTopos) == 0 {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DB_SERV_NOT_INITIALIZED
+		return
+	}
+
+	// find the specified dg container
+	dgContainerID := ""
+	for _, topo := range dbServTopos {
+		id := topo.GetToe(dbServInstID)
+		dgNameAttr := meta.CMPT_META.GetInstAttr(id, 136) // 136 -> 'DG_NAME'
+		if dgNameAttr != nil && dgNameAttr.ATTR_VALUE == dbName {
+			dgContainerID = id
+			break
+		}
+	}
+
+	if dgContainerID == "" {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_SPECIFIED_DG_NOT_FOUND
+		return
+	}
+
+	// update database
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_MOD_ATTR, dbType, dgContainerID, 225)
+	if err != nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DB
+		return
+	}
+
+	// update local cache
+	meta.CMPT_META.SwitchSmsDBType(dgContainerID, dbType)
+
+	// broadcast event bus to synchronize local cache
+	msgBodyMap := make(map[string]interface{})
+	msgBodyMap[consts.HEADER_INST_ID] = dgContainerID
+	msgBodyMap[consts.HEADER_ACTIVE_DB_TYPE] = dbType
+
+	msgBody := utils.Struct2Json(msgBodyMap)
+	event := proto.NewPaasEvent(consts.EVENT_SWITCH_DB_TYPE.CODE, msgBody, magicKey)
+	eventbus.EVENTBUS.PublishEvent(event)
+
+	cmd := consts.CMD_SWITCH_DB_TYPE
+	data := [3]string{cmd, dbType, dbName}
+	buff := ""
+	for _, s := range data {
+		buff += "\t"
+		buff += s
+		buff += "\r\n"
+	}
+	byteBuff := []byte(buff)
+
+	// 依次遍历每个sms服务下的每个模块的web console接口, 指定调整权重操作
+	servTopoRetVal := proto.NewResultBean()
+	if !LoadServiceTopo(servInstID, servTopoRetVal) {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_LOAD_SERV_TOPO_FAIL
+		return
+	}
+
+	servTopo := servTopoRetVal.RET_INFO.(map[string]interface{})
+	if enumSmsTopoToSendData(&servTopo, byteBuff) {
+		resultBean.RET_CODE = consts.REVOKE_OK
+		resultBean.RET_INFO = ""
+	} else {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_AJUST_REDIS_WEIGHT_PARTAIL_OK
+	}
+}
+
+func AddCmptVersion(param *proto.CmptVersionParam, magicKey string, resultBean *proto.ResultBean) {
+	servType := param.SERV_TYPE
+	version := param.VERSION
+
+	if meta.CMPT_META.IsCmptVersionExist(servType, version) {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DUMPLICATE_VERSION_EXCEPTION
+		return
+	}
+
+	// 1. update database
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Insert(dbPool, &SQL_INS_CMPT_VER, servType, version)
+	if err != nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DUMPLICATE_KEY_OR_DB_EXCEPTION
+		return
+	}
+
+	// 2. update local cache
+	meta.CMPT_META.AddCmptVersion(servType, version)
+
+	// 3. broadcast by event bus
+	msgBodyMap := make(map[string]interface{})
+	msgBodyMap[consts.HEADER_SERV_TYPE] = servType
+	msgBodyMap[consts.HEADER_VERSION] = version
+
+	msgBody := utils.Struct2Json(msgBodyMap)
+	event := proto.NewPaasEvent(consts.EVENT_ADD_CMPT_VER.CODE, msgBody, magicKey)
+	eventbus.EVENTBUS.PublishEvent(event)
+
+	resultBean.RET_CODE = consts.REVOKE_OK
+	resultBean.RET_INFO = ""
+}
+
+func DelCmptVersion(param *proto.CmptVersionParam, magicKey string, resultBean *proto.ResultBean) {
+	servType := param.SERV_TYPE
+	version := param.VERSION
+
+	if !meta.CMPT_META.IsCmptVersionExist(servType, version) {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DEL_SERV_VER_NOT_EXISTS
+		return
+	}
+
+	// 1. update database
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Insert(dbPool, &SQL_DEL_CMPT_VER, servType, version)
+	if err != nil {
+		resultBean.RET_CODE = consts.REVOKE_NOK
+		resultBean.RET_INFO = consts.ERR_DB
+		return
+	}
+
+	// 2. update local cache
+	meta.CMPT_META.DelCmptVersion(servType, version)
+
+	// 3. broadcast by event bus
+	msgBodyMap := make(map[string]interface{})
+	msgBodyMap[consts.HEADER_SERV_TYPE] = servType
+	msgBodyMap[consts.HEADER_VERSION] = version
+
+	msgBody := utils.Struct2Json(msgBodyMap)
+	event := proto.NewPaasEvent(consts.EVENT_DEL_CMPT_VER.CODE, msgBody, magicKey)
+	eventbus.EVENTBUS.PublishEvent(event)
+
+	resultBean.RET_CODE = consts.REVOKE_OK
+	resultBean.RET_INFO = ""
+}
+
+func enumSmsTopoToSendData(servTopo *map[string]interface{}, data []byte) bool {
+	smsServContainer := (*servTopo)[consts.HEADER_SMS_GATEWAY_SERV_CONTAINER].(map[string]interface{})
+
+	serverContainer := smsServContainer[consts.HEADER_SMS_SERVER_CONTAINER].(map[string]interface{})
+	processContainer := smsServContainer[consts.HEADER_SMS_PROCESS_CONTAINER].(map[string]interface{})
+	clientContainer := smsServContainer[consts.HEADER_SMS_CLIENT_CONTAINER].(map[string]interface{})
+	batSaveContainer := smsServContainer[consts.HEADER_SMS_BATSAVE_CONTAINER].(map[string]interface{})
+	statsContainer := smsServContainer[consts.HEADER_SMS_STATS_CONTAINER].(map[string]interface{})
+
+	smsServerArr := serverContainer[consts.HEADER_SMS_SERVER].([]map[string]interface{})
+	smsProcessArr := processContainer[consts.HEADER_SMS_PROCESS].([]map[string]interface{})
+	smsClientArr := clientContainer[consts.HEADER_SMS_CLIENT].([]map[string]interface{})
+	batSaveArr := batSaveContainer[consts.HEADER_SMS_BATSAVE].([]map[string]interface{})
+	statsArr := statsContainer[consts.HEADER_SMS_STATS].([]map[string]interface{})
+
+	dispachSmsServerOk := dispatchSmsEvent(consts.HEADER_SMS_SERVER, smsServerArr, data)
+	dispachSmsProcessOk := dispatchSmsEvent(consts.HEADER_SMS_PROCESS, smsProcessArr, data)
+	dispachSmsClientOk := dispatchSmsEvent(consts.HEADER_SMS_CLIENT, smsClientArr, data)
+	dispachSmsBatSaveOk := dispatchSmsEvent(consts.HEADER_SMS_BATSAVE, batSaveArr, data)
+	dispachSmsStatsOk := dispatchSmsEvent(consts.HEADER_SMS_STATS, statsArr, data)
+
+	return dispachSmsServerOk && dispachSmsProcessOk && dispachSmsClientOk && dispachSmsBatSaveOk && dispachSmsStatsOk
+}
+
+func dispatchSmsEvent(smsCmpt string, instArr []map[string]interface{}, data []byte) bool {
+	if len(instArr) == 0 {
+		return true
+	}
+
+	allOk := true
+	for _, item := range instArr {
+		instID := item[consts.HEADER_INST_ID].(string)
+		ip := item[consts.HEADER_IP].(string)
+		webConsolePort := item[consts.HEADER_WEB_CONSOLE_PORT].(string)
+		processor := item[consts.HEADER_PROCESSOR].(string)
+		passwd := consts.SMS_CONSOLE_PASSWD
+
+		var portOffset int = 0
+		if processor != "" {
+			portOffset, _ = strconv.Atoi(processor)
+		}
+		basePort, _ := strconv.Atoi(webConsolePort)
+		realPort := basePort + portOffset
+
+		inst := meta.CMPT_META.GetInstance(instID)
+		if inst == nil {
+			continue
+		}
+
+		notfyOk := false
+		for retry := 0; retry < consts.NOTIFY_RETRY_CNT; retry++ {
+			if notfifySmsInstanceEvent(ip, realPort, passwd, data) {
+				notfyOk = true
+				break
+			} else {
+				errMsg := fmt.Sprintf("send msg: %s to addr: %s:%d fail, restry count: %d", string(data), ip, realPort, retry)
+				utils.LOGGER.Error(errMsg)
+				time.Sleep(time.Duration(100) * time.Millisecond)
+			}
+		}
+
+		if !notfyOk {
+			allOk = false
+		}
+	}
+
+	return allOk
+}
+
+func notfifySmsInstanceEvent(ip string, realPort int, passwd string, data []byte) bool {
+	addr := fmt.Sprintf("%s:%d", ip, realPort)
+	timeout := time.Duration(3) * time.Second
+	conn, err := net.DialTimeout("tcp", addr, timeout)
+	if err != nil {
+		return false
+	} else {
+		errMsg := fmt.Sprintf("dial address: %s fail", addr)
+		utils.LOGGER.Error(errMsg)
+	}
+
+	defer conn.Close()
+
+	_, err = conn.Write(data)
+	if err != nil {
+		return false
+	} else {
+		errMsg := fmt.Sprintf("send to %s msg: %s fail", addr, string(data))
+		utils.LOGGER.Error(errMsg)
+	}
+
+	return true
 }
 
 func getChildNode(instId string, arr *[]map[string]interface{}) {

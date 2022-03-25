@@ -12,6 +12,15 @@ type PaasCmptVer struct {
 	VER_LIST  []string
 }
 
+func NewPaasCmptVer(servType string, version string) *PaasCmptVer {
+	cmptVer := new(PaasCmptVer)
+	cmptVer.SERV_TYPE = servType
+	cmptVer.VERSION = version
+
+	cmptVer.InitVerList()
+	return cmptVer
+}
+
 func (m *PaasCmptVer) InitVerList() {
 	s := strings.Trim(m.VERSION, " ")
 	m.VER_LIST = make([]string, 0)
@@ -20,6 +29,33 @@ func (m *PaasCmptVer) InitVerList() {
 
 func (m *PaasCmptVer) AddVersion(version string) {
 	m.VER_LIST = append(m.VER_LIST, version)
+}
+
+func (m *PaasCmptVer) DelVersion(version string) {
+	length := len(m.VER_LIST)
+	if length == 0 {
+		return
+	}
+
+	tmp := make([]string, length-1)
+	for _, s := range m.VER_LIST {
+		if s == version {
+			continue
+		}
+
+		tmp = append(tmp, s)
+	}
+
+	m.VER_LIST = tmp
+}
+
+func (m *PaasCmptVer) IsVersionExist(ver string) bool {
+	for _, v := range m.VER_LIST {
+		if ver == v {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *PaasCmptVer) ToJsonMap() map[string]interface{} {

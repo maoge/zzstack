@@ -203,3 +203,21 @@ type DelServiceNodeParam struct {
 	PARENT_ID string `json:"PARENT_ID" binding:"required"`
 	INST_ID   string `json:"INST_ID" binding:"required"`
 }
+
+type AdjustSmsABQueueParam struct {
+	SERV_INST_ID       string                 `json:"SERV_INST_ID" binding:"required"`
+	QUEUE_SERV_INST_ID string                 `json:"QUEUE_SERV_INST_ID" binding:"required"`
+	TOPO_JSON          map[string]interface{} `json:"TOPO_JSON" binding:"required"`
+}
+
+type SwitchSmsDBTypeParam struct {
+	SERV_INST_ID    string `json:"SERV_INST_ID" binding:"required"`
+	DB_SERV_INST_ID string `json:"DB_SERV_INST_ID" binding:"required"`
+	ACTIVE_DB_TYPE  string `json:"ACTIVE_DB_TYPE" binding:"required"`
+	DB_NAME         string `json:"DB_NAME" binding:"required"`
+}
+
+type CmptVersionParam struct {
+	SERV_TYPE string `json:"SERV_TYPE" binding:"required"`
+	VERSION   string `json:"VERSION" binding:"required"`
+}

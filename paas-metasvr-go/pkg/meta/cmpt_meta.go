@@ -842,6 +842,20 @@ func (m *CmptMeta) GetServTypeVerList(result *map[string]interface{}) {
 	(*result)["metaCmptVerMap"] = cmptVerMap
 }
 
+func (m *CmptMeta) GetServTypeListFromLocalCache() []string {
+	servMap := make(map[string]bool)
+	for key := range m.metaCmptVerMap {
+		servMap[key] = true
+	}
+
+	servSlice := make([]string, 0)
+	for key := range servMap {
+		servSlice = append(servSlice, key)
+	}
+
+	return servSlice
+}
+
 func (m *CmptMeta) UpdInstPos(inst *proto.PaasInstance) {
 	instPtr := m.metaInstMap[inst.INST_ID]
 	if instPtr != nil {
@@ -986,4 +1000,49 @@ func (m *CmptMeta) UpdInstAttr(instAttr *proto.PaasInstAttr) {
 
 func (m *CmptMeta) GetAttr(attrId int) *proto.PaasMetaAttr {
 	return m.metaAttrIdMap[attrId]
+}
+
+func (m *CmptMeta) AdjustSmsABQueueWeightInfo(instAId, weightA, instBId, weightB string) {
+	// 141 -> 'WEIGHT'
+	attrA := m.GetInstAttr(instAId, 141)
+	attrB := m.GetInstAttr(instBId, 141)
+
+	if attrA == nil || attrB == nil {
+		return
+	}
+
+	attrA.ATTR_VALUE = weightA
+	attrB.ATTR_VALUE = weightB
+}
+
+func (m *CmptMeta) SwitchSmsDBType(dgContainerID, dbType string) {
+	// 225 -> 'ACTIVE_DB_TYPE'
+	attr := m.GetInstAttr(dgContainerID, 225)
+	attr.ATTR_VALUE = dbType
+}
+
+func (m *CmptMeta) AddCmptVersion(servType, version string) {
+	cmptVer := m.metaCmptVerMap[servType]
+	if cmptVer == nil {
+		cmptVer := proto.NewPaasCmptVer(servType, version)
+		m.metaCmptVerMap[servType] = cmptVer
+	} else {
+		cmptVer.AddVersion(version)
+	}
+}
+
+func (m *CmptMeta) DelCmptVersion(servType, version string) {
+	cmptVer := m.metaCmptVerMap[servType]
+	if cmptVer != nil {
+		cmptVer.DelVersion(version)
+	}
+}
+
+func (m *CmptMeta) IsCmptVersionExist(servType, version string) bool {
+	cmptVer := m.metaCmptVerMap[servType]
+	if cmptVer == nil {
+		return false
+	}
+
+	return cmptVer.IsVersionExist(version)
 }
