@@ -20,6 +20,9 @@ func Init(e *gin.Engine) {
 	helloController := controller.NewHelloController(defaultGroup)
 	RegisterController(helloController)
 
+	benchController := controller.NewBenchController(defaultGroup)
+	RegisterController(benchController)
+
 	accountHandler := controller.NewAccountHandler(defaultGroup)
 	RegisterController(accountHandler)
 
