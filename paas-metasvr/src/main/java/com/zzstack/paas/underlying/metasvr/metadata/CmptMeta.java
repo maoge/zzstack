@@ -1306,7 +1306,7 @@ public class CmptMeta {
             cmptVer = new PaasCmptVer(servType);
             cmptVer.addVersion(version);
             
-            metaCmptVerMap.put(version, cmptVer);
+            metaCmptVerMap.put(servType, cmptVer);
         } else {
             cmptVer.addVersion(version);
         }
