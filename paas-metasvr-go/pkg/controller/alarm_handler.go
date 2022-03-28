@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/alarmdao"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
 )
 
 type AlarmHandler struct {
@@ -25,7 +26,7 @@ func (h *AlarmHandler) GetAlarmCount() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		alarmdao.GetAlarmCount(&getAlarmCountParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -39,7 +40,7 @@ func (h *AlarmHandler) GetAlarmList() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		alarmdao.GetAlarmList(&getAlarmListParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -53,7 +54,7 @@ func (h *AlarmHandler) ClearAlarm() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		alarmdao.ClearAlarm(&clearAlarmParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})

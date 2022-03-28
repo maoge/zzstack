@@ -8,6 +8,7 @@ import (
 	"github.com/Valiben/gin_unit_test"
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/maoge/paas-metasvr-go/pkg/config"
@@ -70,7 +71,7 @@ func TestGetOpLogCnt(t *testing.T) {
 		END_TS:   1647496587600,
 	}
 
-	resp := proto.ResultBean{}
+	resp := result.ResultBean{}
 	// 调用函数发起http请求
 	err := gin_unit_test.TestHandlerUnMarshalResp("POST", "/paas/account/getOpLogCnt", "json", params, &resp)
 	assert.Nil(t, err)

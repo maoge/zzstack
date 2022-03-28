@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/factory"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
@@ -16,27 +17,25 @@ import (
 )
 
 func main() {
-	diableLog()
-
-	initial()
-
 	startHttp()
 }
 
-func diableLog() {
+func disableLog() {
 	stderr := os.Stderr
 	fd, _ := os.Open(os.DevNull)
 	os.Stderr = fd
 	os.Stderr = stderr
 }
 
-func initial() {
+func init() {
+	disableLog()
 	consts.InitEventMap()
 	utils.Init()
 	config.InitMetaSvrConf()
 	global.GLOBAL_RES.Init()
 	meta.InitGlobalCmptMeta()
 	eventbus.InitEventBus()
+	factory.InitDeployerFactory()
 }
 
 func startHttp() {

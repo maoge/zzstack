@@ -9,6 +9,7 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
@@ -29,7 +30,7 @@ func (h *MetaDataHandler) GetMetaSvrClusterState() {
 
 func (h *MetaDataHandler) GetCmptMetaData() {
 	h.group.GET("/paas/metadata/getCmptMetaData", func(c *gin.Context) {
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		resultBean.RET_INFO = meta.CMPT_META.GetMetaData2Json()
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -43,7 +44,7 @@ func (h *MetaDataHandler) GetServiceCount() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetServiceCount(&getServiceCountParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -57,7 +58,7 @@ func (h *MetaDataHandler) GetServiceList() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetServiceList(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -91,7 +92,7 @@ func (h *MetaDataHandler) GetServTypeVerCount() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetServTypeVerCount(&getServTypeVerCountParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -105,7 +106,7 @@ func (h *MetaDataHandler) GetServTypeVerListByPage() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetServTypeVerListByPage(&getServTypeVerListByPageParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -119,7 +120,7 @@ func (h *MetaDataHandler) GetClickHouseDashboardAddr() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetClickHouseDashboardAddr(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -133,7 +134,7 @@ func (h *MetaDataHandler) GetVoltDBDashboardAddr() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetVoltDBDashboardAddr(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -147,7 +148,7 @@ func (h *MetaDataHandler) GetRocketMQDashboardAddr() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetRocketMQDashboardAddr(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -161,7 +162,7 @@ func (h *MetaDataHandler) GetTiDBDashboardAddr() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetTiDBDashboardAddr(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -175,7 +176,7 @@ func (h *MetaDataHandler) GetPulsarDashboardAddr() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetPulsarDashboardAddr(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -189,7 +190,7 @@ func (h *MetaDataHandler) GetYBDashboardAddr() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetYBDashboardAddr(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -206,7 +207,7 @@ func (h *MetaDataHandler) AddService() {
 
 		magicKey := utils.GetMagicKey(c)
 		instId := utils.GenUUID()
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.AddService(&param, instId, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -223,7 +224,7 @@ func (h *MetaDataHandler) DelService() {
 
 		magicKey := utils.GetMagicKey(c)
 		instId := param.INST_ID
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.DelService(instId, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -239,7 +240,7 @@ func (h *MetaDataHandler) ModService() {
 		}
 
 		magicKey := utils.GetMagicKey(c)
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.ModService(&param, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -255,7 +256,7 @@ func (h *MetaDataHandler) ModServiceVersion() {
 		}
 
 		magicKey := utils.GetMagicKey(c)
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.ModServiceVersion(&param, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -270,7 +271,7 @@ func (h *MetaDataHandler) GetServerCount() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetServerCnt(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -285,7 +286,7 @@ func (h *MetaDataHandler) GetServerList() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		metadao.GetServerList(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -301,7 +302,7 @@ func (h *MetaDataHandler) AddServer() {
 		}
 
 		magicKey := utils.GetMagicKey(c)
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 
 		metadao.AddServer(&param, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
@@ -319,7 +320,7 @@ func (h *MetaDataHandler) DelServer() {
 
 		servIp := param.SERVER_IP
 		magicKey := utils.GetMagicKey(c)
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 
 		metadao.DelServer(servIp, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
@@ -336,7 +337,7 @@ func (h *MetaDataHandler) GetSSHCountByIP() {
 		}
 
 		servIp := param.SERVER_IP
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 
 		metadao.GetSshCntByIp(servIp, resultBean)
 		c.JSON(http.StatusOK, resultBean)
@@ -352,7 +353,7 @@ func (h *MetaDataHandler) GetSSHListByIP() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 
 		metadao.GetSshListByIp(&param, resultBean)
 		c.JSON(http.StatusOK, resultBean)
@@ -368,7 +369,7 @@ func (h *MetaDataHandler) AddSSH() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 
 		metadao.AddSsh(&param, magicKey, resultBean)
@@ -385,7 +386,7 @@ func (h *MetaDataHandler) ModSSH() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 
 		metadao.ModSSH(&param, magicKey, resultBean)
@@ -402,7 +403,7 @@ func (h *MetaDataHandler) DelSSH() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 
 		metadao.DelSSH(&param, magicKey, resultBean)
@@ -419,7 +420,7 @@ func (h *MetaDataHandler) GetUserByServiceType() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		servClazz := param.SERV_CLAZZ
 
 		data := meta.CMPT_META.GetSurpportSSHList(servClazz)
@@ -438,7 +439,7 @@ func (h *MetaDataHandler) GetServList() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		servType := param.SERV_TYPE
 
 		data := meta.CMPT_META.GetServListFromCache(servType)
@@ -457,7 +458,7 @@ func (h *MetaDataHandler) LoadServiceTopo() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		instId := param.INST_ID
 
 		metadao.LoadServiceTopo(instId, resultBean)
@@ -474,7 +475,7 @@ func (h *MetaDataHandler) LoadInstanceMeta() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		instId := param.INST_ID
 
 		metadao.LoadInstanceMeta(instId, resultBean)
@@ -491,7 +492,7 @@ func (h *MetaDataHandler) SaveServiceTopoSkeleton() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 		servType := param.SERV_TYPE
 		topoMap := param.TOPO_JSON
@@ -510,7 +511,7 @@ func (h *MetaDataHandler) SaveServiceNode() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 		parentId := param.PARENT_ID
 		opType := param.OP_TYPE
@@ -530,7 +531,7 @@ func (h *MetaDataHandler) DelServiceNode() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 		parentId := param.PARENT_ID
 		instId := param.INST_ID
@@ -549,7 +550,7 @@ func (h *MetaDataHandler) GetMetaTree() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		instId := param.INST_ID
 
 		metadao.GetMetaDataTreeByInstId(instId, resultBean)
@@ -566,7 +567,7 @@ func (h *MetaDataHandler) GetMetaData() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		instId := param.INST_ID
 
 		metadao.GetMetaDataNodeByInstId(instId, resultBean)
@@ -583,7 +584,7 @@ func (h *MetaDataHandler) GetSmsABQueueWeightInfo() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		servInstId := param.SERV_INST_ID
 
 		metadao.GetSmsABQueueWeightInfo(servInstId, resultBean)
@@ -600,7 +601,7 @@ func (h *MetaDataHandler) AdjustSmsABQueueWeightInfo() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 
 		metadao.AdjustSmsABQueueWeightInfo(&param, magicKey, resultBean)
@@ -617,7 +618,7 @@ func (h *MetaDataHandler) SwitchSmsDBType() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 
 		metadao.SwitchSmsDBType(&param, magicKey, resultBean)
@@ -634,7 +635,7 @@ func (h *MetaDataHandler) AddCmptVersion() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 
 		metadao.AddCmptVersion(&param, magicKey, resultBean)
@@ -651,7 +652,7 @@ func (h *MetaDataHandler) DelCmptVersion() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 
 		metadao.DelCmptVersion(&param, magicKey, resultBean)
@@ -668,7 +669,7 @@ func (h *MetaDataHandler) ReloadMetaData() {
 			return
 		}
 
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		magicKey := utils.GetMagicKey(c)
 		reloadType := param.RELOAD_TYPE
 

@@ -41,6 +41,7 @@ var (
 	ERR_OP_TYPE                        = "OP_TYPE error"
 	ERR_CMPT_NOT_FOUND                 = "component not found ......"
 	ERR_INSTANCE_NOT_FOUND             = "instance not found ......"
+	ERR_SERV_INST_NOT_FOUND            = "service instance not found ......"
 	ERR_REDIS_QUEUE_NOT_INITIALIZED    = "redis A/B cluster queue service not initialized ......"
 	ERR_REDIS_A_OR_B_MISSING           = "redis A/B cluster queue A or B missing ......"
 	ERR_LOAD_SERV_TOPO_FAIL            = "load service topo fail ......"
@@ -53,4 +54,9 @@ var (
 	ERR_DUMPLICATE_KEY_OR_DB_EXCEPTION = "dumplicate key or db exception ......"
 	ERR_DUMPLICATE_VERSION_EXCEPTION   = "dumplicate version exception ......"
 	ERR_DEL_SERV_VER_NOT_EXISTS        = "delete server version not exists ......"
+	ERR_SERVICE_NOT_FOUND              = "service not found ......"
+	ERR_SERVICE_ALLREADY_DEPLOYED      = "service allready deployed ......"
+	ERR_INSTANCE_ALLREADY_DEPLOYED     = "instance allready deployed ......"
+	ERR_SERVICE_NOT_DEPLOYED           = "service not deployed ......"
+	ERR_INSTANCE_NOT_DEPLOYED          = "instance not deployed ......"
 )

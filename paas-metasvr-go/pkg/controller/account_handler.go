@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/accdao"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
 )
 
 type AccountHandler struct {
@@ -22,7 +23,7 @@ func (h *AccountHandler) Login() {
 		var loginParam proto.LoginParam
 		err := c.MustBindWith(&loginParam, binding.JSON)
 		if err == nil {
-			resultBean := proto.NewResultBean()
+			resultBean := result.NewResultBean()
 			accdao.Login(&loginParam, resultBean)
 			c.JSON(http.StatusOK, resultBean)
 		} else {
@@ -49,7 +50,7 @@ func (h *AccountHandler) ModPassWord() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		accdao.ModPasswd(&modPasswdParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -63,7 +64,7 @@ func (h *AccountHandler) GetOpLogCnt() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		accdao.GetOpLogCnt(&getOpLogCntParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
@@ -77,7 +78,7 @@ func (h *AccountHandler) GetOpLogList() {
 			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
 			return
 		}
-		resultBean := proto.NewResultBean()
+		resultBean := result.NewResultBean()
 		accdao.GetOpLogList(&getOpLogListParam, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})

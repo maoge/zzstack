@@ -221,3 +221,9 @@ type CmptVersionParam struct {
 	SERV_TYPE string `json:"SERV_TYPE" binding:"required"`
 	VERSION   string `json:"VERSION" binding:"required"`
 }
+
+type DeployServiceParam struct {
+	SERV_ID     string `json:"SERV_ID" binding:"required"`
+	LOG_KEY     string `json:"LOG_KEY" binding:"required"`
+	DEPLOY_FLAG string `json:"DEPLOY_FLAG" binding:"omitempty"`
+}

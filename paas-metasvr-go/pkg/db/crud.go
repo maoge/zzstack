@@ -220,11 +220,11 @@ func TxSelectAsMapSlice(pool *pool.DbPool, sql *string, args ...interface{}) ([]
 
 // for insert with param list bind with ?
 //     "INSERT INTO person (first_name, last_name, email) VALUES (?, ?, ?)"
-func Insert(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+func Insert(pool *pool.DbPool, sql *string, args ...any) (sql.Result, error) {
 	return pool.DB.Exec(pool.DB.Rebind(*sql), args...)
 }
 
-func TxInsert(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
+func TxInsert(pool *pool.DbPool, sql *string, args ...any) (sql.Result, error) {
 	tx, err := pool.DB.Beginx()
 	if err != nil {
 		return nil, err

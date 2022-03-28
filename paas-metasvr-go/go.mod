@@ -1,6 +1,6 @@
 module github.com/maoge/paas-metasvr-go
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Valiben/gin_unit_test v0.0.0-20181205064931-674aee46d090

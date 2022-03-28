@@ -2,9 +2,7 @@ package utils
 
 import (
 	"fmt"
-	_ "fmt"
 	"log"
-	_ "os"
 
 	"golang.org/x/crypto/ssh"
 	_ "golang.org/x/crypto/ssh/terminal"
@@ -32,14 +30,6 @@ func NewSSHClient(ip string, sshPort int, user string, passwd string) *SSHClient
 }
 
 func (h *SSHClient) Connect() bool {
-	// config := &ssh.ClientConfig{
-	// 	User: h.user,
-	// 	Auth: []ssh.AuthMethod{
-	// 		ssh.Password(h.passwd),
-	// 	},
-	// 	HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	// }
-
 	addr := fmt.Sprintf("%s:%d", h.ip, h.sshPort)
 	client, err := ssh.Dial("tcp", addr, &ssh.ClientConfig{
 		User:            h.user,
@@ -47,7 +37,6 @@ func (h *SSHClient) Connect() bool {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	})
 
-	// client, err := ssh.Dial("tcp", addr, config)
 	if err != nil {
 		// errMsg := fmt.Sprintf("Failed to dial: %s:%d, error:%s", h.ip, h.sshPort, err.Error())
 		// LOGGER.Error(errMsg)
@@ -71,5 +60,12 @@ func (h *SSHClient) Close() {
 	}
 }
 
-// func (h *SSHClient)
+func (h *SSHClient) Output(cmd string) ([]byte, error) {
+	return h.rawSession.Output(cmd)
+}
+
+func (h *SSHClient) Run(cmd string) {
+	h.rawSession.Run(cmd)
+}
+
 // https://www.php.cn/be/go/476681.html

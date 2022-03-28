@@ -9,6 +9,7 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
@@ -21,7 +22,7 @@ var (
                          WHERE 1=1 AND ACC_NAME = ? AND INSERT_TIME >= ? AND INSERT_TIME <= ? ORDER BY INSERT_TIME ASC LIMIT ?, ?`
 )
 
-func Login(loginParam *proto.LoginParam, resultBean *proto.ResultBean) bool {
+func Login(loginParam *proto.LoginParam, resultBean *result.ResultBean) bool {
 	account := meta.CMPT_META.GetAccount(loginParam.USER)
 	if account == nil {
 		resultBean.RET_CODE = consts.REVOKE_NOK
@@ -82,7 +83,7 @@ func createSession(accName, oldMagicKey string) string {
 	return magicKey
 }
 
-func ModPasswd(modPasswdParam *proto.ModPasswdParam, resultBean *proto.ResultBean) {
+func ModPasswd(modPasswdParam *proto.ModPasswdParam, resultBean *result.ResultBean) {
 	accSession := meta.CMPT_META.GetSessionByMagicKey(modPasswdParam.MAGIC_KEY)
 	if accSession == nil || !accSession.IsSessionValid() {
 		resultBean.RET_CODE = consts.REVOKE_NOK
@@ -113,7 +114,7 @@ func ModPasswd(modPasswdParam *proto.ModPasswdParam, resultBean *proto.ResultBea
 	}
 }
 
-func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *proto.ResultBean) {
+func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *result.ResultBean) {
 	user := getOpLogCntParam.USER
 	startTs := getOpLogCntParam.START_TS
 	endTs := getOpLogCntParam.END_TS
@@ -133,7 +134,7 @@ func GetOpLogCnt(getOpLogCntParam *proto.GetOpLogCntParam, resultBean *proto.Res
 	}
 }
 
-func GetOpLogList(getOpLogListParam *proto.GetOpLogListParam, resultBean *proto.ResultBean) {
+func GetOpLogList(getOpLogListParam *proto.GetOpLogListParam, resultBean *result.ResultBean) {
 	user := getOpLogListParam.USER
 	startTs := getOpLogListParam.START_TS
 	endTs := getOpLogListParam.END_TS

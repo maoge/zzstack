@@ -8,8 +8,9 @@ import (
 
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/db/pool"
-
 	"github.com/maoge/paas-metasvr-go/pkg/redis"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 var GLOBAL_RES MetaSvrGlobalRes
@@ -19,6 +20,8 @@ type MetaSvrGlobalRes struct {
 
 	ldbDbPool *pool.LdbDbPool
 	redisPool *redis.RedisPool
+
+	deployLog *utils.DeployLog
 }
 
 func (g *MetaSvrGlobalRes) Init() {
@@ -26,6 +29,7 @@ func (g *MetaSvrGlobalRes) Init() {
 
 	g.initDBPool()
 	g.initRedisPool()
+	g.initDeployLog()
 }
 
 func (g *MetaSvrGlobalRes) initDBPool() {
@@ -45,10 +49,30 @@ func (g *MetaSvrGlobalRes) initRedisPool() {
 	g.redisPool = redis.NewRedisPool()
 }
 
+func (g *MetaSvrGlobalRes) initDeployLog() {
+	g.deployLog = utils.NewDeployLog()
+}
+
 func (g *MetaSvrGlobalRes) GetDbPool() *pool.DbPool {
 	return g.ldbDbPool.GetDbPool()
 }
 
 func (g *MetaSvrGlobalRes) GetRedisClusterClient() *goredis.ClusterClient {
 	return g.redisPool.GetClusterClient()
+}
+
+func (g *MetaSvrGlobalRes) PubSuccessLog(logKey, log string) {
+	g.deployLog.PubSuccessLog(logKey, log)
+}
+
+func (g *MetaSvrGlobalRes) PubFailLog(logKey, log string) {
+	g.deployLog.PubFailLog(logKey, log)
+}
+
+func (g *MetaSvrGlobalRes) PubErrorLog(logKey, log string) {
+	g.deployLog.PubErrorLog(logKey, log)
+}
+
+func (g *MetaSvrGlobalRes) GetDeployLog(logKey string, result *result.ResultBean) {
+	g.deployLog.GetLog(logKey, result)
 }

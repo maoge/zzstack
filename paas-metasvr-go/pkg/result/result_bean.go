@@ -1,4 +1,4 @@
-package proto
+package result
 
 import "github.com/maoge/paas-metasvr-go/pkg/consts"
 

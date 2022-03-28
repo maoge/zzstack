@@ -12,6 +12,7 @@ import (
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
 	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 	"github.com/tidwall/gjson"
 
@@ -51,7 +52,7 @@ var (
 	SQL_DEL_CMPT_VER             = "DELETE FROM t_meta_cmpt_versions WHERE SERV_TYPE=? AND VERSION=?"
 )
 
-func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *proto.ResultBean) {
+func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *result.ResultBean) {
 	sqlWhere := ""
 	servName := getServiceCountParam.SERV_NAME
 	servClazz := getServiceCountParam.SERV_CLAZZ
@@ -84,7 +85,7 @@ func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBea
 	}
 }
 
-func GetServiceList(getServiceListParam *proto.GetServiceListParam, resultBean *proto.ResultBean) {
+func GetServiceList(getServiceListParam *proto.GetServiceListParam, resultBean *result.ResultBean) {
 	sqlWhere := ""
 	servInstId := getServiceListParam.SERV_INST_ID
 	servName := getServiceListParam.SERV_NAME
@@ -124,7 +125,7 @@ func GetServiceList(getServiceListParam *proto.GetServiceListParam, resultBean *
 	}
 }
 
-func GetServTypeVerCount(getServTypeVerCountParam *proto.GetServTypeVerCountParam, resultBean *proto.ResultBean) {
+func GetServTypeVerCount(getServTypeVerCountParam *proto.GetServTypeVerCountParam, resultBean *result.ResultBean) {
 	sqlWhere := ""
 	servType := getServTypeVerCountParam.SERV_TYPE
 
@@ -149,7 +150,7 @@ func GetServTypeVerCount(getServTypeVerCountParam *proto.GetServTypeVerCountPara
 	}
 }
 
-func GetServTypeVerListByPage(param *proto.GetServTypeVerListByPageParam, resultBean *proto.ResultBean) {
+func GetServTypeVerListByPage(param *proto.GetServTypeVerListByPageParam, resultBean *result.ResultBean) {
 	sqlWhere := ""
 
 	servType := param.SERV_TYPE
@@ -178,7 +179,7 @@ func GetServTypeVerListByPage(param *proto.GetServTypeVerListByPageParam, result
 	}
 }
 
-func GetClickHouseDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
+func GetClickHouseDashboardAddr(param *proto.ServInstParam, resultBean *result.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -222,7 +223,7 @@ func GetClickHouseDashboardAddr(param *proto.ServInstParam, resultBean *proto.Re
 	}
 }
 
-func GetVoltDBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
+func GetVoltDBDashboardAddr(param *proto.ServInstParam, resultBean *result.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -278,7 +279,7 @@ func GetVoltDBDashboardAddr(param *proto.ServInstParam, resultBean *proto.Result
 	}
 }
 
-func GetRocketMQDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
+func GetRocketMQDashboardAddr(param *proto.ServInstParam, resultBean *result.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -322,7 +323,7 @@ func GetRocketMQDashboardAddr(param *proto.ServInstParam, resultBean *proto.Resu
 	}
 }
 
-func GetTiDBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
+func GetTiDBDashboardAddr(param *proto.ServInstParam, resultBean *result.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -366,7 +367,7 @@ func GetTiDBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBe
 	}
 }
 
-func GetPulsarDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
+func GetPulsarDashboardAddr(param *proto.ServInstParam, resultBean *result.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -410,7 +411,7 @@ func GetPulsarDashboardAddr(param *proto.ServInstParam, resultBean *proto.Result
 	}
 }
 
-func GetYBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean) {
+func GetYBDashboardAddr(param *proto.ServInstParam, resultBean *result.ResultBean) {
 	servInstId := param.SERV_INST_ID
 
 	relations := make([]*proto.PaasTopology, 0)
@@ -471,7 +472,7 @@ func GetYBDashboardAddr(param *proto.ServInstParam, resultBean *proto.ResultBean
 	}
 }
 
-func AddService(param *proto.AddServiceParam, instId string, magicKey string, resultBean *proto.ResultBean) {
+func AddService(param *proto.AddServiceParam, instId string, magicKey string, resultBean *result.ResultBean) {
 	servName := param.SERV_NAME
 	servClazz := param.SERV_CLAZZ
 	servType := param.SERV_TYPE
@@ -515,7 +516,7 @@ func AddService(param *proto.AddServiceParam, instId string, magicKey string, re
 	eventbus.EVENTBUS.PublishEvent(event)
 }
 
-func DelService(instId string, magicKey string, resultBean *proto.ResultBean) {
+func DelService(instId string, magicKey string, resultBean *result.ResultBean) {
 	serv := meta.CMPT_META.GetService(instId)
 	if serv == nil {
 		resultBean.RET_CODE = consts.REVOKE_OK
@@ -567,7 +568,7 @@ func DelService(instId string, magicKey string, resultBean *proto.ResultBean) {
 	}
 }
 
-func enumDelService(parentId string, instId string, subNodes []*proto.PaasNode, resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
+func enumDelService(parentId string, instId string, subNodes []*proto.PaasNode, resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
 	if len(subNodes) > 0 {
 		for _, node := range subNodes {
 			subInstId := node.INST_ID
@@ -607,7 +608,7 @@ func enumDelService(parentId string, instId string, subNodes []*proto.PaasNode, 
 	return true
 }
 
-func DelInstance(parentId string, instId string, resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
+func DelInstance(parentId string, instId string, resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
 	relations := make([]*proto.PaasTopology, 0)
 	meta.CMPT_META.GetInstRelations(instId, &relations)
 
@@ -714,7 +715,7 @@ func getChildNodeExcludingServRoot(instId string, subNodes []*proto.PaasNode) {
 	}
 }
 
-func ModService(param *proto.ModServiceParam, magicKey string, resultBean *proto.ResultBean) {
+func ModService(param *proto.ModServiceParam, magicKey string, resultBean *result.ResultBean) {
 	instId := param.INST_ID
 	servName := param.SERV_NAME
 	version := param.VERSION
@@ -740,7 +741,7 @@ func ModService(param *proto.ModServiceParam, magicKey string, resultBean *proto
 	}
 }
 
-func ModServiceVersion(param *proto.ModServiceVersionParam, magicKey string, resultBean *proto.ResultBean) {
+func ModServiceVersion(param *proto.ModServiceVersionParam, magicKey string, resultBean *result.ResultBean) {
 	instId := param.INST_ID
 	version := param.VERSION
 	dbPool := global.GLOBAL_RES.GetDbPool()
@@ -764,7 +765,7 @@ func ModServiceVersion(param *proto.ModServiceVersionParam, magicKey string, res
 	}
 }
 
-func GetServerCnt(param *proto.GetServerCountParam, resultBean *proto.ResultBean) {
+func GetServerCnt(param *proto.GetServerCountParam, resultBean *result.ResultBean) {
 	sqlWhere := ""
 	servIp := param.SERVER_IP
 	servName := param.SERVER_NAME
@@ -793,7 +794,7 @@ func GetServerCnt(param *proto.GetServerCountParam, resultBean *proto.ResultBean
 	}
 }
 
-func GetServerList(param *proto.GetServerListParam, resultBean *proto.ResultBean) {
+func GetServerList(param *proto.GetServerListParam, resultBean *result.ResultBean) {
 	sqlWhere := ""
 	servIp := param.SERVER_IP
 	servName := param.SERVER_NAME
@@ -825,7 +826,7 @@ func GetServerList(param *proto.GetServerListParam, resultBean *proto.ResultBean
 	}
 }
 
-func AddServer(param *proto.AddServerParam, magicKey string, resultBean *proto.ResultBean) {
+func AddServer(param *proto.AddServerParam, magicKey string, resultBean *result.ResultBean) {
 	servIp := param.SERVER_IP
 	servName := param.SERVER_NAME
 	if meta.CMPT_META.IsServerIpExists(servIp) {
@@ -854,7 +855,7 @@ func AddServer(param *proto.AddServerParam, magicKey string, resultBean *proto.R
 	}
 }
 
-func DelServer(servIp string, magicKey string, resultBean *proto.ResultBean) {
+func DelServer(servIp string, magicKey string, resultBean *result.ResultBean) {
 	if meta.CMPT_META.IsServerNull(servIp) {
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = consts.ERR_SERVER_NOT_NULL
@@ -877,7 +878,7 @@ func DelServer(servIp string, magicKey string, resultBean *proto.ResultBean) {
 	}
 }
 
-func GetSshCntByIp(servIp string, resultBean *proto.ResultBean) {
+func GetSshCntByIp(servIp string, resultBean *result.ResultBean) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 	out := proto.Count{}
 	err := crud.SelectAsObject(dbPool, &out, &SQL_SSH_CNT_BY_IP, servIp)
@@ -893,7 +894,7 @@ func GetSshCntByIp(servIp string, resultBean *proto.ResultBean) {
 	}
 }
 
-func GetSshListByIp(param *proto.GetSSHListByIPParam, resultBean *proto.ResultBean) {
+func GetSshListByIp(param *proto.GetSSHListByIPParam, resultBean *result.ResultBean) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	servIp := param.SERVER_IP
@@ -914,7 +915,7 @@ func GetSshListByIp(param *proto.GetSSHListByIPParam, resultBean *proto.ResultBe
 	}
 }
 
-func AddSsh(param *proto.AddSSHParam, magicKey string, resultBean *proto.ResultBean) {
+func AddSsh(param *proto.AddSSHParam, magicKey string, resultBean *result.ResultBean) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	sshName := param.SSH_NAME
@@ -963,7 +964,7 @@ func AddSsh(param *proto.AddSSHParam, magicKey string, resultBean *proto.ResultB
 	}
 }
 
-func ModSSH(param *proto.ModSSHParam, magicKey string, resultBean *proto.ResultBean) {
+func ModSSH(param *proto.ModSSHParam, magicKey string, resultBean *result.ResultBean) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 
 	sshName := param.SSH_NAME
@@ -992,7 +993,7 @@ func ModSSH(param *proto.ModSSHParam, magicKey string, resultBean *proto.ResultB
 	}
 }
 
-func DelSSH(param *proto.DelSSHParam, magicKey string, resultBean *proto.ResultBean) {
+func DelSSH(param *proto.DelSSHParam, magicKey string, resultBean *result.ResultBean) {
 	dbPool := global.GLOBAL_RES.GetDbPool()
 	sshId := param.SSH_ID
 	servIp := param.SERVER_IP
@@ -1016,7 +1017,7 @@ func DelSSH(param *proto.DelSSHParam, magicKey string, resultBean *proto.ResultB
 	}
 }
 
-func LoadServiceTopo(instId string, resultBean *proto.ResultBean) bool {
+func LoadServiceTopo(instId string, resultBean *result.ResultBean) bool {
 	instance := meta.CMPT_META.GetInstance(instId)
 	if instance == nil {
 		resultBean.RET_CODE = consts.SERVICE_NOT_INIT
@@ -1052,7 +1053,7 @@ func LoadServiceTopo(instId string, resultBean *proto.ResultBean) bool {
 	return true
 }
 
-func LoadInstanceMeta(instId string, resultBean *proto.ResultBean) bool {
+func LoadInstanceMeta(instId string, resultBean *result.ResultBean) bool {
 	instance := meta.CMPT_META.GetInstance(instId)
 	if instance == nil {
 		resultBean.RET_CODE = consts.SERVICE_NOT_INIT
@@ -1185,7 +1186,7 @@ func loadInstanceAttribute(instId string, attrMap *map[string]interface{}, deplo
 	return true
 }
 
-func SaveServTopoSkeleton(servType string, topoMap map[string]interface{}, magicKey string, resultBean *proto.ResultBean) {
+func SaveServTopoSkeleton(servType string, topoMap map[string]interface{}, magicKey string, resultBean *result.ResultBean) {
 	servRootName := meta.CMPT_META.GetServRootCmpt(servType)
 	subJson := (topoMap)[servRootName]
 	if subJson == nil {
@@ -1208,7 +1209,7 @@ func SaveServTopoSkeleton(servType string, topoMap map[string]interface{}, magic
 	}
 }
 
-func ReloadMetaData(reloadType string, magicKey string, resultBean *proto.ResultBean) {
+func ReloadMetaData(reloadType string, magicKey string, resultBean *result.ResultBean) {
 	meta.CMPT_META.ReloadMetaData(reloadType)
 
 	// broadcast to cluster
@@ -1221,7 +1222,7 @@ func ReloadMetaData(reloadType string, magicKey string, resultBean *proto.Result
 }
 
 func enumSavePos(cmptName string, topoMap map[string]interface{},
-	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
+	resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
 
 	cmpt := meta.CMPT_META.GetCmptByName(cmptName)
 
@@ -1298,7 +1299,7 @@ func enumSavePos(cmptName string, topoMap map[string]interface{},
 	return true
 }
 
-func enumSaveSkeleton(topoMap interface{}, resultBean *proto.ResultBean,
+func enumSaveSkeleton(topoMap interface{}, resultBean *result.ResultBean,
 	events *[]*proto.PaasEvent, magicKey string) bool {
 
 	itemKind := reflect.TypeOf(topoMap).Kind()
@@ -1355,7 +1356,7 @@ func enumSaveSkeleton(topoMap interface{}, resultBean *proto.ResultBean,
 }
 
 func addInstanceWithAttrRelation(jsonMap map[string]interface{}, cmpt *proto.PaasMetaCmpt,
-	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
+	resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
 
 	instIdRaw := jsonMap[consts.HEADER_INST_ID]
 	if instIdRaw == nil {
@@ -1427,7 +1428,7 @@ func addInstanceWithAttrRelation(jsonMap map[string]interface{}, cmpt *proto.Paa
 	return true
 }
 
-func delRelation(parentId string, topoType int, resultBean *proto.ResultBean,
+func delRelation(parentId string, topoType int, resultBean *result.ResultBean,
 	events *[]*proto.PaasEvent, magicKey string) {
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
@@ -1447,7 +1448,7 @@ func delRelation(parentId string, topoType int, resultBean *proto.ResultBean,
 	*events = append(*events, event)
 }
 
-func addRelation(parentId string, instId string, topoType int, resultBean *proto.ResultBean,
+func addRelation(parentId string, instId string, topoType int, resultBean *result.ResultBean,
 	events *[]*proto.PaasEvent, magicKey string) {
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
@@ -1467,7 +1468,7 @@ func addRelation(parentId string, instId string, topoType int, resultBean *proto
 	*events = append(*events, event)
 }
 
-func modRelation(parentId string, instId string, topoType int, resultBean *proto.ResultBean,
+func modRelation(parentId string, instId string, topoType int, resultBean *result.ResultBean,
 	events *[]*proto.PaasEvent, magicKey string) {
 
 	dbPool := global.GLOBAL_RES.GetDbPool()
@@ -1488,7 +1489,7 @@ func modRelation(parentId string, instId string, topoType int, resultBean *proto
 }
 
 func addCmptAttr(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]interface{},
-	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
+	resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
 
 	attrSlic := meta.CMPT_META.GetCmptAttrs(cmpt.CMPT_ID)
 	for _, attr := range attrSlic {
@@ -1520,7 +1521,7 @@ func addCmptAttr(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]int
 }
 
 func modCmptAttr(instId string, cmpt *proto.PaasMetaCmpt, node *map[string]interface{},
-	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
+	resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
 
 	attrs := meta.CMPT_META.GetCmptAttrs(cmpt.CMPT_ID)
 	if len(attrs) == 0 {
@@ -1587,7 +1588,7 @@ func modCmptAttr(instId string, cmpt *proto.PaasMetaCmpt, node *map[string]inter
 }
 
 func addInstance(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]interface{},
-	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
+	resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) {
 
 	cmptId := cmpt.CMPT_ID
 
@@ -1624,7 +1625,7 @@ func addInstance(instId string, cmpt *proto.PaasMetaCmpt, subMap *map[string]int
 	*events = append(*events, event)
 }
 
-func SaveServiceNode(parentId string, opType int, nodeJson map[string]interface{}, resultBean *proto.ResultBean, magicKey string) {
+func SaveServiceNode(parentId string, opType int, nodeJson map[string]interface{}, resultBean *result.ResultBean, magicKey string) {
 	events := make([]*proto.PaasEvent, 0)
 	if enumSaveServiceNode(parentId, opType, nodeJson, resultBean, &events, magicKey) {
 		for _, event := range events {
@@ -1633,7 +1634,7 @@ func SaveServiceNode(parentId string, opType int, nodeJson map[string]interface{
 	}
 }
 
-func DelServiceNode(parentId string, instId string, resultBean *proto.ResultBean, magicKey string) {
+func DelServiceNode(parentId string, instId string, resultBean *result.ResultBean, magicKey string) {
 	events := make([]*proto.PaasEvent, 0)
 	if DelInstance(parentId, instId, resultBean, &events, magicKey) {
 		for _, ev := range events {
@@ -1665,7 +1666,7 @@ func DelServiceNode(parentId string, instId string, resultBean *proto.ResultBean
 }
 
 func enumSaveServiceNode(parentId string, opType int, nodeJson map[string]interface{},
-	resultBean *proto.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
+	resultBean *result.ResultBean, events *[]*proto.PaasEvent, magicKey string) bool {
 
 	for cmptName, subJsonRaw := range nodeJson {
 		cmpt := meta.CMPT_META.GetCmptByName(cmptName)
@@ -1715,7 +1716,7 @@ func enumSaveServiceNode(parentId string, opType int, nodeJson map[string]interf
 	return true
 }
 
-func GetMetaDataTreeByInstId(instId string, resultBean *proto.ResultBean) {
+func GetMetaDataTreeByInstId(instId string, resultBean *result.ResultBean) {
 	arr := make([]map[string]interface{}, 0)
 	getChildNode(instId, &arr)
 
@@ -1723,7 +1724,7 @@ func GetMetaDataTreeByInstId(instId string, resultBean *proto.ResultBean) {
 	resultBean.RET_INFO = arr
 }
 
-func GetMetaDataNodeByInstId(instId string, resultBean *proto.ResultBean) {
+func GetMetaDataNodeByInstId(instId string, resultBean *result.ResultBean) {
 	instance := meta.CMPT_META.GetInstance(instId)
 	if instance == nil {
 		resultBean.RET_CODE = consts.REVOKE_NOK
@@ -1771,7 +1772,7 @@ func GetMetaDataNodeByInstId(instId string, resultBean *proto.ResultBean) {
 	resultBean.RET_INFO = metaJson
 }
 
-func GetSmsABQueueWeightInfo(servInstId string, resultBean *proto.ResultBean) {
+func GetSmsABQueueWeightInfo(servInstId string, resultBean *result.ResultBean) {
 	instance := meta.CMPT_META.GetInstance(servInstId)
 	if instance == nil {
 		resultBean.RET_CODE = consts.REVOKE_NOK
@@ -1851,7 +1852,7 @@ func GetSmsABQueueWeightInfo(servInstId string, resultBean *proto.ResultBean) {
 	}
 }
 
-func AdjustSmsABQueueWeightInfo(param *proto.AdjustSmsABQueueParam, magicKey string, resultBean *proto.ResultBean) {
+func AdjustSmsABQueueWeightInfo(param *proto.AdjustSmsABQueueParam, magicKey string, resultBean *result.ResultBean) {
 	servInstID := param.SERV_INST_ID
 	queueServInstID := param.QUEUE_SERV_INST_ID
 	topoJson := param.TOPO_JSON
@@ -1919,7 +1920,7 @@ func AdjustSmsABQueueWeightInfo(param *proto.AdjustSmsABQueueParam, magicKey str
 	eventbus.EVENTBUS.PublishEvent(event)
 
 	// 依次遍历每个sms服务下的每个模块的web console接口, 指定调整权重操作
-	servTopoRetVal := proto.NewResultBean()
+	servTopoRetVal := result.NewResultBean()
 	if LoadServiceTopo(servInstID, servTopoRetVal) {
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = consts.ERR_LOAD_SERV_TOPO_FAIL
@@ -1948,7 +1949,7 @@ func AdjustSmsABQueueWeightInfo(param *proto.AdjustSmsABQueueParam, magicKey str
 	}
 }
 
-func SwitchSmsDBType(param *proto.SwitchSmsDBTypeParam, magicKey string, resultBean *proto.ResultBean) {
+func SwitchSmsDBType(param *proto.SwitchSmsDBTypeParam, magicKey string, resultBean *result.ResultBean) {
 	servInstID := param.DB_SERV_INST_ID
 	dbServInstID := param.DB_SERV_INST_ID
 	dbType := param.ACTIVE_DB_TYPE
@@ -2034,7 +2035,7 @@ func SwitchSmsDBType(param *proto.SwitchSmsDBTypeParam, magicKey string, resultB
 	byteBuff := []byte(buff)
 
 	// 依次遍历每个sms服务下的每个模块的web console接口, 指定调整权重操作
-	servTopoRetVal := proto.NewResultBean()
+	servTopoRetVal := result.NewResultBean()
 	if !LoadServiceTopo(servInstID, servTopoRetVal) {
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = consts.ERR_LOAD_SERV_TOPO_FAIL
@@ -2051,7 +2052,7 @@ func SwitchSmsDBType(param *proto.SwitchSmsDBTypeParam, magicKey string, resultB
 	}
 }
 
-func AddCmptVersion(param *proto.CmptVersionParam, magicKey string, resultBean *proto.ResultBean) {
+func AddCmptVersion(param *proto.CmptVersionParam, magicKey string, resultBean *result.ResultBean) {
 	servType := param.SERV_TYPE
 	version := param.VERSION
 
@@ -2086,7 +2087,7 @@ func AddCmptVersion(param *proto.CmptVersionParam, magicKey string, resultBean *
 	resultBean.RET_INFO = ""
 }
 
-func DelCmptVersion(param *proto.CmptVersionParam, magicKey string, resultBean *proto.ResultBean) {
+func DelCmptVersion(param *proto.CmptVersionParam, magicKey string, resultBean *result.ResultBean) {
 	servType := param.SERV_TYPE
 	version := param.VERSION
 

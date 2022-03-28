@@ -92,4 +92,10 @@ var (
 	FILE_TYPE_JDK                                    = "JDK"
 	SCHEMA_OBJECT                                    = "object"
 	SCHEMA_ARRAY                                     = "array"
+	LINE_END                                         = "\n"
+	LINE_BLACK_SLASH                                 = "\\\\"
+	HTML_LINE_END                                    = "<br/>"
+	DEPLOY_SINGLE_SUCCESS_BEGIN_STYLE                = "<span style='color:blue;'>"
+	DEPLOY_SINGLE_FAIL_BEGIN_STYLE                   = "<span style='color:yellow;'>"
+	END_STYLE                                        = "</span>"
 )

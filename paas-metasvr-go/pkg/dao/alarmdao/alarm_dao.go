@@ -7,6 +7,7 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/dao/redisdao"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
+	"github.com/maoge/paas-metasvr-go/pkg/result"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 
 	crud "github.com/maoge/paas-metasvr-go/pkg/db"
@@ -25,7 +26,7 @@ var (
 	SQL_UPD_ALARM_STATE_BY_ALARMID = "update t_meta_alarm set DEAL_TIME = ?, DEAL_ACC_NAME = ?, IS_DEALED = ? where ALARM_ID = ?"
 )
 
-func GetAlarmCount(getAlarmCountParam *proto.GetAlarmCountParam, resultBean *proto.ResultBean) {
+func GetAlarmCount(getAlarmCountParam *proto.GetAlarmCountParam, resultBean *result.ResultBean) {
 	sqlWhere := ""
 	dealFlag := getAlarmCountParam.DEAL_FLAG
 	if dealFlag != "" {
@@ -48,7 +49,7 @@ func GetAlarmCount(getAlarmCountParam *proto.GetAlarmCountParam, resultBean *pro
 	}
 }
 
-func GetAlarmList(getAlarmListParam *proto.GetAlarmListParam, resultBean *proto.ResultBean) {
+func GetAlarmList(getAlarmListParam *proto.GetAlarmListParam, resultBean *result.ResultBean) {
 	servInstId := getAlarmListParam.SERV_INST_ID
 	instId := getAlarmListParam.INST_ID
 	dealFlag := getAlarmListParam.DEAL_FLAG
@@ -103,7 +104,7 @@ func GetAlarmList(getAlarmListParam *proto.GetAlarmListParam, resultBean *proto.
 	}
 }
 
-func ClearAlarm(clearAlarmParam *proto.ClearAlarmParam, resultBean *proto.ResultBean) {
+func ClearAlarm(clearAlarmParam *proto.ClearAlarmParam, resultBean *result.ResultBean) {
 	key := fmt.Sprintf("alarm-%s-%d", clearAlarmParam.INST_ID, clearAlarmParam.ALARM_TYPE)
 	err := redisdao.RedisDel(key)
 	if err != nil {
