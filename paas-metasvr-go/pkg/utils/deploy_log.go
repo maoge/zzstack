@@ -66,7 +66,7 @@ func (l *DeployLog) elimExpired() {
 	}
 }
 
-func (l *DeployLog) pubLog(logKey, log string) {
+func (l *DeployLog) PubLog(logKey, log string) {
 	if logKey == "" {
 		return
 	}
@@ -106,7 +106,7 @@ func (l *DeployLog) PubSuccessLog(logKey, log string) {
 	str += log
 	str += consts.END_STYLE
 
-	l.pubLog(logKey, str)
+	l.PubLog(logKey, str)
 }
 
 func (l *DeployLog) PubFailLog(logKey, log string) {
@@ -118,7 +118,7 @@ func (l *DeployLog) PubFailLog(logKey, log string) {
 	str += log
 	str += consts.END_STYLE
 
-	l.pubLog(logKey, str)
+	l.PubLog(logKey, str)
 }
 
 func (l *DeployLog) PubErrorLog(logKey, log string) {
@@ -130,7 +130,7 @@ func (l *DeployLog) PubErrorLog(logKey, log string) {
 	str += log
 	str += consts.END_STYLE
 
-	l.pubLog(logKey, str)
+	l.PubLog(logKey, str)
 }
 
 func (i *LogItem) PutLog(log string) {

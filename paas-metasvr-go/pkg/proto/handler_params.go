@@ -224,6 +224,24 @@ type CmptVersionParam struct {
 
 type DeployServiceParam struct {
 	SERV_ID     string `json:"SERV_ID" binding:"required"`
+	INST_ID     string `json:"INST_ID" binding:"omitempty"`
+	SERV_TYPE   string `json:"SERV_TYPE" binding:"omitempty"`
 	LOG_KEY     string `json:"LOG_KEY" binding:"required"`
 	DEPLOY_FLAG string `json:"DEPLOY_FLAG" binding:"omitempty"`
+}
+
+type CheckInstanceStatusParam struct {
+	SERV_ID   string `json:"SERV_ID" binding:"required"`
+	INST_ID   string `json:"INST_ID" binding:"required"`
+	SERV_TYPE string `json:"SERV_TYPE" binding:"required"`
+}
+
+type DeployLogParam struct {
+	LOG_KEY string `json:"LOG_KEY" binding:"required"`
+}
+
+type AppLogParam struct {
+	SERV_ID  string `json:"SERV_ID" binding:"required"`
+	INST_ID  string `json:"INST_ID" binding:"required"`
+	LOG_TYPE string `json:"LOG_TYPE" binding:"required"`
 }

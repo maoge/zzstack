@@ -31,4 +31,7 @@ func Init(e *gin.Engine) {
 
 	metaDataHandler := controller.NewMetaDataHandler(defaultGroup)
 	RegisterController(metaDataHandler)
+
+	devOpsHandler := controller.NewDevOpsController(defaultGroup)
+	RegisterController(devOpsHandler)
 }

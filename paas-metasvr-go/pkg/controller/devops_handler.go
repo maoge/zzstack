@@ -2,24 +2,26 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/maoge/paas-metasvr-go/pkg/autodeploy"
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
-type DeployController struct {
+type DevOpsController struct {
 	group *gin.RouterGroup
 }
 
-func NewDeployController(g *gin.RouterGroup) *DeployController {
-	return &DeployController{group: g}
+func NewDevOpsController(g *gin.RouterGroup) *DevOpsController {
+	return &DevOpsController{group: g}
 }
 
-func (h *DeployController) DeployService() {
+func (h *DevOpsController) DeployService() {
 	h.group.POST("/paas/metadata/deployService", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
@@ -39,86 +41,242 @@ func (h *DeployController) DeployService() {
 	})
 }
 
-func (h *DeployController) UndeployService() {
+func (h *DevOpsController) UndeployService() {
 	h.group.POST("/paas/metadata/undeployService", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.UndeployService(servID, logKey, magicKey, false, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) DeployInstance() {
+func (h *DevOpsController) DeployInstance() {
 	h.group.POST("/paas/metadata/deployInstance", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.DeployInstance(servID, instID, logKey, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) UndeployInstance() {
+func (h *DevOpsController) UndeployInstance() {
 	h.group.POST("/paas/metadata/undeployInstance", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.UndeployInstance(servID, instID, logKey, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) ForceUndeployServ() {
+func (h *DevOpsController) ForceUndeployServ() {
 	h.group.POST("/paas/metadata/forceUndeployServ", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.UndeployService(servID, logKey, magicKey, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) StartInstance() {
+func (h *DevOpsController) StartInstance() {
 	h.group.POST("/paas/metadata/startInstance", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		servType := param.SERV_TYPE
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_START, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) StopInstance() {
+func (h *DevOpsController) StopInstance() {
 	h.group.POST("/paas/metadata/stopInstance", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		servType := param.SERV_TYPE
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_STOP, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) RestartInstance() {
+func (h *DevOpsController) RestartInstance() {
 	h.group.POST("/paas/metadata/restartInstance", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		servType := param.SERV_TYPE
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_RESTART, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) UpdateInstance() {
+func (h *DevOpsController) UpdateInstance() {
 	h.group.POST("/paas/metadata/updateInstance", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		servType := param.SERV_TYPE
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_UPDATE, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) BatchUpdateInst() {
+func (h *DevOpsController) BatchUpdateInst() {
 	h.group.POST("/paas/metadata/batchUpdateInst", func(c *gin.Context) {
+		var param proto.DeployServiceParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		servType := param.SERV_TYPE
+		logKey := param.LOG_KEY
+		magicKey := utils.GetMagicKey(c)
+		instIdArr := strings.Split(instID, ",")
+
 		resultBean := result.NewResultBean()
+		autodeploy.BatchUpdateInst(servID, servType, logKey, magicKey, instIdArr, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) CheckInstanceStatus() {
+func (h *DevOpsController) CheckInstanceStatus() {
 	h.group.POST("/paas/metadata/checkInstanceStatus", func(c *gin.Context) {
+		var param proto.CheckInstanceStatusParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		servType := param.SERV_TYPE
+		magicKey := utils.GetMagicKey(c)
+
 		resultBean := result.NewResultBean()
+		autodeploy.CheckInstanceStatus(servID, instID, servType, magicKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) GetDeployLog() {
+func (h *DevOpsController) GetDeployLog() {
 	h.group.POST("/paas/metadata/getDeployLog", func(c *gin.Context) {
+		var param proto.DeployLogParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		logKey := param.LOG_KEY
 		resultBean := result.NewResultBean()
+
+		autodeploy.GetDeployLog(logKey, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
 
-func (h *DeployController) GetAppLog() {
+func (h *DevOpsController) GetAppLog() {
 	h.group.POST("/paas/metadata/getAppLog", func(c *gin.Context) {
+		var param proto.AppLogParam
+		err := c.MustBindWith(&param, binding.JSON)
+		if err != nil {
+			c.String(http.StatusBadRequest, "参数绑定错误"+err.Error())
+			return
+		}
+
+		servID := param.SERV_ID
+		instID := param.INST_ID
+		logType := param.LOG_TYPE
+
 		resultBean := result.NewResultBean()
+		autodeploy.GetAppLog(servID, instID, logType, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }

@@ -21,35 +21,38 @@ import (
 )
 
 var (
-	SQL_COUNT_SERVICE_LIST       = "SELECT count(1) COUNT FROM t_meta_service WHERE 1=1 %s"
-	SQL_SEL_SERVICE_LIST         = "SELECT INST_ID, SERV_NAME, SERV_TYPE, SERV_CLAZZ, VERSION, IS_DEPLOYED, IS_PRODUCT FROM t_meta_service WHERE 1=1 %s ORDER BY CREATE_TIME limit ?, ?"
-	SQL_COUNT_SERV_TYPE_VER_LIST = "SELECT count(1) COUNT FROM t_meta_cmpt_versions WHERE 1=1 %s"
-	SQL_SEL_SERV_TYPE_VER_LIST   = "SELECT SERV_TYPE, VERSION FROM t_meta_cmpt_versions WHERE 1=1 %s ORDER BY SERV_TYPE, VERSION limit ?, ?"
-	SQL_ADD_SERVICE              = "INSERT INTO t_meta_service(INST_ID, SERV_NAME, SERV_CLAZZ, SERV_TYPE, VERSION, IS_DEPLOYED, IS_PRODUCT, CREATE_TIME, USER, PASSWORD, PSEUDO_DEPLOY_FLAG) VALUES(?,?,?,?,?,?,?,?,?,?,?)"
-	SQL_DEL_TOPOLOGY             = "DELETE FROM t_meta_topology WHERE (INST_ID1 = ? AND INST_ID2 = ?) OR (INST_ID2 = ? and TOPO_TYPE = 2)"
-	SQL_DEL_INSTANCE_ATTR        = "DELETE FROM t_meta_instance_attr WHERE INST_ID = ?"
-	SQL_DEL_INSTANCE             = "DELETE FROM t_meta_instance WHERE INST_ID = ?"
-	SQL_DEL_SERVICE              = "DELETE FROM t_meta_service WHERE inst_id = ?"
-	SQL_MOD_SERVICE              = "UPDATE t_meta_service SET SERV_NAME = ?, VERSION = ?, IS_PRODUCT = ? WHERE INST_ID = ?"
-	SQL_MOD_SERVICE_VERSION      = "UPDATE t_meta_service SET VERSION = ? WHERE INST_ID = ?"
-	SQL_COUNT_SERVER_LIST        = "SELECT count(1) COUNT FROM t_meta_server WHERE 1=1 %s"
-	SQL_SEL_SERVER_LIST          = "SELECT SERVER_IP, SERVER_NAME FROM t_meta_server WHERE 1=1 %s order by SERVER_IP limit ?, ?"
-	SQL_ADD_SERVER               = "INSERT INTO t_meta_server(SERVER_IP, SERVER_NAME, CREATE_TIME) VALUES(?,?,?)"
-	SQL_DEL_SERVER               = "DELETE FROM t_meta_server WHERE SERVER_IP=?"
-	SQL_SSH_CNT_BY_IP            = "SELECT count(1) COUNT FROM t_meta_ssh WHERE SERVER_IP=? "
-	SQL_SSH_LIST_BY_IP           = "SELECT SSH_NAME, SERV_CLAZZ, SSH_ID, SERVER_IP, SSH_PORT FROM t_meta_ssh WHERE SERVER_IP=? order by SSH_NAME limit ?, ?"
-	SQL_ADD_SSH                  = "INSERT INTO t_meta_ssh(SSH_NAME,SSH_PWD,SSH_PORT,SERV_CLAZZ,SERVER_IP,SSH_ID) VALUES(?,?,?,?,?,?)"
-	SQL_MOD_SSH                  = "UPDATE t_meta_ssh SET SSH_NAME=?, SSH_PWD=?, SSH_PORT=? WHERE SSH_ID=?"
-	SQL_DEL_SSH                  = "DELETE FROM t_meta_ssh WHERE SSH_ID=?"
-	SQL_UPDATE_POS               = "UPDATE t_meta_instance SET POS_X=?,POS_Y=?, WIDTH=?, HEIGHT=?,ROW_=?,COL_=? WHERE INST_ID = ?"
-	SQL_INS_INSTANCE             = "INSERT INTO t_meta_instance(INST_ID,CMPT_ID,IS_DEPLOYED,POS_X,POS_Y,WIDTH,HEIGHT,ROW_,COL_) VALUES(?,?,?,?,?,?,?,?,?)"
-	SQL_INS_INSTANCE_ATTR        = "INSERT INTO t_meta_instance_attr(INST_ID,ATTR_ID,ATTR_NAME,ATTR_VALUE) VALUES(?,?,?,?)"
-	SQL_INS_TOPOLOGY             = "INSERT INTO t_meta_topology(INST_ID1,INST_ID2,TOPO_TYPE) VALUES(?,?,?)"
-	SQL_UPD_TOPOLOGY             = "update t_meta_topology set INST_ID2 = ? where INST_ID1 = ?"
-	SQL_DEL_ALL_SUB_TOPOLOGY     = "DELETE FROM t_meta_topology WHERE (INST_ID1 = ? AND TOPO_TYPE = 1) OR (INST_ID1 = ? and TOPO_TYPE = 2)"
-	SQL_MOD_ATTR                 = "UPDATE t_meta_instance_attr SET ATTR_VALUE = ? WHERE INST_ID = ? AND ATTR_ID = ?"
-	SQL_INS_CMPT_VER             = "INSERT INTO t_meta_cmpt_versions(SERV_TYPE,VERSION) VALUES(?,?)"
-	SQL_DEL_CMPT_VER             = "DELETE FROM t_meta_cmpt_versions WHERE SERV_TYPE=? AND VERSION=?"
+	SQL_COUNT_SERVICE_LIST             = "SELECT count(1) COUNT FROM t_meta_service WHERE 1=1 %s"
+	SQL_SEL_SERVICE_LIST               = "SELECT INST_ID, SERV_NAME, SERV_TYPE, SERV_CLAZZ, VERSION, IS_DEPLOYED, IS_PRODUCT FROM t_meta_service WHERE 1=1 %s ORDER BY CREATE_TIME limit ?, ?"
+	SQL_COUNT_SERV_TYPE_VER_LIST       = "SELECT count(1) COUNT FROM t_meta_cmpt_versions WHERE 1=1 %s"
+	SQL_SEL_SERV_TYPE_VER_LIST         = "SELECT SERV_TYPE, VERSION FROM t_meta_cmpt_versions WHERE 1=1 %s ORDER BY SERV_TYPE, VERSION limit ?, ?"
+	SQL_ADD_SERVICE                    = "INSERT INTO t_meta_service(INST_ID, SERV_NAME, SERV_CLAZZ, SERV_TYPE, VERSION, IS_DEPLOYED, IS_PRODUCT, CREATE_TIME, USER, PASSWORD, PSEUDO_DEPLOY_FLAG) VALUES(?,?,?,?,?,?,?,?,?,?,?)"
+	SQL_DEL_TOPOLOGY                   = "DELETE FROM t_meta_topology WHERE (INST_ID1 = ? AND INST_ID2 = ?) OR (INST_ID2 = ? and TOPO_TYPE = 2)"
+	SQL_DEL_INSTANCE_ATTR              = "DELETE FROM t_meta_instance_attr WHERE INST_ID = ?"
+	SQL_DEL_INSTANCE                   = "DELETE FROM t_meta_instance WHERE INST_ID = ?"
+	SQL_DEL_SERVICE                    = "DELETE FROM t_meta_service WHERE inst_id = ?"
+	SQL_MOD_SERVICE                    = "UPDATE t_meta_service SET SERV_NAME = ?, VERSION = ?, IS_PRODUCT = ? WHERE INST_ID = ?"
+	SQL_MOD_SERVICE_VERSION            = "UPDATE t_meta_service SET VERSION = ? WHERE INST_ID = ?"
+	SQL_COUNT_SERVER_LIST              = "SELECT count(1) COUNT FROM t_meta_server WHERE 1=1 %s"
+	SQL_SEL_SERVER_LIST                = "SELECT SERVER_IP, SERVER_NAME FROM t_meta_server WHERE 1=1 %s order by SERVER_IP limit ?, ?"
+	SQL_ADD_SERVER                     = "INSERT INTO t_meta_server(SERVER_IP, SERVER_NAME, CREATE_TIME) VALUES(?,?,?)"
+	SQL_DEL_SERVER                     = "DELETE FROM t_meta_server WHERE SERVER_IP=?"
+	SQL_SSH_CNT_BY_IP                  = "SELECT count(1) COUNT FROM t_meta_ssh WHERE SERVER_IP=? "
+	SQL_SSH_LIST_BY_IP                 = "SELECT SSH_NAME, SERV_CLAZZ, SSH_ID, SERVER_IP, SSH_PORT FROM t_meta_ssh WHERE SERVER_IP=? order by SSH_NAME limit ?, ?"
+	SQL_ADD_SSH                        = "INSERT INTO t_meta_ssh(SSH_NAME,SSH_PWD,SSH_PORT,SERV_CLAZZ,SERVER_IP,SSH_ID) VALUES(?,?,?,?,?,?)"
+	SQL_MOD_SSH                        = "UPDATE t_meta_ssh SET SSH_NAME=?, SSH_PWD=?, SSH_PORT=? WHERE SSH_ID=?"
+	SQL_DEL_SSH                        = "DELETE FROM t_meta_ssh WHERE SSH_ID=?"
+	SQL_UPDATE_POS                     = "UPDATE t_meta_instance SET POS_X=?,POS_Y=?, WIDTH=?, HEIGHT=?,ROW_=?,COL_=? WHERE INST_ID = ?"
+	SQL_INS_INSTANCE                   = "INSERT INTO t_meta_instance(INST_ID,CMPT_ID,IS_DEPLOYED,POS_X,POS_Y,WIDTH,HEIGHT,ROW_,COL_) VALUES(?,?,?,?,?,?,?,?,?)"
+	SQL_INS_INSTANCE_ATTR              = "INSERT INTO t_meta_instance_attr(INST_ID,ATTR_ID,ATTR_NAME,ATTR_VALUE) VALUES(?,?,?,?)"
+	SQL_INS_TOPOLOGY                   = "INSERT INTO t_meta_topology(INST_ID1,INST_ID2,TOPO_TYPE) VALUES(?,?,?)"
+	SQL_UPD_TOPOLOGY                   = "update t_meta_topology set INST_ID2 = ? where INST_ID1 = ?"
+	SQL_DEL_ALL_SUB_TOPOLOGY           = "DELETE FROM t_meta_topology WHERE (INST_ID1 = ? AND TOPO_TYPE = 1) OR (INST_ID1 = ? and TOPO_TYPE = 2)"
+	SQL_MOD_ATTR                       = "UPDATE t_meta_instance_attr SET ATTR_VALUE = ? WHERE INST_ID = ? AND ATTR_ID = ?"
+	SQL_INS_CMPT_VER                   = "INSERT INTO t_meta_cmpt_versions(SERV_TYPE,VERSION) VALUES(?,?)"
+	SQL_DEL_CMPT_VER                   = "DELETE FROM t_meta_cmpt_versions WHERE SERV_TYPE=? AND VERSION=?"
+	SQL_UPD_INST_DEPLOY                = "UPDATE t_meta_instance SET IS_DEPLOYED = ? WHERE INST_ID = ?"
+	SQL_UPD_SERV_DEPLOY                = "UPDATE t_meta_service SET IS_DEPLOYED = ? WHERE INST_ID = ?"
+	SQL_MOD_SERVICE_PSEUDO_DEPLOY_FLAG = "UPDATE t_meta_service SET PSEUDO_DEPLOY_FLAG = ? WHERE INST_ID = ?"
 )
 
 func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *result.ResultBean) {
@@ -2244,5 +2247,101 @@ func getChildNode(instId string, arr *[]map[string]interface{}) {
 		}
 
 		*arr = append(*arr, node)
+	}
+}
+
+func UpdateInstanceDeployFlag(instId, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_UPD_INST_DEPLOY, deployFlag, instId)
+	if err == nil {
+		// add to local cache
+		meta.CMPT_META.UpdInstDeploy(instId, deployFlag)
+
+		// broadcast event to cluster
+		msgBodyMap := make(map[string]interface{})
+		msgBodyMap[consts.HEADER_INST_ID] = instId
+		msgBodyMap[consts.HEADER_IS_DEPLOYED] = deployFlag
+
+		msgBody := utils.Struct2Json(msgBodyMap)
+		event := proto.NewPaasEvent(consts.EVENT_UPD_INST_DEPLOY.CODE, msgBody, magicKey)
+		eventbus.EVENTBUS.PublishEvent(event)
+
+		return true
+	} else {
+		errMsg := fmt.Sprintf("UpdateInstanceDeployFlag fail, instId: %s, deployFlag: %s", instId, deployFlag)
+		utils.LOGGER.Error(errMsg)
+
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = errMsg
+
+		if logKey != "" {
+			global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+		}
+
+		return false
+	}
+}
+
+func UpdateServiceDeployFlag(instId, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_UPD_SERV_DEPLOY, deployFlag, instId)
+
+	if err == nil {
+		// add to local
+		meta.CMPT_META.UpdServDeploy(instId, deployFlag)
+
+		// broadcast event to cluster
+		msgBodyMap := make(map[string]interface{})
+		msgBodyMap[consts.HEADER_INST_ID] = instId
+		msgBodyMap[consts.HEADER_IS_DEPLOYED] = deployFlag
+
+		msgBody := utils.Struct2Json(msgBodyMap)
+		event := proto.NewPaasEvent(consts.EVENT_UPD_SERVICE_DEPLOY.CODE, msgBody, magicKey)
+		eventbus.EVENTBUS.PublishEvent(event)
+
+		return true
+	} else {
+		errMsg := fmt.Sprintf("UpdateServiceDeployFlag fail, instId: %s, deployFlag: %s", instId, deployFlag)
+		utils.LOGGER.Error(errMsg)
+
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = errMsg
+
+		if logKey != "" {
+			global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+		}
+
+		return false
+	}
+}
+
+func ModServicePseudoFlag(servInstID, pseudoFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_MOD_SERVICE_PSEUDO_DEPLOY_FLAG, pseudoFlag, servInstID)
+
+	if err == nil {
+		meta.CMPT_META.ReloadService(servInstID)
+
+		// broadcast event to cluster
+		msgBodyMap := make(map[string]interface{})
+		msgBodyMap[consts.HEADER_INST_ID] = servInstID
+
+		msgBody := utils.Struct2Json(msgBodyMap)
+		event := proto.NewPaasEvent(consts.EVENT_MOD_SERVICE.CODE, msgBody, magicKey)
+		eventbus.EVENTBUS.PublishEvent(event)
+
+		return true
+	} else {
+		errMsg := fmt.Sprintf("ModServicePseudoFlag fail, servInstID: %s, pseudoFlag: %s", servInstID, pseudoFlag)
+		utils.LOGGER.Error(errMsg)
+
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_DB
+
+		if logKey != "" {
+			global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+		}
+
+		return false
 	}
 }

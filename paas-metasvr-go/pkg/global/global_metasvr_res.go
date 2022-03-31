@@ -61,6 +61,10 @@ func (g *MetaSvrGlobalRes) GetRedisClusterClient() *goredis.ClusterClient {
 	return g.redisPool.GetClusterClient()
 }
 
+func (g *MetaSvrGlobalRes) PubLog(logKey, log string) {
+	g.deployLog.PubLog(logKey, log)
+}
+
 func (g *MetaSvrGlobalRes) PubSuccessLog(logKey, log string) {
 	g.deployLog.PubSuccessLog(logKey, log)
 }

@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/factory"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
+	"github.com/maoge/paas-metasvr-go/pkg/global_factory"
 
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/route"
@@ -20,13 +20,6 @@ func main() {
 	startHttp()
 }
 
-func disableLog() {
-	stderr := os.Stderr
-	fd, _ := os.Open(os.DevNull)
-	os.Stderr = fd
-	os.Stderr = stderr
-}
-
 func init() {
 	disableLog()
 	consts.InitEventMap()
@@ -35,7 +28,14 @@ func init() {
 	global.GLOBAL_RES.Init()
 	meta.InitGlobalCmptMeta()
 	eventbus.InitEventBus()
-	factory.InitDeployerFactory()
+	global_factory.InitDeployerFactory()
+}
+
+func disableLog() {
+	stderr := os.Stderr
+	fd, _ := os.Open(os.DevNull)
+	os.Stderr = fd
+	os.Stderr = stderr
 }
 
 func startHttp() {

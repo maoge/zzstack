@@ -1,6 +1,6 @@
 package consts
 
-var (
+const (
 	ERR_LDBPOOL_YAML_INIT              = "LdbDbPool Init error, dbYaml nil ......"
 	ERR_REDIS_POOL_NIL                 = "redis pool get connection result nil"
 	ERR_PARAM_INCOMPLETE               = "parameter incomplete ......"
@@ -59,4 +59,6 @@ var (
 	ERR_INSTANCE_ALLREADY_DEPLOYED     = "instance allready deployed ......"
 	ERR_SERVICE_NOT_DEPLOYED           = "service not deployed ......"
 	ERR_INSTANCE_NOT_DEPLOYED          = "instance not deployed ......"
+	ERR_SSH_NOT_FOUND                  = "ssh not found ......"
+	ERR_INIT_REDIS_CLUSTER_FAIL        = "init redis cluster fail"
 )

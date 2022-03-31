@@ -1046,3 +1046,29 @@ func (m *CmptMeta) IsCmptVersionExist(servType, version string) bool {
 
 	return cmptVer.IsVersionExist(version)
 }
+
+func (m *CmptMeta) UpdInstDeploy(instId, deployFlag string) {
+	ref := m.metaInstMap[instId]
+	if ref == nil {
+		return
+	}
+
+	ref.STATUS = deployFlag
+}
+
+func (m *CmptMeta) UpdServDeploy(servInstId, deployFlag string) {
+	ref := m.metaServiceMap[servInstId]
+	if ref == nil {
+		return
+	}
+
+	ref.IS_DEPLOYED = deployFlag
+}
+
+func (m *CmptMeta) GetDeployFile(fileId int) *proto.PaasDeployFile {
+	return m.metaDeployFileMap[fileId]
+}
+
+func (m *CmptMeta) GetDeployHost(hostId int) *proto.PaasDeployHost {
+	return m.metaDeployHostMap[hostId]
+}

@@ -1,39 +1,26 @@
 package autodeploy
 
 import (
-	"fmt"
-
-	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/factory"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
+	"github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
-	"github.com/maoge/paas-metasvr-go/pkg/meta"
+	"github.com/maoge/paas-metasvr-go/pkg/global_factory"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 func DeployService(instID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) {
-	service := meta.CMPT_META.GetService(instID)
-	if service == nil {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, consts.ERR_SERVICE_NOT_FOUND)
-
+	service, found := deployutils.GetService(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	if service.IsDeployed() {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_ALLREADY_DEPLOYED
-		global.GLOBAL_RES.PubFailLog(logKey, consts.ERR_SERVICE_ALLREADY_DEPLOYED)
-
+	if deployutils.IsServiceDeployed(logKey, service, paasResult) {
 		return
 	}
 
-	serviceDeployer := factory.DEPLOYER_FACTORY.Get(service.SERV_TYPE)
+	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
 	if serviceDeployer == nil {
-		errMsg := fmt.Sprintf("service deployer not found, service_id:%s, service_type:%s", instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
@@ -45,28 +32,17 @@ func DeployService(instID, deployFlag, logKey, magicKey string, paasResult *resu
 }
 
 func UndeployService(instID, logKey, magicKey string, force bool, paasResult *result.ResultBean) {
-	service := meta.CMPT_META.GetService(instID)
-	if service == nil {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, consts.ERR_SERVICE_NOT_FOUND)
-
+	service, found := deployutils.GetService(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	if !service.IsDeployed() {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_DEPLOYED
-		global.GLOBAL_RES.PubFailLog(logKey, consts.ERR_SERVICE_NOT_DEPLOYED)
-
+	if deployutils.IsServiceNotDeployed(logKey, service, paasResult) {
 		return
 	}
 
-	serviceDeployer := factory.DEPLOYER_FACTORY.Get(service.SERV_TYPE)
+	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
 	if serviceDeployer == nil {
-		errMsg := fmt.Sprintf("service deployer not found, service_id:%s, service_type:%s", instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
@@ -78,62 +54,31 @@ func UndeployService(instID, logKey, magicKey string, force bool, paasResult *re
 }
 
 func DeployInstance(servInstID, instID, logKey, magicKey string, paasResult *result.ResultBean) {
-	service := meta.CMPT_META.GetService(servInstID)
-	if service == nil {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, consts.ERR_SERVICE_NOT_FOUND)
-
+	service, found := deployutils.GetService(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	if !service.IsDeployed() {
-		errMsg := fmt.Sprintf("service inst_id:%s, %s", servInstID, consts.ERR_SERVICE_NOT_DEPLOYED)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_DEPLOYED
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
+	if deployutils.IsServiceNotDeployed(logKey, service, paasResult) {
 		return
 	}
 
-	inst := meta.CMPT_META.GetInstance(instID)
-	if inst == nil {
-		errMsg := fmt.Sprintf("%s, instID:%s", consts.ERR_INSTANCE_NOT_FOUND, instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
+	inst, found := deployutils.GetInstance(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	if inst.IsDeployed() {
-		errMsg := fmt.Sprintf("instance is allready deployed, inst_id:%s", instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_ALLREADY_DEPLOYED
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
+	if deployutils.IsInstanceDeployed(logKey, inst, paasResult) {
 		return
 	}
 
-	cmpt := meta.CMPT_META.GetCmptByName(service.SERV_TYPE)
+	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
 	if cmpt == nil {
-		errMsg := fmt.Sprintf("service type not found, service_id:%s, inst_id:%s, service_type:%s", servInstID, instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
-	serviceDeployer := factory.DEPLOYER_FACTORY.Get(service.SERV_TYPE)
+	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
 	if serviceDeployer == nil {
-		errMsg := fmt.Sprintf("service deployer not found, service_id:%s, service_type:%s", instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
@@ -145,51 +90,27 @@ func DeployInstance(servInstID, instID, logKey, magicKey string, paasResult *res
 }
 
 func UndeployInstance(servInstID, instID, logKey, magicKey string, paasResult *result.ResultBean) {
-	service := meta.CMPT_META.GetService(servInstID)
-	if service == nil {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, consts.ERR_SERVICE_NOT_FOUND)
-
+	service, found := deployutils.GetService(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	inst := meta.CMPT_META.GetInstance(instID)
-	if inst == nil {
-		errMsg := fmt.Sprintf("%s, instID:%s", consts.ERR_INSTANCE_NOT_FOUND, instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
+	inst, found := deployutils.GetInstance(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	if !inst.IsDeployed() {
-		errMsg := fmt.Sprintf("instance is not deployed, inst_id:%s", instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_DEPLOYED
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
+	if deployutils.IsInstanceNotDeployed(logKey, inst, paasResult) {
 		return
 	}
 
-	cmpt := meta.CMPT_META.GetCmptByName(service.SERV_TYPE)
+	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
 	if cmpt == nil {
-		errMsg := fmt.Sprintf("service type not found, service_id:%s, inst_id:%s, service_type:%s", servInstID, instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
-	serviceDeployer := factory.DEPLOYER_FACTORY.Get(service.SERV_TYPE)
+	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
 	if serviceDeployer == nil {
-		errMsg := fmt.Sprintf("service deployer not found, service_id:%s, service_type:%s", instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
@@ -203,51 +124,27 @@ func UndeployInstance(servInstID, instID, logKey, magicKey string, paasResult *r
 func MaintainInstance(servInstID, instID, servType, logKey, magicKey string, op consts.OperationEnum,
 	isOperateByHandle bool, paasResult *result.ResultBean) {
 
-	service := meta.CMPT_META.GetService(servInstID)
-	if service == nil {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, consts.ERR_SERVICE_NOT_FOUND)
-
+	service, found := deployutils.GetService(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	inst := meta.CMPT_META.GetInstance(instID)
-	if inst == nil {
-		errMsg := fmt.Sprintf("%s, instID:%s", consts.ERR_INSTANCE_NOT_FOUND, instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_FOUND
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
+	inst, found := deployutils.GetInstance(instID, logKey, paasResult)
+	if !found {
 		return
 	}
 
-	if !inst.IsDeployed() {
-		errMsg := fmt.Sprintf("instance is not deployed, inst_id:%s", instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_DEPLOYED
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
+	if deployutils.IsInstanceNotDeployed(logKey, inst, paasResult) {
 		return
 	}
 
-	cmpt := meta.CMPT_META.GetCmptByName(service.SERV_TYPE)
+	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
 	if cmpt == nil {
-		errMsg := fmt.Sprintf("service type not found, service_id:%s, inst_id:%s, service_type:%s", servInstID, instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
-	serviceDeployer := factory.DEPLOYER_FACTORY.Get(service.SERV_TYPE)
+	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
 	if serviceDeployer == nil {
-		errMsg := fmt.Sprintf("service deployer not found, service_id:%s, service_type:%s", instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
@@ -258,49 +155,32 @@ func MaintainInstance(servInstID, instID, servType, logKey, magicKey string, op 
 	}
 }
 
+func BatchUpdateInst(servInstID, servType, logKey, magicKey string, instIdArr []string, paasResult *result.ResultBean) {
+	// TODO
+}
+
 func CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResult *result.ResultBean) {
-	service := meta.CMPT_META.GetService(servInstID)
-	if service == nil {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SERVICE_NOT_FOUND
-
+	service, found := deployutils.GetService(instID, "", paasResult)
+	if !found {
 		return
 	}
 
-	inst := meta.CMPT_META.GetInstance(instID)
-	if inst == nil {
-		errMsg := fmt.Sprintf("%s, instID:%s", consts.ERR_INSTANCE_NOT_FOUND, instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_FOUND
-
+	inst, found := deployutils.GetInstance(instID, "", paasResult)
+	if !found {
 		return
 	}
 
-	if !inst.IsDeployed() {
-		errMsg := fmt.Sprintf("instance is not deployed, inst_id:%s", instID)
-		utils.LOGGER.Error(errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_DEPLOYED
-
+	if deployutils.IsInstanceNotDeployed("", inst, paasResult) {
 		return
 	}
 
-	cmpt := meta.CMPT_META.GetCmptByName(service.SERV_TYPE)
+	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
 	if cmpt == nil {
-		errMsg := fmt.Sprintf("service type not found, service_id:%s, inst_id:%s, service_type:%s", servInstID, instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
-	serviceDeployer := factory.DEPLOYER_FACTORY.Get(service.SERV_TYPE)
+	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
 	if serviceDeployer == nil {
-		errMsg := fmt.Sprintf("service deployer not found, service_id:%s, service_type:%s", instID, service.SERV_TYPE)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
 		return
 	}
 
@@ -313,4 +193,8 @@ func CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResu
 
 func GetDeployLog(logKey string, paasResult *result.ResultBean) {
 	global.GLOBAL_RES.GetDeployLog(logKey, paasResult)
+}
+
+func GetAppLog(servID, instID, logType string, paasResult *result.ResultBean) {
+	// TODO
 }

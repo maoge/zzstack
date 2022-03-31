@@ -1,4 +1,4 @@
-package deployer
+package deployerIntf
 
 import (
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
