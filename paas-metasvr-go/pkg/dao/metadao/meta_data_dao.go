@@ -490,7 +490,7 @@ func AddService(param *proto.AddServiceParam, instId string, magicKey string, re
 		ts, user, password, consts.DEPLOY_FLAG_PHYSICAL)
 	if err != nil {
 		resultBean.RET_CODE = consts.REVOKE_NOK
-		resultBean.RET_INFO = consts.ERR_DB
+		resultBean.RET_INFO = err.Error()
 		return
 	}
 

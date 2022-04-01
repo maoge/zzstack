@@ -21,6 +21,11 @@ func ExecSimpleCmd(sshClient *SSHClient, cmd, logKey string, paasResult *result.
 	}
 }
 
+func Dos2Unix(sshClient *SSHClient, fileName, logKey string, paasResult *result.ResultBean) bool {
+	cmd := fmt.Sprintf("%s %s", consts.CMD_DOS2UNIX, fileName)
+	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
+}
+
 func MkDir(sshClient *SSHClient, dir, logKey string, paasResult *result.ResultBean) bool {
 	cmd := fmt.Sprintf("%s -p %s", consts.CMD_MKDIR, dir)
 	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
@@ -29,6 +34,18 @@ func MkDir(sshClient *SSHClient, dir, logKey string, paasResult *result.ResultBe
 func CD(sshClient *SSHClient, dir, logKey string, paasResult *result.ResultBean) bool {
 	cmd := fmt.Sprintf("%s %s", consts.CMD_CD, dir)
 	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
+}
+
+func PWD(sshClient *SSHClient, logKey string, paasResult *result.ResultBean) (string, error) {
+	res, err := sshClient.GeneralCommand(consts.CMD_PWD)
+	if err == nil {
+		return res, nil
+	} else {
+		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = err.Error()
+		return "", err
+	}
 }
 
 func IsFileExist(sshClient *SSHClient, fileName string, isDir bool, logKey string, paasResult *result.ResultBean) bool {
@@ -111,28 +128,50 @@ func ChMod(sshClient *SSHClient, fileName, mod, logKey string, paasResult *resul
 	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
 }
 
-func CheckPortUp(sshClient *SSHClient, cmpt, instId, servIp, port, logKey string, paasResult *result.ResultBean) bool {
-	// ssh2.consumeSurplusBuf();
-
+func CheckPortUp(sshClient *SSHClient, cmpt, instId, port, logKey string, paasResult *result.ResultBean) bool {
 	isUsed := false
 	i := 0
 	for {
 		if i++; i > consts.CHECK_PORT_RETRY {
 			break
 		}
-
 		if isUsed, _ = sshClient.IsPortUsed(port); isUsed {
 			break
 		}
-
 		time.Sleep(time.Duration(100) * time.Millisecond)
 	}
 
 	if isUsed {
-		info := fmt.Sprintf("deploy %s success, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, servIp, port)
+		info := fmt.Sprintf("deploy %s success, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, sshClient.Ip, port)
 		global.GLOBAL_RES.PubSuccessLog(logKey, info)
 	} else {
-		info := fmt.Sprintf("deploy %s fail, inst_id:%s, serv_ip:%s, port:%s startup fail", cmpt, instId, servIp, port)
+		info := fmt.Sprintf("deploy %s fail, inst_id:%s, serv_ip:%s, port:%s startup fail", cmpt, instId, sshClient.Ip, port)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = info
+	}
+
+	return isUsed
+}
+
+func CheckPortDown(sshClient *SSHClient, cmpt, instId, port, logKey string, paasResult *result.ResultBean) bool {
+	isUsed := false
+	i := 0
+	for {
+		if i++; i > consts.CHECK_PORT_RETRY {
+			break
+		}
+		if isUsed, _ = sshClient.IsPortUsed(port); !isUsed {
+			break
+		}
+		time.Sleep(time.Duration(100) * time.Millisecond)
+	}
+
+	if isUsed {
+		info := fmt.Sprintf("shutdown %s fail, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, sshClient.Ip, port)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("shutdown %s success, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, sshClient.Ip, port)
 		global.GLOBAL_RES.PubFailLog(logKey, info)
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = info

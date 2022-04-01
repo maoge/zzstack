@@ -2,6 +2,7 @@ package deployutils
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
@@ -148,7 +149,7 @@ func GetDeployFile(fileId int, logKey string, paasResult *result.ResultBean) *pr
 	return deployFile
 }
 
-func CheckPortUpPredeploy(sshClient *SSHClient, instId, servIp, port, logKey string, paasResult *result.ResultBean) bool {
+func CheckPortUpPredeploy(sshClient *SSHClient, port, logKey string, paasResult *result.ResultBean) bool {
 	using, err := sshClient.IsPortUsed(port)
 	if err != nil {
 		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
@@ -158,7 +159,7 @@ func CheckPortUpPredeploy(sshClient *SSHClient, instId, servIp, port, logKey str
 	}
 
 	if using {
-		errMsg := fmt.Sprintf("redis-server.port: %s is in using", port)
+		errMsg := fmt.Sprintf("redis-server: %s, port: %s is in using", sshClient.Ip, port)
 		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
 
 		paasResult.RET_CODE = consts.REVOKE_NOK
@@ -203,10 +204,15 @@ func FetchAndExtractTgzDeployFile(sshClient *SSHClient, fileId int, subPath, ver
 		return false
 	}
 
+	res, err := PWD(sshClient, logKey, paasResult)
+	if err == nil {
+		log.Printf("%s", res)
+	}
+
 	srcFile := srcFileDir + srcFileName
 	desFile := "./" + srcFileName
 	global.GLOBAL_RES.PubLog(logKey, "scp deploy file ......")
-	if sshClient.SCP(srcUser, srcPwd, srcIp, srcPort, srcFile, desFile, logKey, paasResult) {
+	if !sshClient.SCP(srcUser, srcPwd, srcIp, srcPort, srcFile, desFile, logKey, paasResult) {
 		return false
 	}
 

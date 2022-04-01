@@ -12,13 +12,8 @@ func TestSSHClient(t *testing.T) {
 
 	sshClient.Connect()
 
-	bytes, err := sshClient.ExecCmd("ls -al")
-	if err == nil {
-		log.Printf("%s", string(bytes))
-	}
-
 	paasResult := result.NewResultBean()
-	if sshClient.SCP("sms", "wlwx2021", "172.20.0.171", "22", "/home/sms/ftp/yugabyte-2.9.0.tar.gz", "./work/yugabyte-2.9.0.tar.gz", "", paasResult) {
+	if sshClient.SCP("sms", "wlwx2021", "172.20.0.171", "22", "/home/sms/ftp/redis-5.0.2.tar.gz", "./redis-5.0.2.tar.gz", "", paasResult) {
 		log.Printf("scp ok")
 	}
 

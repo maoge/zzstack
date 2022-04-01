@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
+	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	"github.com/maoge/paas-metasvr-go/pkg/deployutils"
+	"github.com/maoge/paas-metasvr-go/pkg/deployutils/common"
 	RedisDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/redis"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
@@ -15,9 +17,7 @@ import (
 type RedisClusterDeployer struct {
 }
 
-func (h *RedisClusterDeployer) DeployService(servInstID string, deployFlag string, logKey string, magicKey string,
-	paasResult *result.ResultBean) bool {
-
+func (h *RedisClusterDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
 	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
 		return false
 	}
@@ -48,26 +48,57 @@ func (h *RedisClusterDeployer) DeployService(servInstID string, deployFlag strin
 
 	version := serv.VERSION
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
-	// proxyContainer := servJson[consts.HEADER_REDIS_PROXY_CONTAINER]
+	proxyContainer := servJson[consts.HEADER_REDIS_PROXY_CONTAINER].(map[string]interface{})
 
 	redisNodeArr := nodeContainer[consts.HEADER_REDIS_NODE].([]map[string]interface{})
-	// JsonArray proxyArr = proxyContainer.getJsonArray(FixHeader.HEADER_REDIS_PROXY);
+	proxyArr := proxyContainer[consts.HEADER_REDIS_PROXY].([]map[string]interface{})
 
 	node4cluster, nodes4proxy := RedisDeployUtils.GetClusterNodes(&redisNodeArr)
 
 	utils.LOGGER.Info(node4cluster)
 	utils.LOGGER.Info(nodes4proxy)
-	init := true
 
-	for _, redisNode := range redisNodeArr {
+	// 1. deploy redis nodes
+	init := false
+	size := len(redisNodeArr)
+	for idx, redisNode := range redisNodeArr {
+		if idx == size-1 {
+			init = true
+		}
+
 		if !RedisDeployUtils.DeployRedisNode(redisNode, init, false, true, node4cluster, version, logKey, magicKey, paasResult) {
 			return false
 		}
+	}
 
-		if init {
-			init = false
+	// 2. deploy proxy
+	for _, proxy := range proxyArr {
+		if !RedisDeployUtils.DeployProxyNode(proxy, nodes4proxy, logKey, magicKey, paasResult) {
+			return false
 		}
 	}
+
+	// 部署collectd服务
+	collectdRaw := servJson[consts.HEADER_COLLECTD]
+	if collectdRaw != nil {
+		collectd := collectdRaw.(map[string]interface{})
+		if len(collectd) > 0 {
+			if !common.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult) {
+				return false
+			}
+		}
+	}
+
+	// 3. update t_service.is_deployed and local cache
+	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
+	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }

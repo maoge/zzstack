@@ -22,7 +22,7 @@ func NewDevOpsController(g *gin.RouterGroup) *DevOpsController {
 }
 
 func (h *DevOpsController) DeployService() {
-	h.group.POST("/paas/metadata/deployService", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/deployService", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -42,7 +42,7 @@ func (h *DevOpsController) DeployService() {
 }
 
 func (h *DevOpsController) UndeployService() {
-	h.group.POST("/paas/metadata/undeployService", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/undeployService", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -61,7 +61,7 @@ func (h *DevOpsController) UndeployService() {
 }
 
 func (h *DevOpsController) DeployInstance() {
-	h.group.POST("/paas/metadata/deployInstance", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/deployInstance", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -81,7 +81,7 @@ func (h *DevOpsController) DeployInstance() {
 }
 
 func (h *DevOpsController) UndeployInstance() {
-	h.group.POST("/paas/metadata/undeployInstance", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/undeployInstance", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -101,7 +101,7 @@ func (h *DevOpsController) UndeployInstance() {
 }
 
 func (h *DevOpsController) ForceUndeployServ() {
-	h.group.POST("/paas/metadata/forceUndeployServ", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/forceUndeployServ", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -120,7 +120,7 @@ func (h *DevOpsController) ForceUndeployServ() {
 }
 
 func (h *DevOpsController) StartInstance() {
-	h.group.POST("/paas/metadata/startInstance", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/startInstance", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -141,7 +141,7 @@ func (h *DevOpsController) StartInstance() {
 }
 
 func (h *DevOpsController) StopInstance() {
-	h.group.POST("/paas/metadata/stopInstance", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/stopInstance", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -162,7 +162,7 @@ func (h *DevOpsController) StopInstance() {
 }
 
 func (h *DevOpsController) RestartInstance() {
-	h.group.POST("/paas/metadata/restartInstance", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/restartInstance", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -183,7 +183,7 @@ func (h *DevOpsController) RestartInstance() {
 }
 
 func (h *DevOpsController) UpdateInstance() {
-	h.group.POST("/paas/metadata/updateInstance", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/updateInstance", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -204,7 +204,7 @@ func (h *DevOpsController) UpdateInstance() {
 }
 
 func (h *DevOpsController) BatchUpdateInst() {
-	h.group.POST("/paas/metadata/batchUpdateInst", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/batchUpdateInst", func(c *gin.Context) {
 		var param proto.DeployServiceParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -226,7 +226,7 @@ func (h *DevOpsController) BatchUpdateInst() {
 }
 
 func (h *DevOpsController) CheckInstanceStatus() {
-	h.group.POST("/paas/metadata/checkInstanceStatus", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/checkInstanceStatus", func(c *gin.Context) {
 		var param proto.CheckInstanceStatusParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -246,7 +246,7 @@ func (h *DevOpsController) CheckInstanceStatus() {
 }
 
 func (h *DevOpsController) GetDeployLog() {
-	h.group.POST("/paas/metadata/getDeployLog", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/getDeployLog", func(c *gin.Context) {
 		var param proto.DeployLogParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {
@@ -263,7 +263,7 @@ func (h *DevOpsController) GetDeployLog() {
 }
 
 func (h *DevOpsController) GetAppLog() {
-	h.group.POST("/paas/metadata/getAppLog", func(c *gin.Context) {
+	h.group.POST("/paas/autodeploy/getAppLog", func(c *gin.Context) {
 		var param proto.AppLogParam
 		err := c.MustBindWith(&param, binding.JSON)
 		if err != nil {

@@ -103,6 +103,7 @@ const (
 	DEPLOY_SINGLE_FAIL_BEGIN_STYLE                   = "<span style='color:yellow;'>"
 	END_STYLE                                        = "</span>"
 	LINUX_SHELL_SEP                                  = "\r\n"
+	PAAS_COLLECTD                                    = "paas-collectd"
 	PAAS_ROOT                                        = "paas"
 	COMMON_TOOLS_ROOT                                = "tools"
 	CACHE_REDIS_ROOT                                 = "cache/redis"

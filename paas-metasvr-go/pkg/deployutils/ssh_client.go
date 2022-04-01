@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+
 	"strconv"
 	"strings"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
+	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 	"golang.org/x/crypto/ssh"
 	_ "golang.org/x/crypto/ssh/terminal"
 )
@@ -29,10 +31,10 @@ var (
 )
 
 type SSHClient struct {
-	ip         string
-	sshPort    int
-	user       string
-	passwd     string
+	Ip         string
+	SshPort    int
+	User       string
+	Passwd     string
 	rawClient  *ssh.Client
 	rawSession *ssh.Session
 
@@ -40,12 +42,16 @@ type SSHClient struct {
 	outPipe io.Reader
 }
 
+func NewSSHClientBySSH(ssh *proto.PaasSsh) *SSHClient {
+	return NewSSHClient(ssh.SERVER_IP, ssh.SSH_PORT, ssh.SSH_NAME, ssh.SSH_PWD)
+}
+
 func NewSSHClient(ip string, sshPort int, user string, passwd string) *SSHClient {
 	sshClient := new(SSHClient)
-	sshClient.ip = ip
-	sshClient.sshPort = sshPort
-	sshClient.user = user
-	sshClient.passwd = passwd
+	sshClient.Ip = ip
+	sshClient.SshPort = sshPort
+	sshClient.User = user
+	sshClient.Passwd = passwd
 	sshClient.rawClient = nil
 	sshClient.rawSession = nil
 
@@ -53,17 +59,16 @@ func NewSSHClient(ip string, sshPort int, user string, passwd string) *SSHClient
 }
 
 func (h *SSHClient) Connect() bool {
-	addr := fmt.Sprintf("%s:%d", h.ip, h.sshPort)
+	addr := fmt.Sprintf("%s:%d", h.Ip, h.SshPort)
 	client, err := ssh.Dial("tcp", addr, &ssh.ClientConfig{
-		User:            h.user,
-		Auth:            []ssh.AuthMethod{ssh.Password(h.passwd)},
+		User:            h.User,
+		Auth:            []ssh.AuthMethod{ssh.Password(h.Passwd)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	})
 
 	if err != nil {
-		// errMsg := fmt.Sprintf("Failed to dial: %s:%d, error:%s", h.ip, h.sshPort, err.Error())
-		// LOGGER.Error(errMsg)
-		log.Fatalf("Failed to dial: %s:%d, error:%s", h.ip, h.sshPort, err.Error())
+		errMsg := fmt.Sprintf("Failed to dial: %s:%d, error:%s", h.Ip, h.SshPort, err.Error())
+		utils.LOGGER.Error(errMsg)
 		return false
 	}
 
@@ -77,14 +82,14 @@ func (h *SSHClient) Connect() bool {
 	}
 
 	if err := h.rawSession.RequestPty("xterm", 80, 40, modes); err != nil {
-		log.Fatal(err)
+		utils.LOGGER.Error(err.Error())
 	}
 
 	h.inPipe, err = h.rawSession.StdinPipe()
 	h.outPipe, err = h.rawSession.StdoutPipe()
 
 	if err := h.rawSession.Start("/bin/sh"); err != nil {
-		log.Fatal(err)
+		utils.LOGGER.Error(err.Error())
 	} else {
 		h.ReadToEof() // read and discard shell output
 	}
@@ -173,6 +178,10 @@ func (h *SSHClient) GeneralCommand(cmd string) (string, error) {
 	}
 
 	return string(bytes), nil
+}
+
+func (h *SSHClient) Dos2Unix(cmd string) (string, error) {
+	return h.GeneralCommand(cmd)
 }
 
 func (h *SSHClient) SCP(user, passwd, srcHost, sshPort, srcFile, desFile, logKey string,
@@ -280,7 +289,7 @@ func (h *SSHClient) ReadRedisInitOkOrErr() ([]byte, error) {
 		tmp := make([]byte, 256)
 		size, err := h.outPipe.Read(tmp)
 		if err != nil {
-			log.Fatal("%V", err)
+			utils.LOGGER.Error(err.Error())
 			return nil, err
 		}
 
@@ -303,7 +312,7 @@ func (h *SSHClient) ReadRedisInitAccept() ([]byte, error) {
 		tmp := make([]byte, 256)
 		size, err := h.outPipe.Read(tmp)
 		if err != nil {
-			log.Fatal("%V", err)
+			utils.LOGGER.Error(err.Error())
 			return nil, err
 		}
 
@@ -326,7 +335,7 @@ func (h *SSHClient) ReadScpOut() ([]byte, error) {
 		tmp := make([]byte, 256)
 		size, err := h.outPipe.Read(tmp)
 		if err != nil {
-			log.Fatal("%V", err)
+			utils.LOGGER.Error(err.Error())
 			return nil, err
 		}
 
@@ -354,7 +363,7 @@ func (h *SSHClient) ReadToEof() ([]byte, error) {
 		tmp := make([]byte, 256)
 		size, err := h.outPipe.Read(tmp)
 		if err != nil {
-			log.Fatal("%V", err)
+			utils.LOGGER.Error(err.Error())
 			return nil, err
 		}
 

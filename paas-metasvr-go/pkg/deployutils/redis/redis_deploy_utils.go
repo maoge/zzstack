@@ -139,7 +139,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 		defer sshClient.Close()
 	}
 
-	if DeployUtils.CheckPortUpPredeploy(sshClient, instId, servIp, port, logKey, paasResult) {
+	if DeployUtils.CheckPortUpPredeploy(sshClient, port, logKey, paasResult) {
 		return false
 	}
 
@@ -153,7 +153,6 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 
 	// CACHE_REDIS_SERVER_FILE_ID -> 'redis-6.0.tar.gz'
 	if !DeployUtils.FetchAndExtractTgzDeployFile(sshClient, consts.CACHE_REDIS_SERVER_FILE_ID, consts.CACHE_REDIS_ROOT, version, logKey, paasResult) {
-		sshClient.Close()
 		return false
 	}
 
@@ -271,7 +270,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 		return false
 	}
 
-	if !DeployUtils.CheckPortUp(sshClient, "redis-server", instId, servIp, port, logKey, paasResult) {
+	if !DeployUtils.CheckPortUp(sshClient, "redis-server", instId, port, logKey, paasResult) {
 		return false
 	}
 
@@ -289,6 +288,11 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 			return false
 		}
 	}
+
+	return true
+}
+
+func DeployProxyNode(proxy map[string]interface{}, nodes4proxy, logKey, magicKey string, paasResult *result.ResultBean) bool {
 
 	return true
 }
