@@ -169,15 +169,6 @@ var Component = window.Component || {};
                             self.deployElement(e.target,1);
                         });
                     }},
-                {label:'伪部署面板', icon:'../images/console/icon_pseudo_deployment.png', callback: function(e){
-                        layer.confirm('确认要伪部署集群“'+self.name+'”吗？', {
-                            btn: ['是','否'], //按钮
-                            title: "确认"
-                        }, function(){
-                            layer.close(layer.index);
-                            self.deployElement(e.target,2);
-                        });
-                    }},
                 {label:'卸载面板', icon:'../images/console/icon_uninstall.png', callback: function(e){
                         layer.confirm('确认要卸载集群“'+self.name+'”吗？', {
                             btn: ['是','否'], //按钮

@@ -138,7 +138,7 @@ var Component = window.Component || {};
                                     title: "确认"
                                 }, function(){
                                     layer.close(layer.index);
-                                    self.deployElement(e.target,1);
+                                    self.deployElement(e.target,"1");
                                 });
                             }},
                         {label:'卸载面板', icon:'../images/console/icon_uninstall.png', callback: function(e){

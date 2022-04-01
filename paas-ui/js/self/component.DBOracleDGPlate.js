@@ -82,7 +82,7 @@ var Component = window.Component || {};
                         title: "确认"
                     }, function(){
                         layer.close(layer.index);
-                        self.deployElement(e.target, 2);  
+                        self.deployElement(e.target, "2");  
                     });
                 }},
                 {label:'强制卸载面板', icon:'../images/console/icon_uninstall.png', callback: function(e){
