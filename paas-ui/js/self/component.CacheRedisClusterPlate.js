@@ -53,7 +53,7 @@ var Component = window.Component || {};
                             title: "确认"
                         }, function(){
                             layer.close(layer.index);
-                            self.deployElement(e.target,1);
+                            self.deployElement(e.target,"1");
                         });
                     }},
                 {label:'伪部署面板', icon:'../images/console/icon_pseudo_deployment.png', callback: function(e){
