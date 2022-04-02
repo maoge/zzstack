@@ -145,7 +145,7 @@ func (h *SSHClient) IsFileExist(fileName string, isDir bool) (bool, error) {
 	if e != nil {
 		return false, e
 	} else {
-		return fileNotExists(bytes), nil
+		return isFileExist(bytes), nil
 	}
 }
 
@@ -234,7 +234,7 @@ func (h *SSHClient) SCP(user, passwd, srcHost, sshPort, srcFile, desFile, logKey
 		return false
 	}
 
-	if fileNotExists(bytes) {
+	if !isFileExist(bytes) {
 		errMsg := fmt.Sprintf(logKey, "scp source file:"+srcFile+" not exists ......")
 		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
 
@@ -347,7 +347,7 @@ func (h *SSHClient) ReadScpOut() ([]byte, error) {
 			out = bytes.Join(combine, []byte(""))
 
 			if checkYesOrNo(out) || checkYesOrNoFingerPrint(out) || isPasswd(out) ||
-				isPasswdWrong(out) || fileNotExists(out) || eof(out) {
+				isPasswdWrong(out) || fileNotExist(out) || eof(out) {
 
 				break
 			}
@@ -423,7 +423,11 @@ func isPasswdWrong(context []byte) bool {
 	return bytes.Index(context, SCP_PASSWD_WRONG) != -1
 }
 
-func fileNotExists(context []byte) bool {
+func isFileExist(context []byte) bool {
+	return bytes.Index(context, FILE_DIR_NOT_EXISTS) == -1
+}
+
+func fileNotExist(context []byte) bool {
 	return bytes.Index(context, FILE_DIR_NOT_EXISTS) != -1
 }
 

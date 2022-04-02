@@ -2,7 +2,6 @@ package deployutils
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
@@ -202,11 +201,6 @@ func FetchAndExtractTgzDeployFile(sshClient *SSHClient, fileId int, subPath, ver
 	}
 	if !CD(sshClient, rootDir, logKey, paasResult) {
 		return false
-	}
-
-	res, err := PWD(sshClient, logKey, paasResult)
-	if err == nil {
-		log.Printf("%s", res)
 	}
 
 	srcFile := srcFileDir + srcFileName

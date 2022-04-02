@@ -984,7 +984,7 @@ func (m *CmptMeta) UpdInstAttr(instAttr *proto.PaasInstAttr) {
 	defer m.mut.Unlock()
 
 	attrId := instAttr.ATTR_ID
-	attrArr, found := m.metaInstAttrMMap.Get(attrId)
+	attrArr, found := m.metaInstAttrMMap.Get(instAttr.INST_ID)
 	if !found {
 		return
 	}

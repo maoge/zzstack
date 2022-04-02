@@ -91,6 +91,7 @@ func (l *DeployLog) GetLog(logKey string, result *result.ResultBean) {
 	logItem := l.logMap[logKey]
 	if logItem == nil {
 		result.RET_INFO = ""
+		return
 	}
 
 	deployLog := logItem.GetLog()

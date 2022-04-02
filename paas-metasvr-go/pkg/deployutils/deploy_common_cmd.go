@@ -97,7 +97,7 @@ func AddLine(sshClient *SSHClient, context, confFile, logKey string, paasResult 
 		return false
 	}
 
-	cmd := fmt.Sprintf("%s -e \"%s\">>%s\n", consts.CMD_ECHO, context, confFile)
+	cmd := fmt.Sprintf("%s \"%s\">>%s\n", consts.CMD_ECHO, context, confFile)
 	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
 }
 
@@ -110,12 +110,12 @@ func CreateShell(sshClient *SSHClient, fileName, shell, logKey string, paasResul
 		return false
 	}
 
-	cmd := fmt.Sprintf("%s -e \"%s\\n\">>%s", consts.CMD_ECHO, consts.SHELL_MACRO, fileName)
+	cmd := fmt.Sprintf("%s \"%s\\n\">>%s", consts.CMD_ECHO, consts.SHELL_MACRO, fileName)
 	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}
 
-	cmd = fmt.Sprintf("%s -e \"%s\">>%s", consts.CMD_ECHO, shell, fileName)
+	cmd = fmt.Sprintf("%s \"%s\">>%s", consts.CMD_ECHO, shell, fileName)
 	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}
