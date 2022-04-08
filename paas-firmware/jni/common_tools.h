@@ -16,6 +16,7 @@ static const std::string DES_KEY = "abcd.1234";
 static const char * HEADER_CPU_ID = "cpu_id";
 static const char * HEADER_VALID_DATE = "valid_date";
 static const char * LISENCE_FILE = "system.license";
+static const char * FIRMWARE_FILE = "firmware.txt";
 
 static inline void cpu_info(char *buf) {
     unsigned int level = 1;

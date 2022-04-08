@@ -18,6 +18,8 @@ libfirmwarejni.so: firmware.o
 firmware_tool:firmware_tool.o
 	$(CC) $(FLAGS) -static -o $@ firmware_tool.o $(LIB) $(LIBRARY)
 
+firmware_collect:firmware_collect.o
+    $(CC) $(FLAGS) -static -o $@ firmware_collect.o $(LIB) $(LIBRARY)
 
 .PHONY : clean
 clean:
