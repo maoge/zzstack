@@ -157,12 +157,13 @@ func (i *LogItem) GetLog() string {
 
 		priv = elem
 		res += priv.Value.(string)
+		res += consts.HTML_LINE_END
 		elem = elem.Next()
 
 		i.LogQueue.Remove(priv)
 	}
 
-	return ""
+	return res
 }
 
 func (i *LogItem) Clear() {

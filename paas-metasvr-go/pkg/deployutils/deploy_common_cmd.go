@@ -2,6 +2,7 @@ package deployutils
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
@@ -48,6 +49,49 @@ func PWD(sshClient *SSHClient, logKey string, paasResult *result.ResultBean) (st
 	}
 }
 
+func GetRedisClusterNode(sshClient *SSHClient, cmd, logKey string, paasResult *result.ResultBean) bool {
+	res, err := sshClient.GeneralCommand(consts.CMD_PWD)
+	if err != nil {
+		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = err.Error()
+		return false
+	}
+
+	// int first = context.indexOf("@", 0);
+	// if (first == -1) return false;
+
+	// int start = context.lastIndexOf("\n", first);
+	// int end = context.lastIndexOf("\n");
+
+	// String subStr = context.substring(start + 1, end - 1);
+	// result.setRetInfo(subStr);
+
+	// f2a622adffc0dc3f1d83afc27ad2f410ceb5c34d 192.168.238.135:50004@60004 slave 1d4225f3138ae438692f0909d94e5860102b2594 0 1648889988122 4 connected
+	// 96b53e439f1ad43051a523c0fbbefc85bff1573a 192.168.238.135:50000@60000 myself,slave ff065678c1b6e5c91aec5f27a94725b4983da715 0 1648889987000 6 connected
+	// 84279349bb6c0418855a06bfd99d4499943eba60 192.168.238.135:50001@60001 master - 0 1648889989129 1 connected 0-5460
+	// d8a133e016f4350231787a5928572669496a1a21 192.168.238.135:50005@60005 slave 84279349bb6c0418855a06bfd99d4499943eba60 0 1648889989000 5 connected
+	// 1d4225f3138ae438692f0909d94e5860102b2594 192.168.238.135:50003@60003 master - 0 1648889990137 3 connected 10923-16383
+	// ff065678c1b6e5c91aec5f27a94725b4983da715 192.168.238.135:50002@60002 master - 0 1648889987116 2 connected 5461-10922
+	// ultravirs@ubuntu:~/paas/cache/redis/redis_50000$
+
+	first := strings.Index(res, "@")
+	if first == -1 {
+		return false
+	}
+
+	// start := strings.Index()
+	end := strings.LastIndex(res, "\r\n")
+	subStr := res[0:end]
+	paasResult.RET_INFO = subStr
+	return true
+}
+
+func RemoveRedisNodeFromCluster(sshClient *SSHClient, ip, redisPort, selfId, logKey string, paasResult *result.ResultBean) bool {
+	cmd := fmt.Sprintf("./bin/redis-cli --cluster del-node %s:%s %s -c --no-auth-warning", ip, redisPort, selfId) // // -a passwd
+	return sshClient.RemoveFromRedisCluster(cmd, logKey, paasResult)
+}
+
 func IsFileExist(sshClient *SSHClient, fileName string, isDir bool, logKey string, paasResult *result.ResultBean) bool {
 	exists, err := sshClient.IsFileExist(fileName, isDir)
 	if err != nil {
@@ -57,15 +101,7 @@ func IsFileExist(sshClient *SSHClient, fileName string, isDir bool, logKey strin
 		return false
 	}
 
-	if !exists {
-		errMsg := fmt.Sprintf("dest file: %s not exits ......", fileName)
-		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
-		return false
-	}
-
-	return true
+	return exists
 }
 
 func TAR(sshClient *SSHClient, tarParams, srcFileName, desFileName, logKey string, paasResult *result.ResultBean) bool {
@@ -169,13 +205,13 @@ func CheckPortDown(sshClient *SSHClient, cmpt, instId, port, logKey string, paas
 
 	if isUsed {
 		info := fmt.Sprintf("shutdown %s fail, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, sshClient.Ip, port)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("shutdown %s success, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, sshClient.Ip, port)
 		global.GLOBAL_RES.PubFailLog(logKey, info)
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = info
+	} else {
+		info := fmt.Sprintf("shutdown %s success, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, sshClient.Ip, port)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
 	}
 
-	return isUsed
+	return !isUsed
 }

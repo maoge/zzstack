@@ -107,7 +107,7 @@ func IsInstanceDeployed(logKey string, inst *proto.PaasInstance, paasResult *res
 }
 
 func IsInstanceNotDeployed(logKey string, inst *proto.PaasInstance, paasResult *result.ResultBean) bool {
-	if inst.IsDeployed() {
+	if !inst.IsDeployed() {
 		errMsg := fmt.Sprintf("instance is not deployed, inst_id:%s", inst.INST_ID)
 		utils.LOGGER.Error(errMsg)
 
@@ -124,10 +124,10 @@ func IsInstanceNotDeployed(logKey string, inst *proto.PaasInstance, paasResult *
 	return false
 }
 
-func GetCmptByName(servInstID, instID, servType string, paasResult *result.ResultBean) *proto.PaasMetaCmpt {
-	cmpt := meta.CMPT_META.GetCmptByName(servType)
+func GetCmptById(servInstID, instID string, cmptID int, paasResult *result.ResultBean) *proto.PaasMetaCmpt {
+	cmpt := meta.CMPT_META.GetCmptById(cmptID)
 	if cmpt == nil {
-		errMsg := fmt.Sprintf("service type not found, service_id:%s, inst_id:%s, service_type:%s", servInstID, instID, servType)
+		errMsg := fmt.Sprintf("service type not found, service_id:%s, inst_id:%s, cmpt_id:%d", servInstID, instID, cmptID)
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = errMsg
 	}
@@ -239,9 +239,7 @@ func InitRedisCluster(sshClient *SSHClient, initCmd, logKey string, paasResult *
 	}
 
 	if ok {
-		global.GLOBAL_RES.PubSuccessLog(logKey, string(bytes))
-		paasResult.RET_CODE = consts.REVOKE_OK
-		paasResult.RET_INFO = ""
+		global.GLOBAL_RES.PubLog(logKey, string(bytes))
 	} else {
 		global.GLOBAL_RES.PubErrorLog(logKey, string(bytes))
 		paasResult.RET_CODE = consts.REVOKE_NOK
@@ -249,4 +247,24 @@ func InitRedisCluster(sshClient *SSHClient, initCmd, logKey string, paasResult *
 	}
 
 	return ok
+}
+
+func JoinRedisCluster(sshClient *SSHClient, cmdJoin, logKey string, paasResult *result.ResultBean) bool {
+	bytes, ok, err := sshClient.JoinRedisCluster(cmdJoin)
+	if err != nil {
+		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = err.Error()
+		return false
+	}
+
+	if ok {
+		global.GLOBAL_RES.PubLog(logKey, string(bytes))
+	} else {
+		global.GLOBAL_RES.PubErrorLog(logKey, string(bytes))
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_JOIN_REDIS_CLUSTER_FAIL
+	}
+
+	return true
 }

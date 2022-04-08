@@ -28,6 +28,9 @@ var (
 	REDIS_CLUSTER_INIT_ACCEPT = []byte("(type 'yes' to accept): ")
 	REDIS_CLUSTER_INIT_OK     = []byte("[OK] All 16384 slots covered.")
 	REDIS_CLUSTER_INIT_ERR    = []byte("ERR")
+	REDIS_MOVEING_SLOT        = []byte("Moving slot")
+	REDIS_CLUSTER_DELETE_NODE = []byte(">>> Sending CLUSTER RESET SOFT to the deleted node.")
+	REDIS_ADD_NODE_OK         = []byte("[OK] New node added correctly.")
 )
 
 type SSHClient struct {
@@ -184,6 +187,64 @@ func (h *SSHClient) Dos2Unix(cmd string) (string, error) {
 	return h.GeneralCommand(cmd)
 }
 
+func (h *SSHClient) MigrateRedisClusterSlot(cmd, logKey string, paasResult *result.ResultBean) bool {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		errMsg := fmt.Sprintf("migrate redis slot: %s, error: %v", cmd, e)
+		errProc(errMsg, logKey, paasResult)
+		return false
+	}
+
+	bytes, e := h.ReadRedisMigrateSlot()
+	if e != nil {
+		errMsg := fmt.Sprintf("migrate error: %v", e)
+		errProc(errMsg, logKey, paasResult)
+		return false
+	}
+
+	if isRedisClusterInitErr(bytes) {
+		errMsg := fmt.Sprintf("migrate fail")
+		errProc(errMsg, logKey, paasResult)
+		return false
+	}
+
+	return isRedisMoveingSlotOK(bytes)
+}
+
+func (h *SSHClient) RemoveFromRedisCluster(cmd, logKey string, paasResult *result.ResultBean) bool {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		errMsg := fmt.Sprintf("remove redis node: %s, error: %v", cmd, e)
+		errProc(errMsg, logKey, paasResult)
+		return false
+	}
+
+	bytes, e := h.ReadRedisMigrateSlot()
+	if e != nil {
+		errMsg := fmt.Sprintf("remove redis node fail, %v", e)
+		errProc(errMsg, logKey, paasResult)
+		return false
+	}
+
+	if isRedisClusterInitErr(bytes) {
+		errMsg := fmt.Sprintf("remove redis node fail")
+		errProc(errMsg, logKey, paasResult)
+		return false
+	}
+
+	return isRedisClusterDeleteNodeOK(bytes)
+}
+
+func isRedisMoveingSlotOK(context []byte) bool {
+	return bytes.Index(context, REDIS_MOVEING_SLOT) != -1
+}
+
+func errProc(errMsg, logKey string, paasResult *result.ResultBean) {
+	global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+	paasResult.RET_CODE = consts.REVOKE_NOK
+	paasResult.RET_INFO = errMsg
+}
+
 func (h *SSHClient) SCP(user, passwd, srcHost, sshPort, srcFile, desFile, logKey string,
 	paasResult *result.ResultBean) bool {
 
@@ -279,6 +340,20 @@ func (h *SSHClient) InitRedisCluster(cmd string) ([]byte, bool, error) {
 	return out, res, nil
 }
 
+func (h *SSHClient) JoinRedisCluster(cmd string) ([]byte, bool, error) {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		return nil, false, e
+	}
+
+	bytes, ok, e := h.ReadRedisJoinOkOrErr()
+	if e != nil {
+		return nil, false, e
+	}
+
+	return bytes, ok, nil
+}
+
 func (h *SSHClient) Wait() {
 	h.rawSession.Wait()
 }
@@ -298,6 +373,80 @@ func (h *SSHClient) ReadRedisInitOkOrErr() ([]byte, error) {
 		} else {
 			out = combine(out, trim(tmp))
 			if isRedisClusterInitOk(out) || isRedisClusterInitErr(out) {
+				break
+			}
+		}
+	}
+
+	return out, nil
+}
+
+func (h *SSHClient) ReadRedisJoinOkOrErr() ([]byte, bool, error) {
+	out := make([]byte, 0)
+	res := false
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return nil, false, err
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if isRedisClusterJoinOk(out) {
+				res = true
+				break
+			}
+			if isRedisClusterInitErr(out) {
+				break
+			}
+		}
+	}
+
+	return out, res, nil
+}
+
+func (h *SSHClient) ReadRedisMigrateSlot() ([]byte, error) {
+	out := make([]byte, 0)
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return nil, err
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if isRedisClusterInitErr(out) || eof(out) {
+				break
+			}
+		}
+	}
+
+	return out, nil
+}
+
+func (h *SSHClient) ReadRedisDeleteNode() ([]byte, error) {
+	out := make([]byte, 0)
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return nil, err
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if isRedisClusterInitErr(out) || isRedisClusterDeleteNodeOK(out) || eof(out) {
 				break
 			}
 		}
@@ -342,10 +491,7 @@ func (h *SSHClient) ReadScpOut() ([]byte, error) {
 		if size == 0 {
 			break
 		} else {
-			tmp = trim(tmp)
-			combine := [][]byte{out, tmp}
-			out = bytes.Join(combine, []byte(""))
-
+			out = combine(out, trim(tmp))
 			if checkYesOrNo(out) || checkYesOrNoFingerPrint(out) || isPasswd(out) ||
 				isPasswdWrong(out) || fileNotExist(out) || eof(out) {
 
@@ -370,10 +516,7 @@ func (h *SSHClient) ReadToEof() ([]byte, error) {
 		if size == 0 {
 			break
 		} else {
-			tmp = trim(tmp)
-			combine := [][]byte{out, tmp}
-			out = bytes.Join(combine, []byte(""))
-
+			out = combine(out, trim(tmp))
 			if eof(out) {
 				break
 			}
@@ -439,8 +582,16 @@ func isRedisClusterInitOk(context []byte) bool {
 	return bytes.Index(context, REDIS_CLUSTER_INIT_OK) != -1
 }
 
+func isRedisClusterJoinOk(context []byte) bool {
+	return bytes.Index(context, REDIS_ADD_NODE_OK) != -1
+}
+
 func isRedisClusterInitErr(context []byte) bool {
 	return bytes.Index(context, REDIS_CLUSTER_INIT_ERR) != -1
+}
+
+func isRedisClusterDeleteNodeOK(context []byte) bool {
+	return bytes.Index(context, REDIS_CLUSTER_DELETE_NODE) != -1
 }
 
 func trim(context []byte) []byte {

@@ -32,6 +32,9 @@ const (
 	REDIS_ROLE_NONE                = -1
 	REDIS_CLUSTER_MIN_MASTER_NODES = 3
 	CPU_SLICE                      = 50000
+	CMPT_COLLECTD                  = "COLLECTD"
+	CMPT_REDIS_NODE                = "REDIS_NODE"
+	CMPT_REDIS_PROXY               = "REDIS_PROXY"
 )
 
 const (

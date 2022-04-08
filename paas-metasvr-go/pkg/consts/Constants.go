@@ -20,6 +20,8 @@ const (
 	OP_TYPE_MOD                        int           = 2
 	OP_TYPE_DEL                        int           = 3
 	INFO_OK                                          = "OK"
+	STR_DEPLOY                                       = "1"
+	STR_UNDEPLOY                                     = "0"
 	STR_TRUE                                         = "1"
 	STR_FALSE                                        = "0"
 	STR_ALARM                                        = "4"
@@ -160,4 +162,7 @@ const (
 	CONF_CONSOLE_PORT                                = "%CONSOLE_PORT%"
 	CONF_ES_SERVER                                   = "%ES_SERVER%"
 	CONF_ES_MT_SERVER                                = "%ES_MT_SERVER%"
+	CONF_CLUSTER_NODES                               = "%CLUSTER_NODES%"
+	CONF_CONN_POOL_SIZE                              = "%CONN_POOL_SIZE%"
+	CONF_PORT                                        = "%PORT%"
 )

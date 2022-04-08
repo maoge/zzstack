@@ -64,6 +64,7 @@ func (redisPool *RedisPool) Init() {
 	}
 
 	redisPool.clusterClient = goredis.NewClusterClient(clusterOptions)
+	time.Sleep(time.Duration(20) * time.Millisecond)
 
 	cmd := redisPool.clusterClient.Do("ping")
 	res, err := cmd.Result()

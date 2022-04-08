@@ -494,6 +494,15 @@ func (m *CmptMeta) GetCmptByName(cmptName string) *proto.PaasMetaCmpt {
 	return m.metaCmptNameMap[cmptName]
 }
 
+func (m *CmptMeta) GetInstanceCmpt(instID string) *proto.PaasMetaCmpt {
+	instance, found := m.metaInstMap[instID]
+	if !found {
+		return nil
+	}
+
+	return m.metaCmptIdMap[instance.CMPT_ID]
+}
+
 func (m *CmptMeta) GetCmptAttrs(cmptId int) []*proto.PaasMetaAttr {
 	attrSlice := make([]*proto.PaasMetaAttr, 0)
 

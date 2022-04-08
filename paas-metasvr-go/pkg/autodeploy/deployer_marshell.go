@@ -54,7 +54,12 @@ func UndeployService(instID, logKey, magicKey string, force bool, paasResult *re
 }
 
 func DeployInstance(servInstID, instID, logKey, magicKey string, paasResult *result.ResultBean) {
-	service, found := deployutils.GetService(instID, logKey, paasResult)
+	service, found := deployutils.GetService(servInstID, logKey, paasResult)
+	if !found {
+		return
+	}
+
+	servInst, found := deployutils.GetInstance(servInstID, logKey, paasResult)
 	if !found {
 		return
 	}
@@ -72,7 +77,7 @@ func DeployInstance(servInstID, instID, logKey, magicKey string, paasResult *res
 		return
 	}
 
-	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
+	cmpt := deployutils.GetCmptById(servInstID, instID, servInst.CMPT_ID, paasResult)
 	if cmpt == nil {
 		return
 	}
@@ -90,7 +95,12 @@ func DeployInstance(servInstID, instID, logKey, magicKey string, paasResult *res
 }
 
 func UndeployInstance(servInstID, instID, logKey, magicKey string, paasResult *result.ResultBean) {
-	service, found := deployutils.GetService(instID, logKey, paasResult)
+	service, found := deployutils.GetService(servInstID, logKey, paasResult)
+	if !found {
+		return
+	}
+
+	servInst, found := deployutils.GetInstance(servInstID, logKey, paasResult)
 	if !found {
 		return
 	}
@@ -104,7 +114,7 @@ func UndeployInstance(servInstID, instID, logKey, magicKey string, paasResult *r
 		return
 	}
 
-	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
+	cmpt := deployutils.GetCmptById(servInstID, instID, servInst.CMPT_ID, paasResult)
 	if cmpt == nil {
 		return
 	}
@@ -129,6 +139,11 @@ func MaintainInstance(servInstID, instID, servType, logKey, magicKey string, op 
 		return
 	}
 
+	servInst, found := deployutils.GetInstance(servInstID, logKey, paasResult)
+	if !found {
+		return
+	}
+
 	inst, found := deployutils.GetInstance(instID, logKey, paasResult)
 	if !found {
 		return
@@ -138,7 +153,7 @@ func MaintainInstance(servInstID, instID, servType, logKey, magicKey string, op 
 		return
 	}
 
-	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
+	cmpt := deployutils.GetCmptById(servInstID, instID, servInst.CMPT_ID, paasResult)
 	if cmpt == nil {
 		return
 	}
@@ -165,6 +180,11 @@ func CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResu
 		return
 	}
 
+	servInst, found := deployutils.GetInstance(servInstID, "", paasResult)
+	if !found {
+		return
+	}
+
 	inst, found := deployutils.GetInstance(instID, "", paasResult)
 	if !found {
 		return
@@ -174,7 +194,7 @@ func CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResu
 		return
 	}
 
-	cmpt := deployutils.GetCmptByName(servInstID, instID, service.SERV_TYPE, paasResult)
+	cmpt := deployutils.GetCmptById(servInstID, instID, servInst.CMPT_ID, paasResult)
 	if cmpt == nil {
 		return
 	}
