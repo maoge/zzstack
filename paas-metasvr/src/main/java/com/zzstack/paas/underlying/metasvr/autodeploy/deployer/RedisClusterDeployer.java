@@ -191,7 +191,7 @@ public class RedisClusterDeployer implements ServiceDeployer {
         CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
         
         PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getServType();
+        String version = serv.getVersion();
 
         PaasInstance inst = cmptMeta.getInstance(servInstID);
         PaasMetaCmpt cmpt = cmptMeta.getCmptById(inst.getCmptId());
