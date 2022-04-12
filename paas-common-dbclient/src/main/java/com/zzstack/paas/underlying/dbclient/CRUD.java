@@ -1,6 +1,7 @@
 package com.zzstack.paas.underlying.dbclient;
 
 import java.math.BigInteger;
+import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -815,6 +816,23 @@ public class CRUD {
         }
         return map;
     }
+    
+    private boolean isArray(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        return obj.getClass().isArray();
+    }
+    
+    private Array createSqlArray(Connection conn, Object[] objArr) throws SQLException {
+        if (objArr == null) {
+            return null;
+        }
+        
+        String typeName = objArr[0].getClass().getSimpleName();
+        return conn.createArrayOf(typeName, objArr);
+    }
 
     /**
      * 数据库的更新操作
@@ -837,10 +855,18 @@ public class CRUD {
                 ps = conn.prepareStatement(sql);
                 if (params != null) {
                     for (int i = 0; i < params.length; i++) {
-                        ps.setObject(i + 1, params[i]);
+                        if (isArray(params[i])) {
+                            Object[] objArr = (Object[]) params[i];
+                            Array sqlArr = createSqlArray(conn, objArr);
+                            ps.setArray(i + 1, sqlArr);
+                        } else {
+                            ps.setObject(i + 1, params[i]);
+                        }
+                        
 
-                        if (logger.isDebugEnabled())
+                        if (logger.isDebugEnabled()) {
                             logger.debug("executeSql-params:" + params[i]);
+                        }
                     }
                 }
 
