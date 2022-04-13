@@ -33,7 +33,7 @@
         <netty-all.version>4.1.56.Final</netty-all.version>
 
         <!-- vertx -->
-        <vertx.version>4.0.0</vertx.version>
+        <vertx.version>4.2.6</vertx.version>
 
         <!-- jackson support -->
 		<jackson-annotations.version>2.12.0</jackson-annotations.version>
