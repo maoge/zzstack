@@ -268,3 +268,23 @@ func JoinRedisCluster(sshClient *SSHClient, cmdJoin, logKey string, paasResult *
 
 	return true
 }
+
+func ReshardingRedisSlot(sshClient *SSHClient, cmdMig, logKey string, paasResult *result.ResultBean) bool {
+	bytes, ok, err := sshClient.ReshardingRedisSlot(cmdMig)
+	if err != nil {
+		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = err.Error()
+		return false
+	}
+
+	if ok {
+		global.GLOBAL_RES.PubLog(logKey, string(bytes))
+	} else {
+		global.GLOBAL_RES.PubErrorLog(logKey, string(bytes))
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_RESHARDING_REDIS_SLOT_FAIL
+	}
+
+	return true
+}

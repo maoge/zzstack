@@ -7,14 +7,14 @@ import (
 )
 
 type PaasRedisCluster struct {
-	masterNodes map[string]*PaasRedisNode
-	slaveNodes  map[string]*PaasRedisNode
+	MasterNodes map[string]*PaasRedisNode
+	SlaveNodes  map[string]*PaasRedisNode
 }
 
 func NewPaasRedisCluster() *PaasRedisCluster {
 	paasRedisCluster := new(PaasRedisCluster)
-	paasRedisCluster.masterNodes = make(map[string]*PaasRedisNode)
-	paasRedisCluster.slaveNodes = make(map[string]*PaasRedisNode)
+	paasRedisCluster.MasterNodes = make(map[string]*PaasRedisNode)
+	paasRedisCluster.SlaveNodes = make(map[string]*PaasRedisNode)
 	return paasRedisCluster
 }
 
@@ -57,7 +57,7 @@ func (h *PaasRedisCluster) Parse(info string) {
 				node.SlotRange = str[start:]
 			}
 
-			h.masterNodes[node.NodeId] = node
+			h.MasterNodes[node.NodeId] = node
 		} else {
 			node.RedisRole = consts.REDIS_ROLE_SLAVE
 
@@ -68,13 +68,13 @@ func (h *PaasRedisCluster) Parse(info string) {
 			masterId := subStr[:idxIdEnd]
 			node.MasterId = masterId
 
-			h.slaveNodes[node.NodeId] = node
+			h.SlaveNodes[node.NodeId] = node
 		}
 
 	}
 
-	for _, slave := range h.slaveNodes {
-		master, found := h.masterNodes[slave.MasterId]
+	for _, slave := range h.SlaveNodes {
+		master, found := h.MasterNodes[slave.MasterId]
 		if found {
 			master.AddSlaveId(slave.NodeId)
 		}
@@ -82,13 +82,13 @@ func (h *PaasRedisCluster) Parse(info string) {
 }
 
 func (h *PaasRedisCluster) GetSelfInfo(ip, port string) *PaasRedisNode {
-	for _, node := range h.masterNodes {
+	for _, node := range h.MasterNodes {
 		if node.Ip == ip && node.Port == port {
 			return node
 		}
 	}
 
-	for _, node := range h.slaveNodes {
+	for _, node := range h.SlaveNodes {
 		if node.Ip == ip && node.Port == port {
 			return node
 		}
@@ -99,14 +99,14 @@ func (h *PaasRedisCluster) GetSelfInfo(ip, port string) *PaasRedisNode {
 
 func (h *PaasRedisCluster) GetSlaves(masterId string) []*PaasRedisNode {
 	result := make([]*PaasRedisNode, 0)
-	master, found := h.masterNodes[masterId]
+	master, found := h.MasterNodes[masterId]
 	if !found {
 		return result
 	}
 
 	slaveIds := master.SlaveIds
 	for _, slaveId := range slaveIds {
-		slave := h.slaveNodes[slaveId]
+		slave := h.SlaveNodes[slaveId]
 		result = append(result, slave)
 	}
 
@@ -115,7 +115,7 @@ func (h *PaasRedisCluster) GetSlaves(masterId string) []*PaasRedisNode {
 
 func (h *PaasRedisCluster) GetMasters() []*PaasRedisNode {
 	result := make([]*PaasRedisNode, 0)
-	for _, node := range h.masterNodes {
+	for _, node := range h.MasterNodes {
 		result = append(result, node)
 	}
 
@@ -123,7 +123,7 @@ func (h *PaasRedisCluster) GetMasters() []*PaasRedisNode {
 }
 
 func (h *PaasRedisCluster) GetAloneMaster() string {
-	for _, node := range h.masterNodes {
+	for _, node := range h.MasterNodes {
 		if node.IsSlaveEmpty() {
 			return node.NodeId
 		}
@@ -131,8 +131,8 @@ func (h *PaasRedisCluster) GetAloneMaster() string {
 	return ""
 }
 
-func (h *PaasRedisCluster) GetOneMasterAddr() (string, bool) {
-	for _, master := range h.masterNodes {
+func (h *PaasRedisCluster) GetAnyMasterAddr() (string, bool) {
+	for _, master := range h.MasterNodes {
 		return master.Ip + ":" + master.Port, true
 	}
 

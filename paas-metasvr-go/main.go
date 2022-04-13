@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
@@ -21,7 +20,6 @@ func main() {
 }
 
 func init() {
-	disableLog()
 	consts.InitEventMap()
 	utils.Init()
 	config.InitMetaSvrConf()
@@ -29,13 +27,6 @@ func init() {
 	meta.InitGlobalCmptMeta()
 	eventbus.InitEventBus()
 	global_factory.InitDeployerFactory()
-}
-
-func disableLog() {
-	stderr := os.Stderr
-	fd, _ := os.Open(os.DevNull)
-	os.Stderr = fd
-	os.Stderr = stderr
 }
 
 func startHttp() {

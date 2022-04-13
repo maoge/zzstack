@@ -260,7 +260,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 		return false
 	}
 
-	stopShell := fmt.Sprintf("./bin/redis-cli -h %s -p %s -a %s -c shutdown", ssh.SERVER_IP, port, consts.ZZSOFT_REDIS_PASSWD)
+	stopShell := fmt.Sprintf("./bin/redis-cli -h %s -p %s -a %s -c --no-auth-warning shutdown", ssh.SERVER_IP, port, consts.ZZSOFT_REDIS_PASSWD)
 	if !DeployUtils.CreateShell(sshClient, consts.STOP_SHELL, stopShell, logKey, paasResult) {
 		return false
 	}
@@ -307,7 +307,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 		cluster.Parse(paasResult.RET_INFO.(string))
 		paasResult.RET_INFO = ""
 
-		joinMasterAddr, ok := cluster.GetOneMasterAddr()
+		joinMasterAddr, ok := cluster.GetAnyMasterAddr()
 		if !ok {
 			paasResult.RET_CODE = consts.REVOKE_NOK
 			paasResult.RET_INFO = consts.ERR_NO_MASTER_NODE
@@ -321,7 +321,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 			aloneMasterId := cluster.GetAloneMaster()
 			if aloneMasterId == "" {
 				// join as master node
-				if !joinAsMasterNode(sshClient, joinMasterAddr, ssh.SERVER_IP, port, logKey, paasResult) {
+				if !joinAsMasterNode(sshClient, joinMasterAddr, ssh.SERVER_IP, port, logKey, cluster, paasResult) {
 					return false
 				}
 			} else {
@@ -341,7 +341,9 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 	return true
 }
 
-func joinAsMasterNode(sshClient *DeployUtils.SSHClient, joinMasterAddr, ip, port, logKey string, paasResult *result.ResultBean) bool {
+func joinAsMasterNode(sshClient *DeployUtils.SSHClient, joinMasterAddr, ip, port, logKey string,
+	cluster *proto.PaasRedisCluster, paasResult *result.ResultBean) bool {
+
 	cmdJoin := fmt.Sprintf("./bin/redis-cli --cluster add-node %s:%s %s -c --no-auth-warning", ip, port, joinMasterAddr)
 	global.GLOBAL_RES.PubLog(logKey, cmdJoin)
 
@@ -350,7 +352,31 @@ func joinAsMasterNode(sshClient *DeployUtils.SSHClient, joinMasterAddr, ip, port
 		return false
 	}
 
-	// TODO do migrate slot from exist master nodes to newer
+	// migrate slot from exist master nodes to newer
+	// get self node id
+	cmdSelf := fmt.Sprintf("./bin/redis-cli -h %s -p %s -a %s -c --no-auth-warning cluster nodes | grep myself", ip, port, consts.ZZSOFT_REDIS_PASSWD)
+	if !DeployUtils.GetRedisClusterNode(sshClient, cmdSelf, logKey, paasResult) {
+		return false
+	}
+
+	masterCnt := len(cluster.MasterNodes)
+	slotAvg := consts.REDIS_CLUSTER_TTL_SLOT / (masterCnt + 1)
+	moveSlotCnt := slotAvg / masterCnt
+
+	// b91f8eec7570e89c8f24ce97f2cb5d18c588415c 172.20.0.171:13001@23001 myself,master - 0 1649765390000 1 connected 0-5460
+	slefInfo := paasResult.RET_INFO.(string)
+	idx := strings.Index(slefInfo, " ")
+	selfId := slefInfo[:idx]
+	for _, masterNode := range cluster.MasterNodes {
+		srcNodeId := masterNode.NodeId
+		// do migrate slot from exist master nodes to newer
+		cmdMig := fmt.Sprintf("./bin/redis-cli --cluster reshard %s:%s --cluster-from %s --cluster-to %s --cluster-slots %d -c -a %s --no-auth-warning --cluster-yes",
+			masterNode.Ip, masterNode.Port, srcNodeId, selfId, moveSlotCnt, consts.ZZSOFT_REDIS_PASSWD)
+		if !DeployUtils.ReshardingRedisSlot(sshClient, cmdMig, logKey, paasResult) {
+			global.GLOBAL_RES.PubFailLog(logKey, "resharding slot NOK ......")
+			return false
+		}
+	}
 
 	global.GLOBAL_RES.PubSuccessLog(logKey, "join as master node OK ......")
 	return true
@@ -448,16 +474,14 @@ func UndeployRedisNode(redisJson map[string]interface{}, shrink bool, logKey, ma
 
 		selfId := self.NodeId
 		slotRange := self.SlotRange
-		// role := self.RedisRole
 
 		info := fmt.Sprintf("shrink, id:%s, role:%d", selfId, self.RedisRole)
 		global.GLOBAL_RES.PubLog(logKey, info)
 
 		if self.RedisRole == consts.REDIS_ROLE_MASTER {
-			// remove MASTER ROLE Redis Node
+			// remove slaves from cluster
 			slaves := cluster.GetSlaves(selfId)
 
-			// remove slaves from cluster
 			for _, slaveNode := range slaves {
 				info := fmt.Sprintf("remove sub-slave node:{%s:%s %s} from cluster", slaveNode.Ip, slaveNode.Port, slaveNode.NodeId)
 				global.GLOBAL_RES.PubLog(logKey, info)

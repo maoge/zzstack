@@ -62,6 +62,7 @@ const (
 	ERR_SSH_NOT_FOUND                  = "ssh not found ......"
 	ERR_INIT_REDIS_CLUSTER_FAIL        = "init redis cluster fail"
 	ERR_JOIN_REDIS_CLUSTER_FAIL        = "join redis cluster fail"
+	ERR_RESHARDING_REDIS_SLOT_FAIL     = "resharding redis slot fail"
 	ERR_NO_EXISTING_REDIS_NODE         = "can not find one existing node to join"
 	ERR_NO_MASTER_NODE                 = "can not find redis master node"
 )

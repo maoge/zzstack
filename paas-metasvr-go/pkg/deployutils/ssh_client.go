@@ -354,6 +354,20 @@ func (h *SSHClient) JoinRedisCluster(cmd string) ([]byte, bool, error) {
 	return bytes, ok, nil
 }
 
+func (h *SSHClient) ReshardingRedisSlot(cmd string) ([]byte, bool, error) {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		return nil, false, e
+	}
+
+	bytes, ok, e := h.ReadRedisReshardingOkOrErr()
+	if e != nil {
+		return nil, false, e
+	}
+
+	return bytes, ok, nil
+}
+
 func (h *SSHClient) Wait() {
 	h.rawSession.Wait()
 }
@@ -400,6 +414,36 @@ func (h *SSHClient) ReadRedisJoinOkOrErr() ([]byte, bool, error) {
 				res = true
 				break
 			}
+			if isRedisClusterInitErr(out) {
+				break
+			}
+		}
+	}
+
+	return out, res, nil
+}
+
+func (h *SSHClient) ReadRedisReshardingOkOrErr() ([]byte, bool, error) {
+	out := make([]byte, 0)
+	res := false
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return nil, false, err
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+
+			if isRedisMovingStart(out) && eof(out) {
+				res = true
+				break
+			}
+
 			if isRedisClusterInitErr(out) {
 				break
 			}
@@ -584,6 +628,10 @@ func isRedisClusterInitOk(context []byte) bool {
 
 func isRedisClusterJoinOk(context []byte) bool {
 	return bytes.Index(context, REDIS_ADD_NODE_OK) != -1
+}
+
+func isRedisMovingStart(context []byte) bool {
+	return bytes.Index(context, REDIS_MOVEING_SLOT) != -1
 }
 
 func isRedisClusterInitErr(context []byte) bool {
