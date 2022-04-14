@@ -20,6 +20,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+        </dependency>
+        
+        <dependency>
             <groupId>com.zzstack.paas</groupId>
             <artifactId>paas-common-utils</artifactId>
             <exclusions>
