@@ -19,8 +19,8 @@ public class ClickHouseTest {
     private static final String UPSERT_SQL = "insert into test(user_id, create_date, update_count) select user_id, create_date, ? from test where user_id = ?";
     private static final String SELECT_SQL = "select user_id, create_date, update_count from test";
     
-    private static final String SELECT_NESTED = "select abstract.slice_id, abstract.slice_type, abstract.slice_content from t_paper";
-    private static final String INSERT_NESTED = "INSERT INTO t_paper("
+    private static final String SELECT_NESTED = "select abstract.slice_id, abstract.slice_type, abstract.slice_content from dt_paper";
+    private static final String INSERT_NESTED = "INSERT INTO dt_paper("
                                                    + "doc_id,"
                                                    + "source,"
                                                    + "title_content,"
@@ -97,7 +97,7 @@ public class ClickHouseTest {
         CRUD c = new CRUD("clickhouse");
         
         SqlBean sqlBean1 = new SqlBean(INSERT_NESTED);
-        sqlBean1.putParam(genUUID());
+        sqlBean1.putParam(new Long(1));
         sqlBean1.putParam("https://doi.org/10.1038/s41467-022-29443-w");
         sqlBean1.putParam("Learning meaningful representations of protein sequences");
         sqlBean1.putParam(new String[] {"Nicki Skafte Detlefsen", "Søren Hauberg", "Wouter Boomsma"});
