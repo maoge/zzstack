@@ -138,12 +138,12 @@
     -->
     <distributionManagement>
         <repository>
-            <id>wlwx</id>
+            <id>openread</id>
             <name>local private nexus</name>
             <url>http://127.0.0.1:8081/nexus/content/repositories/openread</url>
         </repository>
         <snapshotRepository>
-            <id>wlwx-snapshots</id>
+            <id>openread-snapshots</id>
             <name>local private nexus snapshots</name>
             <url>http://127.0.0.1:8081/nexus/content/repositories/openread-snapshots</url>
         </snapshotRepository>
