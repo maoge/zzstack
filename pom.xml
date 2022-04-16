@@ -36,11 +36,11 @@
         <vertx.version>4.2.7</vertx.version>
 
         <!-- jackson support -->
-		<jackson-annotations.version>2.12.0</jackson-annotations.version>
+        <jackson-annotations.version>2.12.0</jackson-annotations.version>
         <jackson-core.version>2.12.0</jackson-core.version>
         <jackson-coreutils.version>2.12.0</jackson-coreutils.version>
-		<jackson-databind.version>2.12.0</jackson-databind.version>
-		<jackson-dataformat-yaml.version>2.12.0</jackson-dataformat-yaml.version>
+        <jackson-databind.version>2.12.0</jackson-databind.version>
+        <jackson-dataformat-yaml.version>2.12.0</jackson-dataformat-yaml.version>
 
         <!-- log support -->
         <slf4j.version>1.7.26</slf4j.version>
@@ -77,10 +77,10 @@
         <pulsar.version>2.7.2</pulsar.version>
 
         <!--<ganymed-ssh2.version>262</ganymed-ssh2.version>-->
-	    <jsch.version>0.1.55</jsch.version>
+        <jsch.version>0.1.55</jsch.version>
 
-	    <fastjson.version>1.2.60</fastjson.version>
-	    <taos-jdbcdriver.version>2.0.16</taos-jdbcdriver.version>
+        <fastjson.version>1.2.60</fastjson.version>
+        <taos-jdbcdriver.version>2.0.16</taos-jdbcdriver.version>
         <rocketmq.version>4.4.0</rocketmq.version>
         <clickhouse-native-jdbc.version>2.5.6</clickhouse-native-jdbc.version>
         <voltdbclient.version>10.0</voltdbclient.version>
@@ -140,12 +140,12 @@
         <repository>
             <id>wlwx</id>
             <name>local private nexus</name>
-            <url>http://172.20.0.173:91/nexus/content/repositories/wlwx</url>
+            <url>http://127.0.0.1:8081/nexus/content/repositories/openread</url>
         </repository>
         <snapshotRepository>
             <id>wlwx-snapshots</id>
             <name>local private nexus snapshots</name>
-            <url>http://172.20.0.173:91/nexus/content/repositories/wlwx-snapshots</url>
+            <url>http://127.0.0.1:8081/nexus/content/repositories/openread-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -250,7 +250,7 @@
                 <version>${jackson-core.version}</version>
             </dependency>
 
-			<dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson-databind.version}</version>
@@ -315,11 +315,11 @@
                 <version>${ojdbc6.version}</version>
             </dependency>
 
-			<dependency>
-			    <groupId>com.github.housepower</groupId>
-			    <artifactId>clickhouse-native-jdbc</artifactId>
-			    <version>${clickhouse-native-jdbc.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>com.github.housepower</groupId>
+                <artifactId>clickhouse-native-jdbc</artifactId>
+                <version>${clickhouse-native-jdbc.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>commons-codec</groupId>
@@ -423,12 +423,12 @@
                 <version>${google-guice.version}</version>
             </dependency>
 
-	        <!-- pulsar-client -->
-	        <dependency>
-	            <groupId>org.apache.pulsar</groupId>
-	            <artifactId>pulsar-client</artifactId>
-	            <version>${pulsar.version}</version>
-	        </dependency>
+            <!-- pulsar-client -->
+            <dependency>
+                <groupId>org.apache.pulsar</groupId>
+                <artifactId>pulsar-client</artifactId>
+                <version>${pulsar.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.zzstack.paas</groupId>
@@ -491,12 +491,12 @@
             </dependency>
             
             <dependency>
-			    <groupId>org.voltdb</groupId>
-			    <artifactId>voltdbclient</artifactId>
-			    <version>${voltdbclient.version}</version>
-			</dependency>
+                <groupId>org.voltdb</groupId>
+                <artifactId>voltdbclient</artifactId>
+                <version>${voltdbclient.version}</version>
+            </dependency>
 			
-			<dependency>
+            <dependency>
                 <groupId>com.baidu</groupId>
                 <artifactId>brpc-java</artifactId>
                 <version>${brpc-java.version}</version>
