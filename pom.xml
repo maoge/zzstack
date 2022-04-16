@@ -140,6 +140,18 @@
         <repository>
             <id>openread</id>
             <name>local private nexus</name>
+            <url>http://127.0.0.1:8081/repository/openread/</url>
+        </repository>
+        <snapshotRepository>
+            <id>openread-snapshots</id>
+            <name>local private nexus snapshots</name>
+            <url>http://127.0.0.1:8081/repository/openread-snapshots/</url>
+        </snapshotRepository>
+        
+        <!--
+        <repository>
+            <id>openread</id>
+            <name>local private nexus</name>
             <url>http://127.0.0.1:8081/nexus/content/repositories/openread</url>
         </repository>
         <snapshotRepository>
@@ -147,6 +159,7 @@
             <name>local private nexus snapshots</name>
             <url>http://127.0.0.1:8081/nexus/content/repositories/openread-snapshots</url>
         </snapshotRepository>
+        -->
     </distributionManagement>
 
     <dependencyManagement>
