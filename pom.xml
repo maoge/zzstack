@@ -88,9 +88,7 @@
         <brpc-java.version>2.5.9</brpc-java.version>
         <rocksdbjni.version>5.1.4</rocksdbjni.version>
 
-        <!--
         <repositories.ip>https://maven.aliyun.com</repositories.ip>
-        -->
     </properties>
 
     <repositories>
@@ -135,7 +133,7 @@
             <url>https://maven.aliyun.com/repository/public</url>
         </repository>
     </distributionManagement>
-    -->
+    
     <distributionManagement>
         <repository>
             <id>openread</id>
@@ -147,20 +145,8 @@
             <name>local private nexus snapshots</name>
             <url>http://127.0.0.1:8081/repository/openread-snapshots/</url>
         </snapshotRepository>
-        
-        <!--
-        <repository>
-            <id>openread</id>
-            <name>local private nexus</name>
-            <url>http://127.0.0.1:8081/nexus/content/repositories/openread</url>
-        </repository>
-        <snapshotRepository>
-            <id>openread-snapshots</id>
-            <name>local private nexus snapshots</name>
-            <url>http://127.0.0.1:8081/nexus/content/repositories/openread-snapshots</url>
-        </snapshotRepository>
-        -->
     </distributionManagement>
+    -->
 
     <dependencyManagement>
         <dependencies>
