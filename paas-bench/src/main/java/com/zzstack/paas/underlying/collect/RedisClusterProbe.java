@@ -12,9 +12,11 @@ import com.zzstack.paas.underlying.utils.jvm.JVMMemoryUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
+
+import redis.clients.jedis.Connection;
+import redis.clients.jedis.ConnectionPool;
 import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Protocol;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -107,17 +109,20 @@ public class RedisClusterProbe {
 
     public int collectClusterInstantOps() {
         int result = 0;
-        Map<String, JedisPool> clusterNodes = jedisCluster.getClusterNodes();
-        for (Map.Entry<String, JedisPool> entry : clusterNodes.entrySet()) {
-            Jedis jedis = entry.getValue().getResource();
+        Map<String, ConnectionPool> clusterNodes = jedisCluster.getClusterNodes();
+        for (Map.Entry<String, ConnectionPool> entry : clusterNodes.entrySet()) {
+            Connection conn = entry.getValue().getResource();
             // redis list operates on master node
             try {
-                if (!jedis.info("replication").contains("role:slave")) {
-                    String infoStats = jedis.info(BenchConstants.REDIS_INFO_STATS);
+                conn.sendCommand(Protocol.Command.INFO);
+                String clusterInfo = conn.getStatusCodeReply();
+                if (!clusterInfo.contains("role:slave")) {
+                    conn.sendCommand(Protocol.Command.INFO, BenchConstants.REDIS_INFO_STATS);
+                    String infoStats = conn.getStatusCodeReply();
                     result += getInstantOps(infoStats);
                 }
             } finally {
-                jedis.close();
+                conn.close();
             }
         }
         ops = result;
@@ -125,7 +130,8 @@ public class RedisClusterProbe {
     }
 
     public void collectClusterInstantInfoFromConfig(RedisNodes serverNodes, String pushUrl) {
-        Map<String, JedisPool> clusterNodes = jedisCluster.getClusterNodes();
+        // Map<String, JedisPool> clusterNodes = jedisCluster.getClusterNodes();
+        Map<String, ConnectionPool> clusterNodes = jedisCluster.getClusterNodes();
         // 组装redis监控数据
         JSONObject redisInfo = new JSONObject();
         JSONArray jsonArray = new JSONArray();
@@ -135,10 +141,13 @@ public class RedisClusterProbe {
         Map<String, BigDecimal> bigDecimalMap = new HashMap<>();
         String clusterId = serverNodes.instId;
         Map<String, String> instMap = serverNodes.getInstMap();
-        for (Map.Entry<String, JedisPool> entry : clusterNodes.entrySet()) {
+        for (Map.Entry<String, ConnectionPool> entry : clusterNodes.entrySet()) {
             // redis list operates on master node
-            try (Jedis jedis = entry.getValue().getResource()) {
-                String info = jedis.info();
+            Connection conn = entry.getValue().getResource();
+            try {
+                conn.sendCommand(Protocol.Command.INFO);
+                String info = conn.getStatusCodeReply();
+                
                 JSONObject redis = new JSONObject();
                 redis.put(FixHeader.HEADER_TS, currentStamp);
                 // 应用的实例ID
@@ -208,6 +217,10 @@ public class RedisClusterProbe {
                 }
                 if (StringUtils.isNotBlank(usedCpuUser)) {
                     bigDecimalMap.merge(FixHeader.HEADER_USED_CPU_USER, BigDecimal.valueOf(Double.parseDouble(usedCpuUser)), BigDecimal::add);
+                }
+            } finally {
+                if (conn != null) {
+                    conn.close();
                 }
             }
         }

@@ -13,9 +13,11 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
+
+import redis.clients.jedis.Connection;
+import redis.clients.jedis.ConnectionPool;
 import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Protocol;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -93,7 +95,7 @@ public class RedisClusterProber implements Prober {
     }
 
     public void collectClusterInfo(String clusterId, Map<String, String> instMap) throws PaasSdkException {
-        Map<String, JedisPool> clusterNodes = jedisCluster.getClusterNodes();
+        Map<String, ConnectionPool> clusterNodes = jedisCluster.getClusterNodes();
         // 组装redis监控数据
         JsonObject redisInfo = new JsonObject();
         JsonArray jsonArray = new JsonArray();
@@ -101,13 +103,20 @@ public class RedisClusterProber implements Prober {
         Map<String, Integer> intMap = new HashMap<>();
         Map<String, Long> longMap = new HashMap<>();
         Map<String, BigDecimal> bigDecimalMap = new HashMap<>();
-        for (Map.Entry<String, JedisPool> entry : clusterNodes.entrySet()) {
+        for (Map.Entry<String, ConnectionPool> entry : clusterNodes.entrySet()) {
             // redis list operates on master node
-            try (Jedis jedis = entry.getValue().getResource()) {
-                String info = jedis.info();
+            Connection conn = entry.getValue().getResource();
+            try {
+                conn.sendCommand(Protocol.Command.INFO);
+                String info = conn.getStatusCodeReply();
+                
                 String instId = instMap.get(entry.getKey());
                 // 提取字符串中redis的关键指标
                 infoTransformRedis(info, currentStamp, instId, jsonArray, intMap, longMap, bigDecimalMap);
+            } finally {
+                if (conn != null) {
+                    conn.close();
+                }
             }
         }
         int roundingMode = BigDecimal.ROUND_DOWN;
