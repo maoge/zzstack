@@ -888,9 +888,10 @@ public class RedisDeployUtils {
         return redisNode;
     }
     
-    public static boolean isExistMultiMasterNode(JsonArray redisNodeArr){
+    public static boolean checkMasterNode(JsonArray redisNodeArr, ResultBean result){
         int size = redisNodeArr.size();
-        int iFlag = 0;
+        int count = 0;
+        boolean ret = false;
 
         for (int i = 0; i < size; i++) {
 
@@ -899,12 +900,22 @@ public class RedisDeployUtils {
 
             if(!StringUtils.isNull(strNodeType)){
                 if(FixDefs.TYPE_REDIS_MASTER_NODE.equals(strNodeType)){
-                    iFlag++;
+                    count++;
                 }
             }
         }
 
-        return iFlag > 1;
+        if (count == 0) {
+            result.setRetCode(CONSTS.REVOKE_NOK);
+            result.setRetInfo("no master node exists");
+        } else if (count == 1) {
+            ret = true;
+        } else if (count > 1) {
+            result.setRetCode(CONSTS.REVOKE_NOK);
+            result.setRetInfo("too much master node exists");
+        } 
+        
+        return ret;
     }
 
     //伪部署

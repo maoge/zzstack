@@ -42,8 +42,8 @@ public class RedisMSDeployer implements ServiceDeployer {
         
         String version = serv.getVersion();
 
-        if(RedisDeployUtils.isExistMultiMasterNode(redisNodeArr)){ //判断主节点是否已存在
-            DeployLog.pubErrorLog(logKey, FixDefs.ERR_EXIST_MULTI_MASTER_NODE);
+        if (!RedisDeployUtils.checkMasterNode(redisNodeArr, result)) { // 判断主节点是否已存在
+            DeployLog.pubErrorLog(logKey, result.getRetInfo());
             return false;
         }
 
