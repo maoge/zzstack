@@ -269,6 +269,26 @@ func JoinRedisCluster(sshClient *SSHClient, cmdJoin, logKey string, paasResult *
 	return true
 }
 
+func RedisSlaveOf(sshClient *SSHClient, slaveCmd, logKey string, paasResult *result.ResultBean) bool {
+	bytes, ok, err := sshClient.RedisSlaveOf(slaveCmd)
+	if err != nil {
+		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = err.Error()
+		return false
+	}
+
+	if ok {
+		global.GLOBAL_RES.PubLog(logKey, string(bytes))
+	} else {
+		global.GLOBAL_RES.PubErrorLog(logKey, string(bytes))
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_JOIN_REDIS_CLUSTER_FAIL
+	}
+
+	return true
+}
+
 func ReshardingRedisSlot(sshClient *SSHClient, cmdMig, logKey string, paasResult *result.ResultBean) bool {
 	bytes, ok, err := sshClient.ReshardingRedisSlot(cmdMig)
 	if err != nil {
@@ -284,6 +304,20 @@ func ReshardingRedisSlot(sshClient *SSHClient, cmdMig, logKey string, paasResult
 		global.GLOBAL_RES.PubErrorLog(logKey, string(bytes))
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = consts.ERR_RESHARDING_REDIS_SLOT_FAIL
+	}
+
+	return true
+}
+
+func ConnectSSH(sshClient *SSHClient, logKey string, paasResult *result.ResultBean) bool {
+	if !sshClient.Connect() {
+		errMsg := fmt.Sprintf("ssh connect: %s:%d", sshClient.Ip, sshClient.SshPort)
+		utils.LOGGER.Error(errMsg)
+		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = errMsg
+		return false
 	}
 
 	return true

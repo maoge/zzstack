@@ -10,7 +10,6 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
-	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 func DeployCollectd(collectd map[string]interface{}, srvInstId, logKey, magicKey string, paasResult *result.ResultBean) bool {
@@ -36,13 +35,7 @@ func DeployCollectd(collectd map[string]interface{}, srvInstId, logKey, magicKey
 	}
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
-	if !sshClient.Connect() {
-		errMsg := fmt.Sprintf("ssh connect: %s:%d", ssh.SERVER_IP, ssh.SSH_PORT)
-		utils.LOGGER.Error(errMsg)
-		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
 		return false
 	} else {
 		defer sshClient.Close()
@@ -150,13 +143,7 @@ func UndeployCollectd(collectd map[string]interface{}, logKey, magicKey string, 
 	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("start undeploy collectd, inst_id:%s, serv_ip:%s", instId, ssh.SERVER_IP))
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
-	if !sshClient.Connect() {
-		errMsg := fmt.Sprintf("ssh connect: %s:%d", ssh.SERVER_IP, ssh.SSH_PORT)
-		utils.LOGGER.Error(errMsg)
-		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
 		return false
 	} else {
 		defer sshClient.Close()

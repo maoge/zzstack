@@ -31,6 +31,7 @@ var (
 	REDIS_MOVEING_SLOT        = []byte("Moving slot")
 	REDIS_CLUSTER_DELETE_NODE = []byte(">>> Sending CLUSTER RESET SOFT to the deleted node.")
 	REDIS_ADD_NODE_OK         = []byte("[OK] New node added correctly.")
+	REDIS_SLAVEOF_OK          = []byte("OK")
 )
 
 type SSHClient struct {
@@ -354,6 +355,20 @@ func (h *SSHClient) JoinRedisCluster(cmd string) ([]byte, bool, error) {
 	return bytes, ok, nil
 }
 
+func (h *SSHClient) RedisSlaveOf(cmd string) ([]byte, bool, error) {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		return nil, false, e
+	}
+
+	bytes, ok, e := h.ReadRedisSlaveOfOkOrErr()
+	if e != nil {
+		return nil, false, e
+	}
+
+	return bytes, ok, nil
+}
+
 func (h *SSHClient) ReshardingRedisSlot(cmd string) ([]byte, bool, error) {
 	e := h.ExecInteractCmd(cmd)
 	if e != nil {
@@ -420,6 +435,30 @@ func (h *SSHClient) ReadRedisJoinOkOrErr() ([]byte, bool, error) {
 		}
 	}
 
+	return out, res, nil
+}
+
+func (h *SSHClient) ReadRedisSlaveOfOkOrErr() ([]byte, bool, error) {
+	out := make([]byte, 0)
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return nil, false, err
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if eof(out) {
+				break
+			}
+		}
+	}
+
+	res := isRedisSlaveOfOk(out)
 	return out, res, nil
 }
 
@@ -628,6 +667,10 @@ func isRedisClusterInitOk(context []byte) bool {
 
 func isRedisClusterJoinOk(context []byte) bool {
 	return bytes.Index(context, REDIS_ADD_NODE_OK) != -1
+}
+
+func isRedisSlaveOfOk(context []byte) bool {
+	return bytes.Index(context, REDIS_SLAVEOF_OK) != -1
 }
 
 func isRedisMovingStart(context []byte) bool {

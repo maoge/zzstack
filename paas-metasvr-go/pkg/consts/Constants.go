@@ -44,6 +44,10 @@ const (
 	REVOKE_AUTH_IP_LIMIT               int           = -4
 	SERVICE_NOT_INIT                   int           = -5
 	SESSION_TTL                        int64         = 3600000
+	STR_NULL                                         = ""
+	TYPE_REDIS_MASTER_NODE                           = "1"
+	TYPE_REDIS_SLAVE_NODE                            = "0"
+	ATTR_NODE_TYPE                                   = "NODE_TYPE"
 	SESSION_KEY_PREFIX                               = "session:"
 	EVENTBUS_PULSAR                                  = "pulsar"
 	PAAS_TENANT                                      = "paas-tenant"

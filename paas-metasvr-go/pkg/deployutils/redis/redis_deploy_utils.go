@@ -12,10 +12,49 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
-	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
-func RedisClusterServiceFakeDeploy(servJson map[string]interface{}, servInstID, logKey, magicKey, operType string, paasResult *result.ResultBean) bool {
+func RedisMasterSlaveServiceFakeDeploy(servJson map[string]interface{}, servInstID, logKey, magicKey,
+	operType string, paasResult *result.ResultBean) bool {
+
+	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
+	redisNodeArr := nodeContainer[consts.HEADER_REDIS_NODE].([]map[string]interface{})
+
+	var deployFlag string = ""
+	var pseudoFlag string = ""
+	if operType == consts.STR_DEPLOY {
+		deployFlag = consts.STR_TRUE
+		pseudoFlag = consts.DEPLOY_FLAG_PSEUDO
+	} else {
+		deployFlag = consts.STR_FALSE
+		pseudoFlag = consts.DEPLOY_FLAG_PHYSICAL
+	}
+
+	for _, redisNode := range redisNodeArr {
+		redisNodeID := redisNode[consts.HEADER_INST_ID].(string)
+		if !metadao.UpdateInstanceDeployFlag(redisNodeID, deployFlag, logKey, magicKey, paasResult) {
+			return false
+		}
+	}
+
+	if !metadao.UpdateInstanceDeployFlag(servInstID, deployFlag, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	if !metadao.UpdateServiceDeployFlag(servInstID, deployFlag, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	if !metadao.ModServicePseudoFlag(servInstID, pseudoFlag, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func RedisClusterServiceFakeDeploy(servJson map[string]interface{}, servInstID, logKey, magicKey,
+	operType string, paasResult *result.ResultBean) bool {
+
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
 	proxyContainer := servJson[consts.HEADER_REDIS_PROXY_CONTAINER].(map[string]interface{})
 
@@ -106,6 +145,223 @@ func GetClusterNodes(redisNodeArr *[]map[string]interface{}) (string, string) {
 	return nodes4cluster, nodes4proxy
 }
 
+func DeploySingleRedisNode(redisNode map[string]interface{}, redisNodeArr []map[string]interface{}, isMaster bool,
+	version, logKey, magicKey string, paasResult *result.ResultBean) bool {
+
+	maxConn := redisNode[consts.HEADER_MAX_CONN].(string)
+	maxMem := redisNode[consts.HEADER_MAX_MEMORY].(string) // unit: GB
+	port := redisNode[consts.HEADER_PORT].(string)
+	instId := redisNode[consts.HEADER_INST_ID].(string)
+	sshId := redisNode[consts.HEADER_SSH_ID].(string)
+
+	lMaxMem, err := strconv.ParseInt(maxMem, 10, 64)
+	if err != nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_PARSE_REDIS_MAX_MEM
+		return false
+	}
+	lMaxMem = lMaxMem * consts.UNIT_G
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	if ssh == nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_SSH_NOT_FOUND
+		return false
+	}
+
+	info := fmt.Sprintf("start deploy redis-server, inst_id:%s, serv_ip:%s, port:%s", instId, ssh.SERVER_IP, port)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	if DeployUtils.CheckPortUpPredeploy(sshClient, port, logKey, paasResult) {
+		return false
+	}
+
+	deployFile := DeployUtils.GetDeployFile(consts.CACHE_REDIS_SERVER_FILE_ID, logKey, paasResult)
+	srcFileName := deployFile.FILE_NAME
+
+	// 版本优先级: service.VERSION > deploy_file.VERSION
+	if version == "" {
+		version = deployFile.VERSION
+	}
+
+	// CACHE_REDIS_SERVER_FILE_ID -> 'redis-xxx.tar.gz'
+	if !DeployUtils.FetchAndExtractTgzDeployFile(sshClient, consts.CACHE_REDIS_SERVER_FILE_ID, consts.CACHE_REDIS_ROOT, version, logKey, paasResult) {
+		return false
+	}
+
+	// 替换 %VERSION% 为真实版本
+	if strings.Index(srcFileName, consts.REG_VERSION) != -1 && version != "" {
+		srcFileName = strings.Replace(srcFileName, consts.REG_VERSION, version, -1)
+	}
+
+	idx := strings.Index(srcFileName, consts.TAR_GZ_SURFIX)
+	oldName := srcFileName[0:idx]
+
+	newName := "redis_" + port
+	// rm exists dir before deploy
+	if !DeployUtils.RM(sshClient, newName, logKey, paasResult) {
+		return false
+	}
+
+	// mv to new name
+	if !DeployUtils.MV(sshClient, newName, oldName, logKey, paasResult) {
+		return false
+	}
+
+	global.GLOBAL_RES.PubLog(logKey, "modify redis configure files ......")
+
+	if !DeployUtils.CD(sshClient, newName+"/etc", logKey, paasResult) {
+		return false
+	}
+
+	newConf := fmt.Sprintf("redis_%s.conf", port)
+	if !DeployUtils.MV(sshClient, newConf, consts.REDIS_CONF, logKey, paasResult) {
+		return false
+	}
+
+	pidFile := fmt.Sprintf("redis_%s.pid", port)
+	aofFile := fmt.Sprintf("appendonly_%s.aof", port)
+	confFile := fmt.Sprintf("nodes_%s.conf", port)
+
+	// bind %SERV_IP%
+	// port %SERV_PORT%
+	// pidfile ./data/%PID_FILE%
+	// requirepass %PASSWORD%
+	// maxclients %MAX_CONN%
+	// maxmemory %MAX_MEMORY%
+	// appendfilename %APPENDONLY_FILENAME%
+	// cluster-config-file %REDIS_CONF_FILENAME%
+	// cluster-enabled %CLUSTER_ENABLED%
+	clusterEnabledFlag := "no"
+
+	if !DeployUtils.SED(sshClient, consts.CONF_SERV_IP, ssh.SERVER_IP, newConf, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.SED(sshClient, consts.CONF_SERV_PORT, port, newConf, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.SED(sshClient, consts.CONF_PID_FILE, pidFile, newConf, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.SED(sshClient, consts.CONF_MAX_CONN, maxConn, newConf, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.SED(sshClient, consts.CONF_MAX_MEMORY, maxMem, newConf, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.SED(sshClient, consts.CONF_APPENDONLY_FILENAME, aofFile, newConf, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.SED(sshClient, consts.REDIS_CLUSTER_CONF_FILENAME, confFile, newConf, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.SED(sshClient, consts.CONF_CLUSTER_ENABLED, clusterEnabledFlag, newConf, logKey, paasResult) {
+		return false
+	}
+
+	// create start and stop shell
+	global.GLOBAL_RES.PubLog(logKey, "create start and stop shell ......")
+	if !DeployUtils.CD(sshClient, "..", logKey, paasResult) {
+		return false
+	}
+
+	startShell := fmt.Sprintf("./bin/redis-server ./etc/%s", newConf)
+	if !DeployUtils.CreateShell(sshClient, consts.START_SHELL, startShell, logKey, paasResult) {
+		return false
+	}
+
+	stopShell := fmt.Sprintf("./bin/redis-cli -h %s -p %s -a %s -c --no-auth-warning shutdown", ssh.SERVER_IP, port, consts.ZZSOFT_REDIS_PASSWD)
+	if !DeployUtils.CreateShell(sshClient, consts.STOP_SHELL, stopShell, logKey, paasResult) {
+		return false
+	}
+
+	// start
+	global.GLOBAL_RES.PubLog(logKey, "start redis-server ......")
+	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortUp(sshClient, "redis-server", instId, port, logKey, paasResult) {
+		return false
+	}
+
+	// slave node exec slaveof
+	if !isMaster {
+		masterNode := getMasNode(redisNodeArr)
+		if masterNode == nil {
+			global.GLOBAL_RES.PubErrorLog(logKey, consts.ERR_NO_REDIS_MASTER_NODE)
+			return false
+		}
+
+		masterPort := masterNode[consts.HEADER_PORT].(string)
+		masterSshId := masterNode[consts.HEADER_SSH_ID].(string)
+
+		masterSSH := meta.CMPT_META.GetSshById(sshId)
+		if masterSSH == nil {
+			errMsg := fmt.Sprintf("%s, ssh_id: %s", consts.ERR_METADATA_NOT_FOUND, masterSshId)
+			global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+
+			paasResult.RET_CODE = consts.REVOKE_NOK
+			paasResult.RET_INFO = errMsg
+			return false
+		}
+		masterHost := masterSSH.SERVER_IP
+
+		cmdSlaveOf := fmt.Sprintf("./bin/redis-cli -h %s -p %s slaveof %s %s", sshClient.Ip, port, masterHost, masterPort)
+		global.GLOBAL_RES.PubLog(logKey, cmdSlaveOf)
+
+		if !DeployUtils.RedisSlaveOf(sshClient, cmdSlaveOf, logKey, paasResult) {
+			global.GLOBAL_RES.PubFailLog(logKey, "join as slave node NOK ......")
+
+			cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+			DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
+
+			return false
+		}
+		global.GLOBAL_RES.PubSuccessLog(logKey, "join as slave node OK ......")
+	}
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func getMasNode(redisNodeArr []map[string]interface{}) map[string]interface{} {
+	if redisNodeArr == nil || len(redisNodeArr) == 0 {
+		return nil
+	}
+
+	for _, node := range redisNodeArr {
+		nodeTypeRaw := node[consts.ATTR_NODE_TYPE]
+		if nodeTypeRaw == nil {
+			continue
+		}
+
+		nodeType := nodeTypeRaw.(string)
+		if nodeType == consts.TYPE_REDIS_MASTER_NODE {
+			return node
+		}
+	}
+
+	return nil
+}
+
 func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster bool, join bool,
 	node4cluster, version, logKey, magicKey string, paasResult *result.ResultBean) bool {
 
@@ -134,13 +390,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 	}
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
-	if !sshClient.Connect() {
-		errMsg := fmt.Sprintf("ssh connect: %s:%d", ssh.SERVER_IP, ssh.SSH_PORT)
-		utils.LOGGER.Error(errMsg)
-		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
 		return false
 	} else {
 		defer sshClient.Close()
@@ -158,7 +408,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 		version = deployFile.VERSION
 	}
 
-	// CACHE_REDIS_SERVER_FILE_ID -> 'redis-6.0.tar.gz'
+	// CACHE_REDIS_SERVER_FILE_ID -> 'redis-xxx.tar.gz'
 	if !DeployUtils.FetchAndExtractTgzDeployFile(sshClient, consts.CACHE_REDIS_SERVER_FILE_ID, consts.CACHE_REDIS_ROOT, version, logKey, paasResult) {
 		return false
 	}
@@ -310,7 +560,7 @@ func DeployRedisNode(redisNode map[string]interface{}, init, expand, isCluster b
 		joinMasterAddr, ok := cluster.GetAnyMasterAddr()
 		if !ok {
 			paasResult.RET_CODE = consts.REVOKE_NOK
-			paasResult.RET_INFO = consts.ERR_NO_MASTER_NODE
+			paasResult.RET_INFO = consts.ERR_NO_REDIS_MASTER_NODE
 			return false
 		}
 
@@ -433,13 +683,7 @@ func UndeployRedisNode(redisJson map[string]interface{}, shrink bool, logKey, ma
 	}
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
-	if !sshClient.Connect() {
-		errMsg := fmt.Sprintf("ssh connect: %s:%d", servIp, ssh.SSH_PORT)
-		utils.LOGGER.Error(errMsg)
-		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
 		return false
 	} else {
 		defer sshClient.Close()
@@ -603,13 +847,7 @@ func DeployProxyNode(proxy map[string]interface{}, nodes4proxy, logKey, magicKey
 	}
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
-	if !sshClient.Connect() {
-		errMsg := fmt.Sprintf("ssh connect: %s:%d", ssh.SERVER_IP, ssh.SSH_PORT)
-		utils.LOGGER.Error(errMsg)
-		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
 		return false
 	} else {
 		defer sshClient.Close()
@@ -744,13 +982,7 @@ func UndeployProxyNode(proxy map[string]interface{}, force bool, logKey, magicKe
 	}
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
-	if !sshClient.Connect() {
-		errMsg := fmt.Sprintf("ssh connect: %s:%d", ssh.SERVER_IP, ssh.SSH_PORT)
-		utils.LOGGER.Error(errMsg)
-		global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
 		return false
 	} else {
 		defer sshClient.Close()
@@ -790,3 +1022,45 @@ func UndeployProxyNode(proxy map[string]interface{}, force bool, logKey, magicKe
 
 	return true
 }
+
+func CheckMasterNode(arr []map[string]interface{}, paasResult *result.ResultBean) bool {
+	count := 0
+	ret := false
+	for _, item := range arr {
+		strNodeType := item[consts.ATTR_NODE_TYPE].(string)
+		if strNodeType == consts.TYPE_REDIS_MASTER_NODE {
+			count++
+		}
+	}
+
+	if count == 0 {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_NO_REDIS_MASTER_NODE
+	} else if count == 1 {
+		ret = true
+	} else if count > 1 {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_TOO_MUCH_REDIS_MASTER_NODE
+	}
+
+	return ret
+}
+
+// public static boolean isExistMultiMasterNode(JsonArray redisNodeArr){
+// 	int size = redisNodeArr.size();
+// 	int iFlag = 0;
+
+// 	for (int i = 0; i < size; i++) {
+
+// 		JsonObject redisJson = redisNodeArr.getJsonObject(i);
+// 		String strNodeType = redisJson.getString(FixDefs.ATTR_NODE_TYPE);
+
+// 		if(!StringUtils.isNull(strNodeType)){
+// 			if(FixDefs.TYPE_REDIS_MASTER_NODE.equals(strNodeType)){
+// 				iFlag++;
+// 			}
+// 		}
+// 	}
+
+// 	return iFlag > 1;
+// }

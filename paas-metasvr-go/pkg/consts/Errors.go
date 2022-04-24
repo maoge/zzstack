@@ -64,5 +64,8 @@ const (
 	ERR_JOIN_REDIS_CLUSTER_FAIL        = "join redis cluster fail"
 	ERR_RESHARDING_REDIS_SLOT_FAIL     = "resharding redis slot fail"
 	ERR_NO_EXISTING_REDIS_NODE         = "can not find one existing node to join"
-	ERR_NO_MASTER_NODE                 = "can not find redis master node"
+	ERR_NOT_FIND_REDIS_MASTER_NODE     = "can not find redis master node"
+	ERR_NO_REDIS_MASTER_NODE           = "no redis master node"
+	ERR_TOO_MUCH_REDIS_MASTER_NODE     = "too much redis master node"
+	ERR_PARSE_REDIS_MAX_MEM            = "parse redis max memoy error"
 )
