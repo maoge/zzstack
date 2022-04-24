@@ -653,7 +653,7 @@ public class RedisDeployUtils {
                 return false;
             }
             String masterPort = masterNode.getString(FixHeader.HEADER_PORT);
-            String masterSshId = redisJson.getString(FixHeader.HEADER_SSH_ID);
+            String masterSshId = masterNode.getString(FixHeader.HEADER_SSH_ID);
             PaasSsh masterSsh = DeployUtils.getSshById(masterSshId, logKey, result);
             if (masterSsh == null) {
                 String errInfo = String.format("%s, ssh_id: %s", FixDefs.ERR_METADATA_NOT_FOUND, masterSshId);
