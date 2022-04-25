@@ -134,12 +134,6 @@ public class RedisMSDeployer implements ServiceDeployer {
         int redisNodeSize = redisNodeArr.size();
         for (int idx = 0; idx < redisNodeSize; ++idx) {
             JsonObject redisJson = redisNodeArr.getJsonObject(idx);
-
-            if (!force && RedisDeployUtils.isMasterNode(redisJson)) {
-                DeployLog.pubLog(logKey, FixDefs.ERR_EXIST_MULTI_MASTER_NODE);
-                return false;
-            }
-
             if (!RedisDeployUtils.undeploySingleRedisNode(redisJson, false, logKey, magicKey, result)) {
                 if (!force){
                     return false;
