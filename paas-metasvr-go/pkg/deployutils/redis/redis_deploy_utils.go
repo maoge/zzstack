@@ -342,6 +342,61 @@ func DeploySingleRedisNode(redisNode map[string]interface{}, redisNodeArr []map[
 	return true
 }
 
+func UndeploySingleRedisNode(redisNode map[string]interface{}, shrink bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	port := redisNode[consts.HEADER_PORT].(string)
+	instId := redisNode[consts.HEADER_INST_ID].(string)
+	sshId := redisNode[consts.HEADER_SSH_ID].(string)
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	if ssh == nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_SSH_NOT_FOUND
+		return false
+	}
+
+	info := fmt.Sprintf("start undeploy redis-server, inst_id:%s, serv_ip:%s, port:%s", instId, ssh.SERVER_IP, port)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	redisDir := fmt.Sprintf("redis_%s", port)
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.CACHE_REDIS_ROOT, redisDir)
+	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop redis-server ......")
+	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortDown(sshClient, "redis-server", instId, port, logKey, paasResult) {
+		return false
+	}
+
+	DeployUtils.CD(sshClient, "..", logKey, paasResult)
+	DeployUtils.RM(sshClient, redisDir, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
 func getMasNode(redisNodeArr []map[string]interface{}) map[string]interface{} {
 	if redisNodeArr == nil || len(redisNodeArr) == 0 {
 		return nil
@@ -1046,21 +1101,16 @@ func CheckMasterNode(arr []map[string]interface{}, paasResult *result.ResultBean
 	return ret
 }
 
-// public static boolean isExistMultiMasterNode(JsonArray redisNodeArr){
-// 	int size = redisNodeArr.size();
-// 	int iFlag = 0;
+func GetSelfRedisNode(redisNodeArr []map[string]interface{}, instID string) map[string]interface{} {
+	for _, node := range redisNodeArr {
+		currIDRaw := node[consts.HEADER_INST_ID]
+		if currIDRaw != nil {
+			currID := currIDRaw.(string)
+			if currID == instID {
+				return node
+			}
+		}
+	}
 
-// 	for (int i = 0; i < size; i++) {
-
-// 		JsonObject redisJson = redisNodeArr.getJsonObject(i);
-// 		String strNodeType = redisJson.getString(FixDefs.ATTR_NODE_TYPE);
-
-// 		if(!StringUtils.isNull(strNodeType)){
-// 			if(FixDefs.TYPE_REDIS_MASTER_NODE.equals(strNodeType)){
-// 				iFlag++;
-// 			}
-// 		}
-// 	}
-
-// 	return iFlag > 1;
-// }
+	return nil
+}
