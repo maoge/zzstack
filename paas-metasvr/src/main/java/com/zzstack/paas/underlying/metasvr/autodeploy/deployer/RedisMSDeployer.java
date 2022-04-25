@@ -197,25 +197,18 @@ public class RedisMSDeployer implements ServiceDeployer {
             JsonObject selfJson = RedisDeployUtils.getSelfRedisNode(redisNodeArr, instID);
             boolean isMasterNode = RedisDeployUtils.isMasterNode(selfJson);
             
-            if (isMasterNode) {
-                // 是否存在多个主节点?
-                if (RedisDeployUtils.isExistMultiMasterNode(redisNodeArr)) {
-                    DeployLog.pubErrorLog(logKey, FixDefs.ERR_EXIST_MULTI_MASTER_NODE);
-                    return false;
-                }
-                
-                // 主节点直接部署，启动start脚本
-                if (!RedisDeployUtils.deploySingleRedisNode(selfJson, redisNodeArr, true, version, logKey, magicKey, result))
-                    return false;
-            } else {
-                // 从节点，先启动，再执行slaveof挂载到主节点上
-                if (!RedisDeployUtils.deploySingleRedisNode(selfJson, redisNodeArr, false, version, logKey, magicKey, result))
-                    return false;
+            if (RedisDeployUtils.checkMasterNode(redisNodeArr, result)) {
+                DeployLog.pubErrorLog(logKey, FixDefs.ERR_EXIST_MULTI_MASTER_NODE);
+                return false;
             }
-        }
-
-        //部署collectd服务
-        if (servJson.containsKey(FixHeader.HEADER_COLLECTD)) {
+            
+            // 主节点直接部署，启动start脚本
+            // 从节点，先启动，再执行slaveof挂载到主节点上
+            if (!RedisDeployUtils.deploySingleRedisNode(selfJson, redisNodeArr, isMasterNode, version, logKey, magicKey, result)) {
+                return false;
+            }
+        } else if (cmptName.equals(FixDefs.CMPT_COLLECTD)) {
+            // 部署collectd服务
             JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
             if (!collectd.isEmpty()) {
                 if (!CollectdDeployUtils.deployCollectd(collectd, servInstID, logKey, magicKey, result)) {
