@@ -2074,5 +2074,18 @@ public class DeployUtils {
             ;
         }
     }
+    
+    public static JsonObject getSelfNode(JsonArray nodeArr, String instID) {
+        int size = nodeArr.size();
+        for (int i = 0; i < size; ++i) {
+            JsonObject currNode = nodeArr.getJsonObject(i);
+            String currID = currNode.getString(FixHeader.HEADER_INST_ID);
+            if (currID.equals(instID)) {
+                return currNode;
+            }
+        }
+        
+        return null;
+    }
 
 }

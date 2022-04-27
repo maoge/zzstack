@@ -226,6 +226,7 @@ public class CONSTS {
     public static final String ERR_PUT_SESSION = "put session fail ......";
     public static final String ERR_ACCOUNT_NOT_EXISTS = "account not exists ......";
     public static final String ERR_PAAS_SERVICE_INIT_FAIL = "paas service init fail ......";
+    public static final String ERR_UNSURPORT_OPERATION = "unsurport operation";
 
     // TIDB consts
     public static final String ERR_FIND_TIDB_SERVER_ERROR = "no available tidb server for serv_id ";
@@ -513,5 +514,8 @@ public class CONSTS {
     
     public static final String CLICKHOUSE_DEFAULT_USER = "default";
     public static final String CLICKHOUSE_DEFAULT_PWD = "abcd.1234";
+    
+    public static final String MINIO_ACCESS_KEY = "zzadmin";
+    public static final String MINIO_SECRET_KEY = "abcd.1234";
 
 }

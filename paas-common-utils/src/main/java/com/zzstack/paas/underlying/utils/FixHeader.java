@@ -393,6 +393,11 @@ public class FixHeader {
 
     public static final String HEADER_REDIS_HA_CLUSTER_CONTAINER = "REDIS_HA_CLUSTER_CONTAINER";
     public static final String HEADER_HA_CONTAINER = "HA_CONTAINER";
+    
+    public static final String HEADER_MINIO_CONTAINER = "MINIO_CONTAINER";
+    public static final String HEADER_MINIO = "MINIO";
+    public static final String HEADER_MINIO_MOUNT = "MINIO_MOUNT";
+    public static final String HEADER_MINIO_REGION = "MINIO_REGION";
 
     public static final String HEADER_DB_COLLECTD = "DB_COLLECTD";
     public static final String HEADER_COLLECTD_ID = "COLLECTD_ID";

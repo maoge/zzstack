@@ -186,6 +186,7 @@ public class FixDefs {
     public static final int    NGX_FILE_ID                        =   34;
     public static final int    SMS_QUERY_SERVER_FILE_ID           =   35;
     public static final int    NGX_SMS_QUERY_CONF_FILE_ID         =   36;
+    public static final int    STORE_MINIO_FILE_ID                =   37;
 
     public static final String PAAS_ROOT                          =   "paas";
     public static final String COMMON_TOOLS_ROOT                  =   "tools";
@@ -202,6 +203,7 @@ public class FixDefs {
     public static final String DB_CLICKHOUSE_ROOT                 =   "db/clickhouse";
     public static final String DB_VOLTDB_ROOT                     =   "db/voltdb";
     public static final String DB_YUGABYTEDB_ROOT                 =   "db/yugabyte";
+    public static final String STORE_MINIO_ROOT                   =   "store/minio";
 
     public static final String CACHE_REDIS_PROXY                  =   "cache_redis_proxy";
     public static final String CACHE_REDIS_PROXY_PREFIX           =   "cache_redis_proxy_";
@@ -251,6 +253,12 @@ public class FixDefs {
 	public static final String CONF_LISTEN_CLIENT_URLS            =   "%LISTEN_CLIENT_URLS%";
 	public static final String CONF_LISTEN_PEER_URLS              =   "%LISTEN_PEER_URLS%";
 	public static final String CONF_ADVERTISE_CLIENT_URLS         =   "%ADVERTISE_CLIENT_URLS%";
+	public static final String CONF_MINIO_REGION                  =   "%MINIO_REGION%";
+	public static final String CONF_MINIO_USER                    =   "%MINIO_USER%";
+	public static final String CONF_MINIO_PASSWD                  =   "%MINIO_PASSWD%";
+	public static final String CONF_ADDRESS                       =   "%ADDRESS%";
+	public static final String CONF_CONSOLE_ADDRESS               =   "%CONSOLE_ADDRESS%";
+	public static final String CONF_ENDPOINTS                     =   "%ENDPOINTS%";
 	
 	public static final String VOLTDB_ADMIN_NAME                  =   "admin";
 	public static final String VOLTDB_ADMIN_PWD                   =   "admin.1234";
@@ -349,6 +357,7 @@ public class FixDefs {
 	
 	public static final String CMPT_REDIS_NODE                    =   "REDIS_NODE";
 	public static final String CMPT_REDIS_PROXY                   =   "REDIS_PROXY";
+	public static final String CMPT_MINIO                         =   "MINIO";
 
     public static final String CACHE_REDIS_CLUSTER                =   "CACHE_REDIS_CLUSTER";
     public static final String CACHE_REDIS_MASTER_SLAVE           =   "CACHE_REDIS_MASTER_SLAVE";
