@@ -95,6 +95,13 @@ function init(id, name, type, clazz, isProduct ,version) {
             $("#SERVERLESS-APISIX").show();
             break;
 
+        case "STORE_MINIO":
+            $('#service_type').text("store服务");
+            plate = new Component.StoreMinioPlate(rootUrl, id, name, $("#canvas")[0], isProduct);
+            $("#store-deploy").show();
+            $("#STORE-MINIO").show();
+            break;
+
         case "SMS_GATEWAY":
             $('#service_type').text("SMS网关");
             plate = new Component.SMSGwPlate(rootUrl, id, name, $("#canvas")[0], isProduct, version);
@@ -127,6 +134,8 @@ function collapseToolBar() {
     $("#Cache-Redis").hide();
 
     $("#SERVERLESS-APISIX").hide();
+    
+    $("#STORE-MINIO").hide();
 
     $("#SMS_GATEWAY").hide();
     $("#SMS_QUERY_SERVICE").hide();
@@ -136,6 +145,7 @@ function collapseToolBar() {
     $("#cache-deploy").hide();
 
     $("#serverless-deploy").hide();
+    $("#store-deploy").hide();
     $("#sms-deploy").hide();
 }
 

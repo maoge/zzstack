@@ -290,7 +290,8 @@ insert into `t_meta_attr`(`ATTR_ID`,`ATTR_NAME`,`ATTR_NAME_CN`, `AUTO_GEN`) valu
 (321, 'SMS_EXT_PROTO_SWITCH',  'sms_ext_proto_switch',       '0'),
 (322, 'SMS_EXT_PROTO_PORT',    'sms_ext_proto_port',         '0'),
 (323, 'MINIO_REGION',          'region',                     '0'),
-(324, 'MINIO_MOUNT',           '挂载路径',                      '0');
+(324, 'MINIO_MOUNT',           '挂载路径',                      '0'),
+(325, 'MINIO_BROWSER',         '浏览器可否访问',                  '0');
 
 
 /*Table structure for component table `t_meta_cmpt` */
@@ -665,6 +666,7 @@ insert into `t_meta_cmpt_attr`(`CMPT_ID`,`ATTR_ID`, `ATTR_NAME`) values
 (312, 249, 'CONSOLE_PORT'),
 (312, 323, 'MINIO_REGION'),
 (312, 324, 'MINIO_MOUNT'),
+(312, 325, 'MINIO_BROWSER'),
 
 (700, 114, 'INST_ID'),
 
@@ -1161,7 +1163,7 @@ INSERT INTO `t_meta_deploy_file`(`FILE_ID`,`HOST_ID`,`SERV_TYPE`,`FILE_NAME`,`FI
 (34, 1, 'COMMON_NGX',          'nginx-1.19.6.tar.gz',              '/DATA/sms/work/ftp/', ROUND(UNIX_TIMESTAMP(CURTIME(4))*1000), '1.19.6'),
 (35, 1, 'SMS_QUERY_SERVICE',   'smsqueryserver-%VERSION%.zip',     '/DATA/sms/work/ftp/', ROUND(UNIX_TIMESTAMP(CURTIME(4))*1000), '1.2.0'),
 (36, 1, 'COMMON_NGX',          'nginx_sms_query.conf',             '/DATA/sms/work/ftp/', ROUND(UNIX_TIMESTAMP(CURTIME(4))*1000), ''),
-(37, 1, 'STORE_MINIO',         'minio-%VERSION%.zip',              '/DATA/sms/work/ftp/', ROUND(UNIX_TIMESTAMP(CURTIME(4))*1000), '2022-04-26T01');
+(37, 1, 'STORE_MINIO',         'minio-%VERSION%.tar.gz',              '/DATA/sms/work/ftp/', ROUND(UNIX_TIMESTAMP(CURTIME(4))*1000), '2022-04-26T01');
 
 
 DROP TABLE IF EXISTS `t_meta_server`;

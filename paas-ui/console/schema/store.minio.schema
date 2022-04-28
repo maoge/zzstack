@@ -1,0 +1,51 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type":"object",
+    "properties": {
+        "MINIO_SERV_CONTAINER":{
+            "type":"object",
+            "required":true,
+            "properties": {
+                "INST_ID": {"type":"string","required":true,"minLength":36,"description":"minio服务面板ID"},
+                
+                "MINIO_CONTAINER": {
+                    "type":"object",
+                    "required":true,
+                    "properties": {
+                        "INST_ID": {"type":"string","required":true,"minLength":36,"description":"minio容器ID"},
+                        "POS": {
+                            "type":"object",
+                            "required":true,
+                            "properties": {
+                                "x": {"type":"integer","required":true},
+                                "y": {"type":"integer","required":true},
+                                "width": {"type":"integer"},
+                                "height":{"type":"integer"},
+                                "row":{"type":"integer"},
+                                "col":{"type":"integer"}
+                            }
+                        },
+                        
+                        "MINIO": {
+                            "type":"array",
+                            "required":true,
+                            "items": {
+                                "type":"object",
+                                "properties": {
+                                    "INST_ID": {"type":"string","required":true,"minLength":36,"description":"Zookeeper ID","inputDisabled":true},
+                                    "SSH_ID": {"type":"string","module":"select","required":true,"description":"服务器"},
+                                    "PORT": {"type":"string","required":true,"description":"minio.PORT","pattern":"[^0-9]","message":"PORT不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "CONSOLE_PORT": {"type":"string","required":true,"description":"minio.CONSOLE_PORT","pattern":"[^0-9]","message":"CONSOLE_PORT不能为空，必须是数字，范围在1024-65535！","isPort":"yes"},
+                                    "MINIO_REGION": {"type":"string","required":true,"description":"region","default":"region-cn"},
+                                    "MINIO_MOUNT": {"type":"string","required":true,"description":"数据挂载路径(多路径','分隔)","default":"/minio/data"},
+                                    "MINIO_BROWSER": {"type":"string","module":"select","required":true,"description":"浏览器可否访问","default":"on","note":"on|off"}
+                                },
+                                "minItems":1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

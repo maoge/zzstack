@@ -398,6 +398,7 @@ public class FixHeader {
     public static final String HEADER_MINIO = "MINIO";
     public static final String HEADER_MINIO_MOUNT = "MINIO_MOUNT";
     public static final String HEADER_MINIO_REGION = "MINIO_REGION";
+    public static final String HEADER_MINIO_BROWSER = "MINIO_BROWSER";
 
     public static final String HEADER_DB_COLLECTD = "DB_COLLECTD";
     public static final String HEADER_COLLECTD_ID = "COLLECTD_ID";

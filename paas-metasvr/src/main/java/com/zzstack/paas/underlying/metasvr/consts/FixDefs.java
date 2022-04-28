@@ -256,6 +256,7 @@ public class FixDefs {
 	public static final String CONF_MINIO_REGION                  =   "%MINIO_REGION%";
 	public static final String CONF_MINIO_USER                    =   "%MINIO_USER%";
 	public static final String CONF_MINIO_PASSWD                  =   "%MINIO_PASSWD%";
+	public static final String CONF_MINIO_BROWSER                 =   "%BROWSER%";
 	public static final String CONF_ADDRESS                       =   "%ADDRESS%";
 	public static final String CONF_CONSOLE_ADDRESS               =   "%CONSOLE_ADDRESS%";
 	public static final String CONF_ENDPOINTS                     =   "%ENDPOINTS%";
@@ -377,6 +378,7 @@ public class FixDefs {
 	public static final String ATTR_NODE_TYPE                     =   "NODE_TYPE";
 
 	public static final String SERVERLESS_APISIX                  =   "SERVERLESS_APISIX";
+	public static final String STORE_MINIO                        =   "STORE_MINIO";
 	public static final String MQ_ROCKETMQ                  	  =   "MQ_ROCKETMQ";
 	public static final String MQ_PULSAR                          =   "MQ_PULSAR";
     public static final String DB_TDENGINE                        =   "DB_TDENGINE";

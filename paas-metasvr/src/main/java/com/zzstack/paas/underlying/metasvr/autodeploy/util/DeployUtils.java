@@ -734,7 +734,9 @@ public class DeployUtils {
         if (!execSimpleCmd(ssh2, cmd, logKey, result))
             return false;
         
-        cmd = String.format("%s -i 's/%s/%s/g' %s", SSHExecutor.CMD_SED, oldValue, "", file);
+        // cmd = String.format("%s -i 's/%s/%s/g' %s", SSHExecutor.CMD_SED, oldValue, "", file);
+        // sed '/System/d' sed-demo.txt
+        cmd = String.format("%s -i '/%s/d' %s", SSHExecutor.CMD_SED, oldValue, file);
         return execSimpleCmd(ssh2, cmd, logKey, result);
     }
 

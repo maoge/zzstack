@@ -21,8 +21,8 @@ public class MinioDeployerUtils {
             return "";
         
         StringBuilder sb = new StringBuilder();
-        int size = minioArr.size();
-        for (int i = 0; i < size; i++) {
+        int maxMinio = minioArr.size() - 1;
+        for (int i = 0; i <= maxMinio; i++) {
             JsonObject minio = minioArr.getJsonObject(i);
             
             String sshID = minio.getString(FixHeader.HEADER_SSH_ID);
@@ -33,17 +33,19 @@ public class MinioDeployerUtils {
             String ip = ssh.getServerIp();
             
             // http://192.168.238.135/data{1...4}
-            for (String mountPoint : mountArr) {
-                String endPoint = String.format("http://%s%s", ip, mountPoint);
+            int maxArr = mountArr.length - 1;
+            for (int j = 0; j <= maxArr; j++) {
+                String mountPoint = mountArr[j];
+                String endPoint = String.format("    http://%s%s \\", ip, mountPoint);
+                sb.append(endPoint);
                 
-                if (sb.length() > 0) {
-                    sb.append("\\\\r");
+                if (j == maxArr && i == maxMinio) {
+                    continue;
                 }
                 
-                sb.append(endPoint);
+                sb.append("\\\\\n");
             }
         }
-        
         
         return sb.toString();
     }
@@ -54,6 +56,7 @@ public class MinioDeployerUtils {
         String minioPort = minioNode.getString(FixHeader.HEADER_PORT);
         String minioConsolePort = minioNode.getString(FixHeader.HEADER_CONSOLE_PORT);
         String region = minioNode.getString(FixHeader.HEADER_MINIO_REGION);
+        String browerFlag = minioNode.getString(FixHeader.HEADER_MINIO_BROWSER);
         
         PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(instId);
         if (DeployUtils.isInstanceDeployed(inst, logKey, result)) return true;
@@ -108,12 +111,18 @@ public class MinioDeployerUtils {
             return false;
         }
         
+        // endpoints = endpoints.replaceAll("/", "\\\\/");
+        
+        // export MINIO_BROWSER=%BROWSER%
         // export MINIO_REGION_NAME=%MINIO_REGION%
         // export MINIO_ACCESS_KEY=%MINIO_USER%
         // export MINIO_SECRET_KEY=%MINIO_PASSWD%
         // nohup ./bin/minio server --address %ADDRESS% --console-address %CONSOLE_ADDRESS% --config-dir ./etc \
-        // %ENDPOINTS%
         String file = FixDefs.START_SHELL;
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_MINIO_BROWSER, browerFlag, file, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
         if (!DeployUtils.sed(ssh2, FixDefs.CONF_MINIO_REGION, region, file, logKey, result)) {
             ssh2.close();
             return false;
@@ -134,7 +143,7 @@ public class MinioDeployerUtils {
             ssh2.close();
             return false;
         }
-        if (!DeployUtils.sed(ssh2, FixDefs.CONF_ENDPOINTS, endpoints, file, logKey, result)) {
+        if (!DeployUtils.appendMultiLine(ssh2, FixDefs.CONF_ENDPOINTS, endpoints, file, logKey, result)) {
             ssh2.close();
             return false;
         }

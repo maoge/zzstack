@@ -1151,6 +1151,7 @@ public class CmptMeta {
         metaServRootMapRef.put(CONSTS.SERV_TYPE_MQ_PULSAR,                "PULSAR_SERV_CONTAINER");
         
         metaServRootMapRef.put(CONSTS.SERV_TYPE_SERVERLESS_APISIX,        "APISIX_SERV_CONTAINER");
+        metaServRootMapRef.put(CONSTS.SERV_TYPE_STORE_MINIO,              "MINIO_SERV_CONTAINER");
         metaServRootMapRef.put(CONSTS.SERV_TYPE_SMS_GATEWAY,              "SMS_GATEWAY_SERV_CONTAINER");
         metaServRootMapRef.put(CONSTS.SERV_TYPE_SMS_QUERY,                "SMS_QUERY_SERV_CONTAINER");
     }

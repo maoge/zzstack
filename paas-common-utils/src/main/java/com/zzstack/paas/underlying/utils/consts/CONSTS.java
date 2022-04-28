@@ -159,6 +159,7 @@ public class CONSTS {
     public static final String SERV_TYPE_CACHE_REDIS_HA_CLUSTER = "CACHE_REDIS_HA_CLUSTER";
 
     public static final String SERV_TYPE_SERVERLESS_APISIX = "SERVERLESS_APISIX";
+    public static final String SERV_TYPE_STORE_MINIO = "STORE_MINIO";
 
     public static final String SERV_TYPE_MQ_ROCKETMQ = "MQ_ROCKETMQ";
     public static final String SERV_TYPE_MQ_PULSAR = "MQ_PULSAR";

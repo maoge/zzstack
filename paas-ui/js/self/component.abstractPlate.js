@@ -458,7 +458,16 @@ var Component = window.Component || {};
                         return false;
                     } 
                 }    
-            }       
+            }
+        }else if(self.PlateType == "STORE_MINIO"){
+            if(self.isProduct == "1"){
+                if(element.type=="MINIO"){
+                    if(self.MinioContainer.childs.length<4){
+                        Component.Alert("warn", "目前环境为生产环境，minio至少存在4个组件!");
+                        return false;
+                    } 
+                }
+            }
         }else if(self.PlateType == "MQ_ROCKETMQ"){
             var data = self.VbrokerContainer.childs;
             if(self.isProduct == "1"){

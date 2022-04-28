@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zzstack.paas.underlying.metasvr.autodeploy.deployer.ApiSixDeployer;
+import com.zzstack.paas.underlying.metasvr.autodeploy.deployer.MinioDeployer;
 import com.zzstack.paas.underlying.metasvr.autodeploy.deployer.ClickHouseDeployer;
 import com.zzstack.paas.underlying.metasvr.autodeploy.deployer.OracleDgDeployer;
 import com.zzstack.paas.underlying.metasvr.autodeploy.deployer.PulsarDeployer;
@@ -48,6 +49,7 @@ public class DeployerFactory {
         DEPLOYER_MAP.put(FixDefs.DB_YUGABYTEDB,            YugaByteDBDeployer.class);
         
         DEPLOYER_MAP.put(FixDefs.SERVERLESS_APISIX,        ApiSixDeployer.class);
+        DEPLOYER_MAP.put(FixDefs.STORE_MINIO,              MinioDeployer.class);
         
         DEPLOYER_MAP.put(FixDefs.SMS_GATEWAY,              SMSGatewayDeployer.class);
         DEPLOYER_MAP.put(FixDefs.SMS_QUERY_SERVICE,        SMSQueryServiceDeployer.class);

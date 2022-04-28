@@ -502,6 +502,10 @@ function onServClazzSel(typeSel, clazzSel, hide, versionSel) {
             typeSel.append(`<option value ="CACHE_REDIS_HA_CLUSTER">CACHE_REDIS_HA_CLUSTER</option>`);
             if (hide) setVersionSel("CACHE_REDIS_CLUSTER", versionSel);
             break;
+        case 'KVSTORE':
+            typeSel.append(`<option value ="STORE_MINIO">STORE_MINIO</option>`);
+            if (hide) setVersionSel("STORE_MINIO", versionSel);
+            break;
         case 'SERVERLESS':
             typeSel.append(`<option value ="SERVERLESS_APISIX">SERVERLESS_APISIX</option>`);
             if (hide) setVersionSel("SERVERLESS_APISIX", versionSel);
