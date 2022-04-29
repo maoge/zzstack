@@ -241,7 +241,10 @@ public class MinioDeployerUtils {
         // clear mount points
         String[] mountArr = mount.split(CONSTS.PATH_COMMA);
         for (String mountPoint : mountArr) {
-            String path = String.format("%s/*", mountPoint);
+            String path = String.format("%s/.minio.sys", mountPoint);
+            DeployUtils.rm(ssh2, path, logKey, result);
+            
+            path = String.format("%s/*", mountPoint);
             DeployUtils.rm(ssh2, path, logKey, result);
         }
 
