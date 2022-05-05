@@ -150,7 +150,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
         // 卸载prometheus
         if (prometheus != null && !prometheus.isEmpty()) {
             if (!DeployUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result)) {
-                DeployLog.pubFailLog(logKey, "pulsar undeploy failed ......");
+                DeployLog.pubFailLog(logKey, "prometheus undeploy failed ......");
                 return false;
             }
         }

@@ -377,7 +377,7 @@ func UndeploySingleRedisNode(redisNode map[string]interface{}, shrink bool, logK
 
 	// stop
 	global.GLOBAL_RES.PubLog(logKey, "stop redis-server ......")
-	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
 	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}

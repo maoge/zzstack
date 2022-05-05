@@ -137,6 +137,16 @@ func AddLine(sshClient *SSHClient, context, confFile, logKey string, paasResult 
 	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
 }
 
+func AppendMultiLine(sshClient *SSHClient, oldValue, newValue, file, logKey string, paasResult *result.ResultBean) bool {
+	cmd := fmt.Sprintf("%s -i '/%s/a\\%s' %s", consts.CMD_SED, oldValue, newValue, file)
+	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	cmd = fmt.Sprintf("%s -i '/%s/d' %s", consts.CMD_SED, oldValue, file)
+	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
+}
+
 func CreateShell(sshClient *SSHClient, fileName, shell, logKey string, paasResult *result.ResultBean) bool {
 	if IsFileExist(sshClient, fileName, false, logKey, paasResult) {
 		RM(sshClient, fileName, logKey, paasResult)
