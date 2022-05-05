@@ -1547,78 +1547,6 @@ public class DeployUtils {
         return true;
     }
     
-    public static boolean undeployPrometheus(JsonObject prometheus, String version, String logKey, String magicKey,
-            ResultBean result) {
-
-        String instId = prometheus.getString(FixHeader.HEADER_INST_ID);
-        String sshId = prometheus.getString(FixHeader.HEADER_SSH_ID);
-        String prometheusPort = prometheus.getString(FixHeader.HEADER_PROMETHEUS_PORT);
-        
-        PaasSsh ssh = DeployUtils.getSshById(sshId, logKey, result);
-        if (ssh == null) return false;
-        String servIp = ssh.getServerIp();
-        String sshName = ssh.getSshName();
-        String sshPwd = ssh.getSshPwd();
-        int sshPort = ssh.getSshPort();
-        SSHExecutor ssh2 = new SSHExecutor(sshName, sshPwd, servIp, sshPort);
-        if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
-        {
-            String info = String.format("start undeploy prometheus, inst_id:%s, serv_ip:%s, prometheus_port:%s", instId, servIp, prometheusPort);
-            DeployLog.pubLog(logKey, info);
-        }
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        
-        PaasInstance inst = cmptMeta.getInstance(instId);
-        if (DeployUtils.isInstanceNotDeployed(inst, logKey, result)) return true;
-        if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
-        
-        PaasDeployFile deployFile = DeployUtils.getDeployFile(FixDefs.PROMETHEUS_FILE_ID, logKey, result);
-        String srcFileName = deployFile.getFileName();
-        
-        if (version == null || version.isEmpty()) {
-            version = deployFile.getVersion();
-        }
-        if (srcFileName.indexOf(CONSTS.REG_VERSION) != -1 && version != null && !version.isEmpty()) {
-            srcFileName = srcFileName.replaceFirst(CONSTS.REG_VERSION, version);
-        }
-
-        int i = srcFileName.indexOf(CONSTS.TAR_GZ_SURFIX);
-        String oldName = srcFileName.substring(0, i);
-
-        String newName = oldName + "_" + prometheusPort;
-        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.COMMON_TOOLS_ROOT, newName);
-        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) {
-            ssh2.close();
-            return false;
-        }
-        
-        // stop
-        DeployLog.pubLog(logKey, "stop prometheus ......");
-        String cmd = "./stop.sh";
-        if (!DeployUtils.execSimpleCmd(ssh2, cmd, logKey, result)) {
-            ssh2.close();
-            return false;
-        }
-        
-        if (!DeployUtils.cd(ssh2, "..", logKey, result)) {
-            ssh2.close();
-            return false;
-        }
-        if (!DeployUtils.rm(ssh2, newName, logKey, result)) {
-            ssh2.close();
-            return false;
-        }
-
-        // update instance deploy flag
-        if (!MetaDataDao.updateInstanceDeployFlag(instId, FixDefs.STR_FALSE, result, magicKey)) {
-            ssh2.close();
-            return false;
-        }
-
-        ssh2.close();
-        return true;
-    }
-    
     public static boolean deployGrafana(JsonObject grafana, String version, String logKey, String magicKey, ResultBean result) {
         String instId = grafana.getString(FixHeader.HEADER_INST_ID);
         String sshId = grafana.getString(FixHeader.HEADER_SSH_ID);
@@ -2088,6 +2016,256 @@ public class DeployUtils {
         }
         
         return null;
+    }
+    
+    public static String getZKAddress(JsonArray zkArr) {
+        CmptMeta meta = MetaSvrGlobalRes.get().getCmptMeta();
+        
+        StringBuilder buff = new StringBuilder();
+        int size = zkArr.size();
+        for (int idx = 0; idx < size; ++idx) {
+            JsonObject item = zkArr.getJsonObject(idx);
+            String sshID = item.getString(FixHeader.HEADER_SSH_ID);
+            String clientPort1 = item.getString(FixHeader.HEADER_ZK_CLIENT_PORT1);
+            String clientPort2 = item.getString(FixHeader.HEADER_ZK_CLIENT_PORT2);
+            
+            PaasSsh ssh = meta.getSshById(sshID);
+            String servIP = ssh.getServerIp();
+            
+            // server.1=host1:2888:3888
+            // server.2=host2:2888:3888
+            // server.3=host3:2888:3888
+            String line = String.format("server.%d=%s:%s:%s", (idx + 1), servIP, clientPort1, clientPort2);
+            if (idx > 0)
+                buff.append("\n");
+            
+            buff.append(line);
+        }
+        
+        return buff.toString();
+    }
+    
+    public static String getZKShortAddress(JsonArray zkArr) {
+        CmptMeta meta = MetaSvrGlobalRes.get().getCmptMeta();
+        
+        StringBuilder buff = new StringBuilder();
+        int size = zkArr.size();
+        for (int idx = 0; idx < size; ++idx) {
+            JsonObject item = zkArr.getJsonObject(idx);
+            String sshID = item.getString(FixHeader.HEADER_SSH_ID);
+            String clientPort = item.getString(FixHeader.HEADER_CLIENT_PORT);
+            
+            PaasSsh ssh = meta.getSshById(sshID);
+            String servIP = ssh.getServerIp();
+            
+            String line = String.format("%s:%s", servIP, clientPort);
+            if (idx > 0)
+                buff.append(",");
+            
+            buff.append(line);
+        }
+        
+        return buff.toString();
+    }
+    
+    public static boolean deployPrometheus(JsonObject prometheus, String pulsarClusterName, String brokers,
+            String bookies, String zks, String version, String logKey, String magicKey, ResultBean result) {
+
+        String instId = prometheus.getString(FixHeader.HEADER_INST_ID);
+        String sshId = prometheus.getString(FixHeader.HEADER_SSH_ID);
+        String prometheusPort = prometheus.getString(FixHeader.HEADER_PROMETHEUS_PORT);
+        
+        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(instId);
+        if (DeployUtils.isInstanceDeployed(inst, logKey, result)) return true;
+
+        PaasSsh ssh = DeployUtils.getSshById(sshId, logKey, result);
+        if (ssh == null) return false;
+        String servIp = ssh.getServerIp();
+        String sshName = ssh.getSshName();
+        String sshPwd = ssh.getSshPwd();
+        int sshPort = ssh.getSshPort();
+        
+        {
+            String info = String.format("deploy prometheus: %s:%s, instId:%s", servIp, prometheusPort, instId);
+            DeployLog.pubLog(logKey, info);
+        }
+        
+        SSHExecutor ssh2 = new SSHExecutor(sshName, sshPwd, servIp, sshPort);
+        if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
+        
+        if (DeployUtils.checkPortUpPredeploy(ssh2, "prometheus", instId, servIp, prometheusPort, logKey, result)) {
+            ssh2.close();
+            result.setRetCode(CONSTS.REVOKE_NOK);
+            result.setRetInfo("prometheus.prometheusPort is in use");
+            return false;
+        }
+        
+        //获取文件,解压文件
+        if (!DeployUtils.fetchAndExtractTGZDeployFile(ssh2, FixDefs.PROMETHEUS_FILE_ID, FixDefs.COMMON_TOOLS_ROOT, version, logKey, result))
+            return false;
+        
+        //修改文件名
+        PaasDeployFile deployFile = DeployUtils.getDeployFile(FixDefs.PROMETHEUS_FILE_ID, logKey, result);
+        String srcFileName = deployFile.getFileName();
+
+        if (version == null || version.isEmpty()) {
+            version = deployFile.getVersion();
+        }
+        if (srcFileName.indexOf(CONSTS.REG_VERSION) != -1 && version != null && !version.isEmpty()) {
+            srcFileName = srcFileName.replaceFirst(CONSTS.REG_VERSION, version);
+        }
+
+        int i = srcFileName.indexOf(CONSTS.TAR_GZ_SURFIX);
+        String oldName = srcFileName.substring(0, i);
+
+        String newName = oldName + "_" + prometheusPort;
+        if (!DeployUtils.rm(ssh2, newName, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.mv(ssh2, newName, oldName, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.cd(ssh2, newName, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        // start.sh stop.sh %LISTEN_ADDRESS%
+        String prometheusAddr = String.format("%s:%s", servIp, prometheusPort);
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_LISTEN_ADDRESS, prometheusAddr, FixDefs.START_SHELL, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_LISTEN_ADDRESS, prometheusAddr, FixDefs.STOP_SHELL, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        // scp prometheus_pulsar.yml
+        if (!DeployUtils.fetchFile(ssh2, FixDefs.PROMETHEUS_PULSAR_YML_FILE_ID, logKey, result)) {
+            DeployLog.pubFailLog(logKey, "scp prometheus_pulsar.yml fail ......");
+            return false;
+        }
+        
+        // cluster: %CLUSTER_NAME%
+        // %PULSAR_BROKERS%
+        // %PULSAR_BOOKIES%
+        // %PULSAR_ZOOKEEPERS%
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_CLUSTER_NAME, pulsarClusterName, FixDefs.PROMETHEUS_PULSAR_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_PULSAR_BROKERS, brokers, FixDefs.PROMETHEUS_PULSAR_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_PULSAR_BOOKIES, bookies, FixDefs.PROMETHEUS_PULSAR_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_PULSAR_ZOOKEEPERS, zks, FixDefs.PROMETHEUS_PULSAR_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.mv(ssh2, FixDefs.PROMETHEUS_YML, FixDefs.PROMETHEUS_PULSAR_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        // start
+        DeployLog.pubLog(logKey, "start prometheus ......");
+        String cmd = String.format("./%s", FixDefs.START_SHELL);
+        if (!DeployUtils.execSimpleCmd(ssh2, cmd, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        if (!DeployUtils.checkPortUp(ssh2, "prometheus", instId, servIp, prometheusPort, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+
+        // 3. update t_meta_instance is_deployed flag
+        if (!MetaDataDao.updateInstanceDeployFlag(instId, FixDefs.STR_TRUE, result, magicKey)) {
+            ssh2.close();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    public static boolean undeployPrometheus(JsonObject prometheus, String version, String logKey, String magicKey,
+            ResultBean result) {
+
+        String instId = prometheus.getString(FixHeader.HEADER_INST_ID);
+        String sshId = prometheus.getString(FixHeader.HEADER_SSH_ID);
+        String prometheusPort = prometheus.getString(FixHeader.HEADER_PROMETHEUS_PORT);
+        
+        PaasSsh ssh = DeployUtils.getSshById(sshId, logKey, result);
+        if (ssh == null) return false;
+        String servIp = ssh.getServerIp();
+        String sshName = ssh.getSshName();
+        String sshPwd = ssh.getSshPwd();
+        int sshPort = ssh.getSshPort();
+        SSHExecutor ssh2 = new SSHExecutor(sshName, sshPwd, servIp, sshPort);
+        if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
+        {
+            String info = String.format("start undeploy prometheus, inst_id:%s, serv_ip:%s, prometheus_port:%s", instId, servIp, prometheusPort);
+            DeployLog.pubLog(logKey, info);
+        }
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        
+        PaasInstance inst = cmptMeta.getInstance(instId);
+        if (DeployUtils.isInstanceNotDeployed(inst, logKey, result)) return true;
+        if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
+        
+        PaasDeployFile deployFile = DeployUtils.getDeployFile(FixDefs.PROMETHEUS_FILE_ID, logKey, result);
+        String srcFileName = deployFile.getFileName();
+        
+        if (version == null || version.isEmpty()) {
+            version = deployFile.getVersion();
+        }
+        if (srcFileName.indexOf(CONSTS.REG_VERSION) != -1 && version != null && !version.isEmpty()) {
+            srcFileName = srcFileName.replaceFirst(CONSTS.REG_VERSION, version);
+        }
+
+        int i = srcFileName.indexOf(CONSTS.TAR_GZ_SURFIX);
+        String oldName = srcFileName.substring(0, i);
+
+        String newName = oldName + "_" + prometheusPort;
+        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.COMMON_TOOLS_ROOT, newName);
+        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        // stop
+        DeployLog.pubLog(logKey, "stop prometheus ......");
+        String cmd = "./stop.sh";
+        if (!DeployUtils.execSimpleCmd(ssh2, cmd, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        if (!DeployUtils.cd(ssh2, "..", logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.rm(ssh2, newName, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+
+        // update instance deploy flag
+        if (!MetaDataDao.updateInstanceDeployFlag(instId, FixDefs.STR_FALSE, result, magicKey)) {
+            ssh2.close();
+            return false;
+        }
+
+        ssh2.close();
+        return true;
     }
 
 }

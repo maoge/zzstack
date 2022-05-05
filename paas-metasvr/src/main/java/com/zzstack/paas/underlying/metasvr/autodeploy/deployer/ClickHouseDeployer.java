@@ -4,7 +4,6 @@ import com.zzstack.paas.underlying.metasvr.autodeploy.ServiceDeployer;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.ClickHouseDeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.DeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.InstanceOperationEnum;
-import com.zzstack.paas.underlying.metasvr.autodeploy.util.PulsarDeployerUtils;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
 import com.zzstack.paas.underlying.metasvr.bean.PaasService;
@@ -49,7 +48,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
         JsonObject zkContainer = servJson.getJsonObject(FixHeader.HEADER_ZOOKEEPER_CONTAINER);
         JsonArray zkArr = zkContainer.getJsonArray(FixHeader.HEADER_ZOOKEEPER);
         // 部署zookeeper服务
-        String zkAddrList = PulsarDeployerUtils.getZKAddress(zkArr);
+        String zkAddrList = DeployUtils.getZKAddress(zkArr);
         for (int i = 0; i < zkArr.size(); i++) {
             JsonObject zk = zkArr.getJsonObject(i);
             if (!DeployUtils.deployZKNode(zk, (i + 1), version, zkAddrList, logKey, magicKey, result)) {
@@ -150,7 +149,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
         
         // 卸载prometheus
         if (prometheus != null && !prometheus.isEmpty()) {
-            if (!PulsarDeployerUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result)) {
+            if (!DeployUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, "pulsar undeploy failed ......");
                 return false;
             }
@@ -226,7 +225,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
         switch (instCmpt.getCmptName()) {
         case FixHeader.HEADER_ZOOKEEPER:
             JsonObject zk = DeployUtils.getSpecifiedItem(zkArr, instID);
-            String zkAddrList = PulsarDeployerUtils.getZKAddress(zkArr);
+            String zkAddrList = DeployUtils.getZKAddress(zkArr);
             deployResult = DeployUtils.deployZKNode(zk, zkArr.size(), version, zkAddrList, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_CLICKHOUSE_SERVER:
@@ -296,7 +295,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
             DeployLog.pubFailLog(logKey, info);
             break;
         case FixHeader.HEADER_PROMETHEUS:
-            undeployResult = PulsarDeployerUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result);
+            undeployResult = DeployUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_GRAFANA:
             undeployResult = DeployUtils.undeployGrafana(grafana, version, logKey, magicKey, result);

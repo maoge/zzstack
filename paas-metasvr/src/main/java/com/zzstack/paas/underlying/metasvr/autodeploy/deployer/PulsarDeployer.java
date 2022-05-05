@@ -44,7 +44,7 @@ public class PulsarDeployer implements ServiceDeployer {
         JsonObject zkContainer = servJson.getJsonObject(FixHeader.HEADER_ZOOKEEPER_CONTAINER);
         JsonArray zkArr = zkContainer.getJsonArray(FixHeader.HEADER_ZOOKEEPER);
         // 部署zookeeper服务
-        String zkAddrList = PulsarDeployerUtils.getZKAddress(zkArr);
+        String zkAddrList = DeployUtils.getZKAddress(zkArr);
         for (int i = 0; i < zkArr.size(); i++) {
             JsonObject zk = zkArr.getJsonObject(i);
             if (!DeployUtils.deployZKNode(zk, (i + 1), version, zkAddrList, logKey, magicKey, result)) {
@@ -57,7 +57,7 @@ public class PulsarDeployer implements ServiceDeployer {
         // 部署bookkeeper服务
         JsonObject bookieContainer = servJson.getJsonObject(FixHeader.HEADER_PULSAR_BOOKKEEPER_CONTAINER);
         JsonArray bookieArr = bookieContainer.getJsonArray(FixHeader.HEADER_PULSAR_BOOKKEEPER);
-        String zkShortAddress = PulsarDeployerUtils.getZKShortAddress(zkArr);
+        String zkShortAddress = DeployUtils.getZKShortAddress(zkArr);
         for (int i = 0; i < bookieArr.size(); i++) {
             JsonObject bookie = bookieArr.getJsonObject(i);
             boolean initMeta = i == 0;
@@ -104,7 +104,7 @@ public class PulsarDeployer implements ServiceDeployer {
             String bookies = PulsarDeployerUtils.getPulsarBookieListForPrometheus(bookieArr);
             String zks = PulsarDeployerUtils.getPulsarZKListForPrometheus(zkArr);
             
-            if (!PulsarDeployerUtils.deployPrometheus(prometheus, pulsarClusterName, brokers, bookies, zks, version,
+            if (!DeployUtils.deployPrometheus(prometheus, pulsarClusterName, brokers, bookies, zks, version,
                     logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, "prometheus deploy failed ......");
                 DeployLog.pubFailLog(logKey, result.getRetInfo());
@@ -177,7 +177,7 @@ public class PulsarDeployer implements ServiceDeployer {
         
         // 卸载prometheus
         if (prometheus != null && !prometheus.isEmpty()) {
-            if (!PulsarDeployerUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result)) {
+            if (!DeployUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, "pulsar undeploy failed ......");
                 return false;
             }
@@ -265,7 +265,7 @@ public class PulsarDeployer implements ServiceDeployer {
         
         PaasInstance inst = cmptMeta.getInstance(instID);
         PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
-        String zkShortAddress = PulsarDeployerUtils.getZKShortAddress(zkArr);
+        String zkShortAddress = DeployUtils.getZKShortAddress(zkArr);
         
         String bookies = PulsarDeployerUtils.getPulsarBookieListForPrometheus(bookieArr);
         
@@ -273,7 +273,7 @@ public class PulsarDeployer implements ServiceDeployer {
         switch (instCmpt.getCmptName()) {
         case FixHeader.HEADER_ZOOKEEPER:
             JsonObject zk = DeployUtils.getSpecifiedItem(zkArr, instID);
-            String zkAddrList = PulsarDeployerUtils.getZKAddress(zkArr);
+            String zkAddrList = DeployUtils.getZKAddress(zkArr);
             deployResult = DeployUtils.deployZKNode(zk, zkArr.size(), version, zkAddrList, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_PULSAR_BOOKKEEPER:
@@ -292,7 +292,7 @@ public class PulsarDeployer implements ServiceDeployer {
         case FixHeader.HEADER_PROMETHEUS:
             String brokers = PulsarDeployerUtils.getPulsarBrokerListForPrometheus(pulsarArr);
             String zks = PulsarDeployerUtils.getPulsarZKListForPrometheus(bookieArr);
-            deployResult = PulsarDeployerUtils.deployPrometheus(prometheus, pulsarClusterName, brokers, bookies, zks,
+            deployResult = DeployUtils.deployPrometheus(prometheus, pulsarClusterName, brokers, bookies, zks,
                     version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_GRAFANA:
@@ -366,7 +366,7 @@ public class PulsarDeployer implements ServiceDeployer {
             undeployResult = PulsarDeployerUtils.undeployPulsarManager(pulsarManager, version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_PROMETHEUS:
-            undeployResult = PulsarDeployerUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result);
+            undeployResult = DeployUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_GRAFANA:
             undeployResult = DeployUtils.undeployGrafana(grafana, version, logKey, magicKey, result);
