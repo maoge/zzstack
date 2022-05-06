@@ -69,4 +69,5 @@ const (
 	ERR_TOO_MUCH_REDIS_MASTER_NODE     = "too much redis master node"
 	ERR_PARSE_REDIS_MAX_MEM            = "parse redis max memoy error"
 	ERR_FORBIDEN_REMOVE_REDIS_MNODE    = "forbiden to remove redis master node"
+	ERR_RESET_TIDB_ROOT_PWD            = "reset tidb root password fail ......"
 )

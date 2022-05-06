@@ -453,17 +453,14 @@ public class TiDBDeployerUtils {
             ssh2.close();
             return false;
         }
-
-        if (!DeployUtils.cd(ssh2, "..", logKey, result)) {
-            ssh2.close();
-            return false;
-        }
-        if (!DeployUtils.rm(ssh2, newName, logKey, result)) {
-            ssh2.close();
-            return false;
-        }
-
+        
         if (!DeployUtils.checkPortDown(ssh2, "pdserver", instId, servIp, port, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+
+        if (!DeployUtils.cd(ssh2, "..", logKey, result)
+                || !DeployUtils.rm(ssh2, newName, logKey, result)) {
             ssh2.close();
             return false;
         }

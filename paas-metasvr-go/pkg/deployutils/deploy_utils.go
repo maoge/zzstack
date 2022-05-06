@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
+	CRUD "github.com/maoge/paas-metasvr-go/pkg/db"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
@@ -467,6 +469,39 @@ func FetchFile(sshClient *SSHClient, fileId int, logKey string, paasResult *resu
 	return true
 }
 
+func ResetDBPwd(tidb map[string]interface{}, logKey string, paasResult *result.ResultBean) bool {
+	sshID := tidb[consts.HEADER_SSH_ID].(string)
+	port := tidb[consts.HEADER_PORT].(string)
+
+	ssh := meta.CMPT_META.GetSshById(sshID)
+	servIp := ssh.SERVER_IP
+
+	return setTiDBPwdProc(servIp, port, logKey, paasResult)
+}
+
+func setTiDBPwdProc(ip, port, logKey string, paasResult *result.ResultBean) bool {
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)?timeout=%ds&readTimeout=%ds", "root", "", ip, port, 5, 5)
+	db, err := sqlx.Connect("mysql", connStr)
+	if err != nil {
+		global.GLOBAL_RES.PubLog(logKey, consts.ERR_RESET_TIDB_ROOT_PWD)
+		return false
+	}
+
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	defer db.Close()
+
+	sql := "SET PASSWORD FOR 'root'@'%' = ?"
+	pwd := consts.DEFAULT_TIDB_ROOT_PASSWD
+	_, err = CRUD.UpdateOri(db, &sql, pwd)
+	if err != nil {
+		global.GLOBAL_RES.PubLog(logKey, err.Error())
+		return false
+	}
+
+	return true
+}
+
 func DeployZookeeper(zk map[string]interface{}, idx int, version, zkAddrList, logKey, magicKey string, paasResult *result.ResultBean) bool {
 	sshId := zk[consts.HEADER_SSH_ID].(string)
 	clientPort := zk[consts.HEADER_CLIENT_PORT].(string)
@@ -645,7 +680,7 @@ func UndeployZookeeper(zk map[string]interface{}, version, logKey, magicKey stri
 
 	// stop
 	global.GLOBAL_RES.PubLog(logKey, "stop zookeeper ......")
-	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
 	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}
@@ -797,7 +832,7 @@ func UndeployGrafana(grafana map[string]interface{}, version, logKey, magicKey s
 
 	// stop
 	global.GLOBAL_RES.PubLog(logKey, "stop grafana ......")
-	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
 	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}
@@ -862,7 +897,7 @@ func UndeployPrometheus(prometheus map[string]interface{}, version, logKey, magi
 
 	// stop
 	global.GLOBAL_RES.PubLog(logKey, "stop grafana ......")
-	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
 	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}

@@ -307,22 +307,8 @@ func UndeployClickHouseServer(clickhouse map[string]interface{}, version, logKey
 	info := fmt.Sprintf("start undeploy clickhouse, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, tcpPort)
 	global.GLOBAL_RES.PubLog(logKey, info)
 
-	deployFile := DeployUtils.GetDeployFile(consts.DB_CLICKHOUSE_FILE_ID, logKey, paasResult)
-	srcFileName := deployFile.FILE_NAME
-
-	// 版本优先级: service.VERSION > deploy_file.VERSION
-	if version == "" {
-		version = deployFile.VERSION
-	}
-
-	// 替换 %VERSION% 为真实版本
-	if strings.Index(srcFileName, consts.REG_VERSION) != -1 && version != "" {
-		srcFileName = strings.Replace(srcFileName, consts.REG_VERSION, version, -1)
-	}
-
-	pos := strings.Index(srcFileName, consts.TAR_GZ_SURFIX)
-	oldName := srcFileName[0:pos]
-	newName := oldName + "_" + tcpPort
+	oldName := DeployUtils.GetVersionedFileName(consts.DB_CLICKHOUSE_FILE_ID, version, logKey, paasResult)
+	newName := fmt.Sprintf("%s_%s", oldName, tcpPort)
 	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.DB_CLICKHOUSE_ROOT, newName)
 
 	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
@@ -331,7 +317,7 @@ func UndeployClickHouseServer(clickhouse map[string]interface{}, version, logKey
 
 	// stop
 	global.GLOBAL_RES.PubLog(logKey, "stop clickhouse ......")
-	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
 	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}

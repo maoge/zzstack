@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"reflect"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/maoge/paas-metasvr-go/pkg/db/pool"
 )
 
@@ -254,6 +255,10 @@ func TxNamedInsert(pool *pool.DbPool, sql *string, args *map[string]interface{})
 //     "update person set first_name = ?, last_name = ?, email = ? where id = ?"
 func Update(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
 	return pool.DB.Exec(pool.DB.Rebind(*sql), args...)
+}
+
+func UpdateOri(db *sqlx.DB, sql *string, args ...interface{}) (sql.Result, error) {
+	return db.Exec(db.Rebind(*sql), args...)
 }
 
 func TxUpdate(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {
