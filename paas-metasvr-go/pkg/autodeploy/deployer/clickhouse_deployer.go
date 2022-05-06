@@ -2,7 +2,6 @@ package deployer
 
 import (
 	"fmt"
-	_ "fmt"
 	"strings"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
@@ -184,27 +183,132 @@ func (h *ClickHouseDeployer) UndeployService(servInstID string, force bool, logK
 func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
+	// 新增clickhouse-server节点, 需要拉起新增节点, 再更新原clickhouse节点的配置<shard></shard>部分的配置
+	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+		return false
+	}
+
+	serv := meta.CMPT_META.GetService(servInstID)
+	version := serv.VERSION
+	// 未部署直接退出不往下执行
+	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+		return false
+	}
+
+	servInst := meta.CMPT_META.GetInstance(servInstID)
+	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
+
+	topoJson := paasResult.RET_INFO.(map[string]interface{})
+	paasResult.RET_INFO = ""
+
+	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
+	zkContainer := servJson[consts.HEADER_ZOOKEEPER_CONTAINER].(map[string]interface{})
+	zkArr := zkContainer[consts.HEADER_ZOOKEEPER].([]map[string]interface{})
+
+	replicasContainer := servJson[consts.HEADER_CLICKHOUSE_REPLICAS_CONTAINER].(map[string]interface{})
+	replicasArr := replicasContainer[consts.HEADER_CLICKHOUSE_REPLICAS].([]map[string]interface{})
+
+	prometheus := servJson[consts.HEADER_PROMETHEUS].(map[string]interface{})
+	grafana := servJson[consts.HEADER_GRAFANA].(map[string]interface{})
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	deployResult := false
+
+	replicaCluster := ClickHouseDeployUtils.GetRelicaCluster(replicasArr)
+	zkCluster := deployutils.GetZkCluster(zkArr)
+
+	replicaCluster = strings.ReplaceAll(replicaCluster, "/", "\\\\/")
+	replicaCluster = strings.ReplaceAll(replicaCluster, "\n", "\\\\\n")
+
+	zkCluster = strings.ReplaceAll(zkCluster, "/", "\\\\/")
+	zkCluster = strings.ReplaceAll(zkCluster, "\n", "\\\\\n")
+
+	switch instCmpt.CMPT_NAME {
+	case consts.HEADER_ZOOKEEPER:
+		zk := DeployUtils.GetSpecifiedItem(zkArr, instID)
+		zkAddrList := DeployUtils.GetZKAddress(zkArr)
+		deployResult = DeployUtils.DeployZookeeper(zk, len(zkArr), version, zkAddrList, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_PROMETHEUS:
+		exporters := ClickHouseDeployUtils.GetExporterList(replicasArr)
+		deployResult = ClickHouseDeployUtils.DeployPrometheus(prometheus, servInstID, exporters, version, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_GRAFANA:
+		deployResult = DeployUtils.DeployGrafana(grafana, version, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_CLICKHOUSE_SERVER:
+		clickhouse, replicasID := DeployUtils.GetSpecifiedClickHouseItem(replicasArr, instID)
+		deployResult = ClickHouseDeployUtils.DeployClickHouseServer(clickhouse, version, replicasID, replicaCluster, zkCluster, logKey, magicKey, paasResult)
+		break
+	default:
+		break
+	}
+
+	if deployResult {
+		info := fmt.Sprintf("new instance inst_id:%s, deploy sucess ......", instID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("new instance inst_id:%s, deploy failed ......", instID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
+	}
+
 	return true
 }
 
 func (h *ClickHouseDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	return true
-}
+	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+		return false
+	}
 
-func (h *ClickHouseDeployer) MaintainInstance(servInstID, instID, servType string, op consts.OperationEnum,
-	isOperateByHandle bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	serv := meta.CMPT_META.GetService(servInstID)
+	version := serv.VERSION
+	// 未部署直接退出不往下执行
+	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+		return false
+	}
 
-	return true
-}
+	servInst := meta.CMPT_META.GetInstance(servInstID)
+	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
 
-func (h *ClickHouseDeployer) UpdateInstanceForBatch(servInstID, instID, servType string, loadDeployFile bool,
-	rmDeployFile bool, isOperateByHandle bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	topoJson := paasResult.RET_INFO.(map[string]interface{})
+	paasResult.RET_INFO = ""
 
-	return true
-}
+	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
-func (h *ClickHouseDeployer) CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResult *result.ResultBean) bool {
+	prometheus := servJson[consts.HEADER_PROMETHEUS].(map[string]interface{})
+	grafana := servJson[consts.HEADER_GRAFANA].(map[string]interface{})
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	undeployResult := false
+
+	switch instCmpt.CMPT_NAME {
+	case consts.HEADER_ZOOKEEPER:
+	case consts.HEADER_CLICKHOUSE_SERVER:
+		// 缩容复杂，非特殊情况不做缩容
+		info := fmt.Sprintf("service inst_id:%s, undeploy not support ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
+		break
+	case consts.HEADER_PROMETHEUS:
+		undeployResult = DeployUtils.UndeployPrometheus(prometheus, version, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_GRAFANA:
+		undeployResult = DeployUtils.UndeployGrafana(grafana, version, logKey, magicKey, paasResult)
+		break
+	default:
+		break
+	}
+
+	if undeployResult {
+		info := fmt.Sprintf("instance inst_id:%s, undeploy sucess ......", instID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("instance inst_id:%s, undeploy failed ......", instID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
+	}
+
 	return true
 }

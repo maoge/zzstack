@@ -322,19 +322,3 @@ func (h *RedisClusterDeployer) UndeployInstance(servInstID string, instID string
 
 	return true
 }
-
-func (h *RedisClusterDeployer) MaintainInstance(servInstID, instID, servType string, op consts.OperationEnum,
-	isOperateByHandle bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
-
-	return true
-}
-
-func (h *RedisClusterDeployer) UpdateInstanceForBatch(servInstID, instID, servType string, loadDeployFile bool,
-	rmDeployFile bool, isOperateByHandle bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
-
-	return true
-}
-
-func (h *RedisClusterDeployer) CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResult *result.ResultBean) bool {
-	return true
-}

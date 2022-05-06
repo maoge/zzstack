@@ -158,12 +158,12 @@ func MaintainInstance(servInstID, instID, servType, logKey, magicKey string, op 
 		return
 	}
 
-	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
-	if serviceDeployer == nil {
+	serviceMaintainer := global_factory.GetServiceMaintainer(instID, service.SERV_TYPE, paasResult)
+	if serviceMaintainer == nil {
 		return
 	}
 
-	if serviceDeployer.MaintainInstance(servInstID, instID, servType, op, isOperateByHandle, logKey, magicKey, paasResult) {
+	if serviceMaintainer.MaintainInstance(servInstID, instID, servType, op, isOperateByHandle, logKey, magicKey, paasResult) {
 		utils.LOGGER.Info("maintain instance success ......")
 	} else {
 		utils.LOGGER.Info("maintain instance fail ......")
@@ -199,12 +199,12 @@ func CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResu
 		return
 	}
 
-	serviceDeployer := global_factory.GetServiceDeployer(instID, service.SERV_TYPE, paasResult)
-	if serviceDeployer == nil {
+	serviceMaintainer := global_factory.GetServiceMaintainer(instID, service.SERV_TYPE, paasResult)
+	if serviceMaintainer == nil {
 		return
 	}
 
-	if serviceDeployer.CheckInstanceStatus(servInstID, instID, servType, magicKey, paasResult) {
+	if serviceMaintainer.CheckInstanceStatus(servInstID, instID, servType, magicKey, paasResult) {
 		utils.LOGGER.Info("CheckInstanceStatus instance success ......")
 	} else {
 		utils.LOGGER.Info("CheckInstanceStatus instance fail ......")

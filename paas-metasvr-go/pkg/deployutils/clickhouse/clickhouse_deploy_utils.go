@@ -284,6 +284,73 @@ func DeployClickHouseServer(clickhouse map[string]interface{}, version, parentID
 	return true
 }
 
+func UndeployClickHouseServer(clickhouse map[string]interface{}, version, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	instId := clickhouse[consts.HEADER_INST_ID].(string)
+	sshId := clickhouse[consts.HEADER_SSH_ID].(string)
+	tcpPort := clickhouse[consts.HEADER_TCP_PORT].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start undeploy clickhouse, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, tcpPort)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	deployFile := DeployUtils.GetDeployFile(consts.DB_CLICKHOUSE_FILE_ID, logKey, paasResult)
+	srcFileName := deployFile.FILE_NAME
+
+	// 版本优先级: service.VERSION > deploy_file.VERSION
+	if version == "" {
+		version = deployFile.VERSION
+	}
+
+	// 替换 %VERSION% 为真实版本
+	if strings.Index(srcFileName, consts.REG_VERSION) != -1 && version != "" {
+		srcFileName = strings.Replace(srcFileName, consts.REG_VERSION, version, -1)
+	}
+
+	pos := strings.Index(srcFileName, consts.TAR_GZ_SURFIX)
+	oldName := srcFileName[0:pos]
+	newName := oldName + "_" + tcpPort
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.DB_CLICKHOUSE_ROOT, newName)
+
+	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop clickhouse ......")
+	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortDown(sshClient, "clickhouse", instId, tcpPort, logKey, paasResult) {
+		return false
+	}
+
+	DeployUtils.CD(sshClient, "..", logKey, paasResult)
+	DeployUtils.RM(sshClient, newName, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
 func DeployPrometheus(prometheus map[string]interface{}, clusterName, exporters, version, logKey, magicKey string,
 	paasResult *result.ResultBean) bool {
 
