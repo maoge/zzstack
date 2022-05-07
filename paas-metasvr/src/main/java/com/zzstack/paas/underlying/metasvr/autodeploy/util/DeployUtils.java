@@ -1187,7 +1187,7 @@ public class DeployUtils {
                                                int id, String logKey, ResultBean result) {
         String context = "";
         try {
-            String cmd = String.format("./bin/pd-ctl -u http://%s:%s  store delete %s \n", pdIp, pdPort, id);
+            String cmd = String.format("./bin/pd-ctl -u http://%s:%s store delete %d \n", pdIp, pdPort, id);
             context = ssh2.generalCommand(cmd);
 
         } catch (SSHException e) {

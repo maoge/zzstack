@@ -243,7 +243,6 @@ public class TiDBDeployer implements ServiceDeployer {
         } else {
             String info = String.format("service inst_id:%s, deploy failed ......", servInstID);
             DeployLog.pubFailLog(logKey, info);
-            DeployLog.pubFailLog(logKey, result.getRetInfo());
         }
         return deployResult;
     }
