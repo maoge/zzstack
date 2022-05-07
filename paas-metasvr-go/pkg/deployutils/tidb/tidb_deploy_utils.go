@@ -151,7 +151,7 @@ func DeployDashboard(dashboard map[string]interface{}, version, pdAddress, logKe
 
 	// start
 	global.GLOBAL_RES.PubLog(logKey, "start dashboard proxy ......")
-	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
 	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}
