@@ -40,7 +40,8 @@ func CD(sshClient *SSHClient, dir, logKey string, paasResult *result.ResultBean)
 func PWD(sshClient *SSHClient, logKey string, paasResult *result.ResultBean) (string, error) {
 	res, err := sshClient.GeneralCommand(consts.CMD_PWD)
 	if err == nil {
-		return res, nil
+		end := strings.Index(res, "\r\n")
+		return res[:end], nil
 	} else {
 		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
 		paasResult.RET_CODE = consts.REVOKE_NOK

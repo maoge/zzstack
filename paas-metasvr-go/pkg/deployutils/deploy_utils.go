@@ -322,6 +322,9 @@ func ConnectSSH(sshClient *SSHClient, logKey string, paasResult *result.ResultBe
 		return false
 	}
 
+	// 防止默认登陆为/bin/sh环境时，ubuntu下不会自动加载.bashrc
+	ExecSimpleCmd(sshClient, "bash", logKey, paasResult)
+
 	return true
 }
 
@@ -480,7 +483,7 @@ func ResetDBPwd(tidb map[string]interface{}, logKey string, paasResult *result.R
 }
 
 func setTiDBPwdProc(ip, port, logKey string, paasResult *result.ResultBean) bool {
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)?timeout=%ds&readTimeout=%ds", "root", "", ip, port, 5, 5)
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/mysql?timeout=5s&readTimeout=5s", "root", "", ip, port)
 	db, err := sqlx.Connect("mysql", connStr)
 	if err != nil {
 		global.GLOBAL_RES.PubLog(logKey, consts.ERR_RESET_TIDB_ROOT_PWD)
@@ -491,15 +494,69 @@ func setTiDBPwdProc(ip, port, logKey string, paasResult *result.ResultBean) bool
 	db.SetMaxIdleConns(1)
 	defer db.Close()
 
-	sql := "SET PASSWORD FOR 'root'@'%' = ?"
-	pwd := consts.DEFAULT_TIDB_ROOT_PASSWD
-	_, err = CRUD.UpdateOri(db, &sql, pwd)
+	sql := fmt.Sprintf("SET PASSWORD FOR 'root' = '%s'", consts.DEFAULT_TIDB_ROOT_PASSWD)
+	_, err = CRUD.UpdateOri(db, &sql)
 	if err != nil {
 		global.GLOBAL_RES.PubLog(logKey, err.Error())
 		return false
 	}
 
 	return true
+}
+
+func PdctlDeleteTikvStore(sshClient *SSHClient, pdIp, pdPort string,
+	id int, logKey string, paasResult *result.ResultBean) bool {
+
+	cmd := fmt.Sprintf("./bin/pd-ctl -u http://%s:%s store delete %d", pdIp, pdPort, id)
+	context, err := sshClient.GeneralCommand(cmd)
+	if err != nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = "pd-ctl delete store fail ......"
+		return false
+	}
+
+	return strings.Index(context, consts.PD_DELETE_STORE_SUCC) != -1
+}
+
+func GetStoreId(sshClient *SSHClient, pdIp, pdClientPort, ip, port, logKey string, paasResult *result.ResultBean) (int, bool) {
+	tikvStore := PdctlGetStore(sshClient, pdIp, pdClientPort, logKey, paasResult)
+	if tikvStore == nil {
+		return -1, false
+	}
+
+	destAddr := fmt.Sprintf("%s:%s", ip, port)
+	for _, store := range tikvStore.STORES {
+		addr := store.STORE.ADDRESS
+		if addr == destAddr {
+			return store.STORE.ID, true
+		}
+	}
+
+	return -1, false
+}
+
+func PdctlGetStore(sshClient *SSHClient, ip, port, logKey string, paasResult *result.ResultBean) *proto.TikvStore {
+	cmd := fmt.Sprintf("./bin/pd-ctl -u http://%s:%s store", ip, port)
+	context, err := sshClient.GeneralCommand(cmd)
+	if err != nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = "pd-ctl get store fail ......"
+		return nil
+	}
+
+	start := strings.Index(context, "\n")
+	start += len("\n")
+	end := strings.LastIndex(context, "\n")
+	pdInfo := context[start:end]
+	if pdInfo == "" {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = "pd-ctl get store context nil ......"
+		return nil
+	}
+
+	tikvStore := new(proto.TikvStore)
+	utils.Json2Struct([]byte(pdInfo), tikvStore)
+	return tikvStore
 }
 
 func DeployZookeeper(zk map[string]interface{}, idx int, version, zkAddrList, logKey, magicKey string, paasResult *result.ResultBean) bool {
@@ -587,8 +644,8 @@ func DeployZookeeper(zk map[string]interface{}, idx int, version, zkAddrList, lo
 	dataDir := fmt.Sprintf("%s/%s", pwd, "data")
 	logDir := fmt.Sprintf("%s/%s/%s", pwd, "data", "log")
 
-	dataDir = strings.ReplaceAll(dataDir, "/", "\\\\/")
-	logDir = strings.ReplaceAll(logDir, "/", "\\\\/")
+	dataDir = strings.ReplaceAll(dataDir, "/", "\\/")
+	logDir = strings.ReplaceAll(logDir, "/", "\\/")
 	configFile := "./conf/zoo.cfg"
 
 	if !SED(sshClient, consts.CONF_DATA_DIR, dataDir, configFile, logKey, paasResult) {

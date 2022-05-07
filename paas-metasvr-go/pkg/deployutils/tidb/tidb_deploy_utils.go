@@ -151,7 +151,7 @@ func DeployDashboard(dashboard map[string]interface{}, version, pdAddress, logKe
 
 	// start
 	global.GLOBAL_RES.PubLog(logKey, "start dashboard proxy ......")
-	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
 	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}
@@ -165,7 +165,6 @@ func DeployDashboard(dashboard map[string]interface{}, version, pdAddress, logKe
 		return false
 	}
 
-	global.GLOBAL_RES.PubLog(logKey, "init dashboard-proxy success ......")
 	return true
 }
 
@@ -322,7 +321,6 @@ func DeployPdServer(pdServer map[string]interface{}, version, pdLongAddr, logKey
 		return false
 	}
 
-	global.GLOBAL_RES.PubLog(logKey, "init pdserver success ......")
 	return true
 }
 
@@ -349,7 +347,7 @@ func UndeployPdServer(pd map[string]interface{}, version, logKey, magicKey strin
 	info := fmt.Sprintf("start undeploy pd-server, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, port)
 	global.GLOBAL_RES.PubLog(logKey, info)
 
-	oldName := DeployUtils.GetVersionedFileName(consts.DB_CLICKHOUSE_FILE_ID, version, logKey, paasResult)
+	oldName := DeployUtils.GetVersionedFileName(consts.DB_PD_SERVER_FILE_ID, version, logKey, paasResult)
 	newName := fmt.Sprintf("%s_%s", oldName, port)
 	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.DB_TIDB_ROOT, newName)
 
@@ -473,12 +471,76 @@ func DeployTikvServer(tikv map[string]interface{}, version, pdShortAddr, logKey,
 		return false
 	}
 
-	global.GLOBAL_RES.PubLog(logKey, "init tikv-server success ......")
 	return true
 }
 
 func UndeployTikvServer(tikv map[string]interface{}, pdCtl map[string]interface{}, version, logKey, magicKey string,
 	isUndeployService bool, paasResult *result.ResultBean) bool {
+
+	sshId := tikv[consts.HEADER_SSH_ID].(string)
+	ip := tikv[consts.HEADER_IP].(string)
+	port := tikv[consts.HEADER_PORT].(string)
+	instId := tikv[consts.HEADER_INST_ID].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start undeploy tikv-server, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, port)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	oldName := DeployUtils.GetVersionedFileName(consts.DB_TIKV_SERVER_FILE_ID, version, logKey, paasResult)
+	newName := fmt.Sprintf("%s_%s", oldName, port)
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.DB_TIDB_ROOT, newName)
+
+	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop tikv-server ......")
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortDown(sshClient, "clickhouse", instId, port, logKey, paasResult) {
+		return false
+	}
+
+	if !isUndeployService {
+		// pd-server delete tikv-instance
+		// String.format("./bin/pd-ctl -u http://%s:%s -d store delete %s \n", servIp, port, instId)
+		// pdServrSshId := pdCtl[consts.HEADER_SSH_ID].(string)
+		pdIp := pdCtl[consts.HEADER_IP].(string)
+		pdClientPort := pdCtl[consts.HEADER_CLIENT_PORT].(string)
+		storeId, ok := DeployUtils.GetStoreId(sshClient, pdIp, pdClientPort, ip, port, logKey, paasResult)
+		if !ok {
+			global.GLOBAL_RES.PubFailLog(logKey, "pdctl get store id fail ......")
+			return false
+		}
+		if !DeployUtils.PdctlDeleteTikvStore(sshClient, pdIp, pdClientPort, storeId, logKey, paasResult) {
+			global.GLOBAL_RES.PubFailLog(logKey, "pdctl Delete Tikv Store is failed ......")
+			return false
+		}
+	}
+
+	DeployUtils.CD(sshClient, "..", logKey, paasResult)
+	DeployUtils.RM(sshClient, newName, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
+		return false
+	}
 
 	return true
 }
@@ -580,7 +642,6 @@ func DeployTidbServer(tidb map[string]interface{}, version, pdShortAddr, logKey,
 		return false
 	}
 
-	global.GLOBAL_RES.PubLog(logKey, "init tidb-server success ......")
 	return true
 }
 
@@ -617,7 +678,7 @@ func UndeployTidbServer(tidb map[string]interface{}, version, logKey, magicKey s
 
 	// stop
 	global.GLOBAL_RES.PubLog(logKey, "stop tidb-server ......")
-	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
 	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
 		return false
 	}

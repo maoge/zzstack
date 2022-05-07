@@ -53,11 +53,11 @@ func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magic
 	replicaCluster := ClickHouseDeployUtils.GetRelicaCluster(replicasArr)
 	zkCluster := deployutils.GetZkCluster(zkArr)
 
-	replicaCluster = strings.ReplaceAll(replicaCluster, "/", "\\\\/")
-	replicaCluster = strings.ReplaceAll(replicaCluster, "\n", "\\\\\n")
+	replicaCluster = strings.ReplaceAll(replicaCluster, "/", "\\/")
+	replicaCluster = strings.ReplaceAll(replicaCluster, "\n", "\\\n")
 
-	zkCluster = strings.ReplaceAll(zkCluster, "/", "\\\\/")
-	zkCluster = strings.ReplaceAll(zkCluster, "\n", "\\\\\n")
+	zkCluster = strings.ReplaceAll(zkCluster, "/", "\\/")
+	zkCluster = strings.ReplaceAll(zkCluster, "\n", "\\\n")
 	for _, replicas := range replicasArr {
 		replicasID := replicas[consts.HEADER_INST_ID].(string)
 		clickHouseArr := replicas[consts.HEADER_CLICKHOUSE_SERVER].([]map[string]interface{})
@@ -218,11 +218,11 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 	replicaCluster := ClickHouseDeployUtils.GetRelicaCluster(replicasArr)
 	zkCluster := deployutils.GetZkCluster(zkArr)
 
-	replicaCluster = strings.ReplaceAll(replicaCluster, "/", "\\\\/")
-	replicaCluster = strings.ReplaceAll(replicaCluster, "\n", "\\\\\n")
+	replicaCluster = strings.ReplaceAll(replicaCluster, "/", "\\/")
+	replicaCluster = strings.ReplaceAll(replicaCluster, "\n", "\\\n")
 
-	zkCluster = strings.ReplaceAll(zkCluster, "/", "\\\\/")
-	zkCluster = strings.ReplaceAll(zkCluster, "\n", "\\\\\n")
+	zkCluster = strings.ReplaceAll(zkCluster, "/", "\\/")
+	zkCluster = strings.ReplaceAll(zkCluster, "\n", "\\\n")
 
 	switch instCmpt.CMPT_NAME {
 	case consts.HEADER_ZOOKEEPER:
@@ -253,7 +253,7 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 		global.GLOBAL_RES.PubFailLog(logKey, info)
 	}
 
-	return true
+	return deployResult
 }
 
 func (h *ClickHouseDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
@@ -310,5 +310,5 @@ func (h *ClickHouseDeployer) UndeployInstance(servInstID string, instID string, 
 		global.GLOBAL_RES.PubFailLog(logKey, info)
 	}
 
-	return true
+	return undeployResult
 }

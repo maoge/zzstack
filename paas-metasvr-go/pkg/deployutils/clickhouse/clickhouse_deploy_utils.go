@@ -247,7 +247,7 @@ func DeployClickHouseServer(clickhouse map[string]interface{}, version, parentID
 	// export CLICKHOUSE_USER=%CLICKHOUSE_USER%
 	// export CLICKHOUSE_PASSWORD=%CLICKHOUSE_PASSWORD%
 	scrapeUri := fmt.Sprintf("http://%s:%s/", ssh.SERVER_IP, httpPort)
-	scrapeUri = strings.ReplaceAll(scrapeUri, "/", "\\\\/")
+	scrapeUri = strings.ReplaceAll(scrapeUri, "/", "\\/")
 	if !DeployUtils.SED(sshClient, consts.CONF_SCRAPE_URI, scrapeUri, consts.START_SHELL, logKey, paasResult) {
 		return false
 	}

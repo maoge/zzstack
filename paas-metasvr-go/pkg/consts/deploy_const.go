@@ -25,6 +25,10 @@ const (
 	START_SHELL                    = "start.sh"
 	STOP_SHELL                     = "stop.sh"
 	STOP_NOAUTH_SHELL              = "stop_noauth.sh"
+	PD_DELETE_MEMBER_SUCC          = "Success!"
+	PD_DELETE_STORE_SUCC           = "Success!"
+	TIKV_OFFLINE_STATUS            = "Offline"
+	TIKV_TOMBSTONE_STATUS          = "Tombstone"
 	REDIS_CLUSTER_REPLICAS         = 1
 	REDIS_CLUSTER_TTL_SLOT         = 16384
 	REDIS_ROLE_MASTER              = 1

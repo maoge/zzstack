@@ -258,7 +258,8 @@ func Update(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, er
 }
 
 func UpdateOri(db *sqlx.DB, sql *string, args ...interface{}) (sql.Result, error) {
-	return db.Exec(db.Rebind(*sql), args...)
+	newSql := db.Rebind(*sql)
+	return db.Exec(newSql, args...)
 }
 
 func TxUpdate(pool *pool.DbPool, sql *string, args ...interface{}) (sql.Result, error) {

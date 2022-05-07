@@ -23,6 +23,7 @@ func InitDeployerFactory() {
 		DEPLOYER_FACTORY.DeployerMap[consts.CACHE_REDIS_CLUSTER] = new(deployer.RedisClusterDeployer)
 		DEPLOYER_FACTORY.DeployerMap[consts.CACHE_REDIS_MASTER_SLAVE] = new(deployer.RedisMasterSlaveDeployer)
 
+		DEPLOYER_FACTORY.DeployerMap[consts.DB_TIDB] = new(deployer.TiDBDeployer)
 		DEPLOYER_FACTORY.DeployerMap[consts.DB_CLICKHOUSE] = new(deployer.ClickHouseDeployer)
 	})
 }

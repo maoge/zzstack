@@ -5,6 +5,7 @@ import (
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
+	"github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	TiDBDeployerUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/tidb"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
@@ -176,11 +177,128 @@ func (h *TiDBDeployer) UndeployService(servInstID string, force bool, logKey str
 func (h *TiDBDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	return true
+	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+		return false
+	}
+
+	serv := meta.CMPT_META.GetService(servInstID)
+	version := serv.VERSION
+	// 未部署直接退出不往下执行
+	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+		return false
+	}
+
+	servInst := meta.CMPT_META.GetInstance(servInstID)
+	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
+
+	topoJson := paasResult.RET_INFO.(map[string]interface{})
+	paasResult.RET_INFO = ""
+
+	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
+
+	pdContainer := servJson[consts.HEADER_PD_SERVER_CONTAINER].(map[string]interface{})
+	tikvContainer := servJson[consts.HEADER_TIKV_SERVER_CONTAINER].(map[string]interface{})
+	tidbContainer := servJson[consts.HEADER_TIDB_SERVER_CONTAINER].(map[string]interface{})
+	dashboard := servJson[consts.HEADER_DASHBOARD_PROXY].(map[string]interface{})
+
+	pdArr := pdContainer[consts.HEADER_PD_SERVER].([]map[string]interface{})
+	tikvArr := tikvContainer[consts.HEADER_TIKV_SERVER].([]map[string]interface{})
+	tidbArr := tidbContainer[consts.HEADER_TIDB_SERVER].([]map[string]interface{})
+
+	pdShortAddr := TiDBDeployerUtils.GetPDShortAddress(pdArr)
+	pdLongAddr := TiDBDeployerUtils.GetPDLongAddress(pdArr)
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	deployResult := false
+
+	switch instCmpt.CMPT_NAME {
+	case consts.HEADER_TIDB_SERVER:
+		tidbItem := DeployUtils.GetSpecifiedItem(tidbArr, instID)
+		deployResult = TiDBDeployerUtils.DeployTidbServer(tidbItem, version, pdShortAddr, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_TIKV_SERVER:
+		tikvItem := DeployUtils.GetSpecifiedItem(tikvArr, instID)
+		deployResult = TiDBDeployerUtils.DeployTikvServer(tikvItem, version, pdShortAddr, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_PD_SERVER:
+		pdItem := DeployUtils.GetSpecifiedItem(pdArr, instID)
+		deployResult = TiDBDeployerUtils.DeployPdServer(pdItem, version, pdLongAddr, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_DASHBOARD_PROXY:
+		pdAddress := TiDBDeployerUtils.GetFirstPDAddress(pdArr)
+		deployResult = TiDBDeployerUtils.DeployDashboard(dashboard, version, pdAddress, logKey, magicKey, paasResult)
+		break
+	default:
+		break
+	}
+
+	if deployResult {
+		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
+	}
+
+	return deployResult
 }
 
 func (h *TiDBDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	return true
+	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+		return false
+	}
+
+	serv := meta.CMPT_META.GetService(servInstID)
+	version := serv.VERSION
+	// 未部署直接退出不往下执行
+	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+		return false
+	}
+
+	servInst := meta.CMPT_META.GetInstance(servInstID)
+	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
+
+	topoJson := paasResult.RET_INFO.(map[string]interface{})
+	paasResult.RET_INFO = ""
+
+	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
+
+	pdContainer := servJson[consts.HEADER_PD_SERVER_CONTAINER].(map[string]interface{})
+	tikvContainer := servJson[consts.HEADER_TIKV_SERVER_CONTAINER].(map[string]interface{})
+	tidbContainer := servJson[consts.HEADER_TIDB_SERVER_CONTAINER].(map[string]interface{})
+	dashboard := servJson[consts.HEADER_DASHBOARD_PROXY].(map[string]interface{})
+
+	pdArr := pdContainer[consts.HEADER_PD_SERVER].([]map[string]interface{})
+	tikvArr := tikvContainer[consts.HEADER_TIKV_SERVER].([]map[string]interface{})
+	tidbArr := tidbContainer[consts.HEADER_TIDB_SERVER].([]map[string]interface{})
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	undeployResult := false
+
+	switch instCmpt.CMPT_NAME {
+	case consts.HEADER_TIDB_SERVER:
+		tidbItem := DeployUtils.GetSpecifiedItem(tidbArr, instID)
+		undeployResult = TiDBDeployerUtils.UndeployTidbServer(tidbItem, version, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_TIKV_SERVER:
+		tikvItem := DeployUtils.GetSpecifiedItem(tikvArr, instID)
+		pdCtl := pdArr[0]
+		undeployResult = TiDBDeployerUtils.UndeployTikvServer(tikvItem, pdCtl, version, logKey, magicKey, false, paasResult)
+		break
+	case consts.HEADER_PD_SERVER:
+		pdItem := DeployUtils.GetSpecifiedItem(pdArr, instID)
+		undeployResult = TiDBDeployerUtils.UndeployPdServer(pdItem, version, logKey, magicKey, paasResult)
+		break
+	case consts.HEADER_DASHBOARD_PROXY:
+		undeployResult = TiDBDeployerUtils.UndeployDashboard(dashboard, version, logKey, magicKey, paasResult)
+		break
+	default:
+		break
+	}
+
+	return undeployResult
 }
