@@ -1,6 +1,7 @@
 package deployutils
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -48,6 +49,35 @@ func PWD(sshClient *SSHClient, logKey string, paasResult *result.ResultBean) (st
 		paasResult.RET_INFO = err.Error()
 		return "", err
 	}
+}
+
+func IsDirExistInCurrPath(sshClient *SSHClient, fileDir, logKey string, paasResult *result.ResultBean) (bool, error) {
+	cmd := fmt.Sprintf("%s -d %s", consts.CMD_FILE, fileDir)
+	context, err := sshClient.GeneralCommand(cmd)
+	if err == nil {
+		if strings.Index(context, consts.ERR_COMMAND_NOT_FOUND) != -1 {
+			errStr := fmt.Sprintf("command %s not found", consts.CMD_FILE)
+			paasResult.RET_CODE = consts.REVOKE_NOK
+			paasResult.RET_INFO = errStr
+			return false, errors.New(errStr)
+		}
+
+		res := strings.Index(context, consts.ERR_FILE_DIR_NOT_EXISTS)
+		return res != -1, nil
+	} else {
+		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = err.Error()
+		return false, err
+	}
+
+	// if (context.contains(CONSTS.COMMAND_NOT_FOUND)) {
+	// 	String errInfo = String.format(CONSTS.ERR_COMMAND_NOT_FOUND, CMD_FILE);
+	// 	throw new SSHException(errInfo);
+	// }
+
+	// // 用户权限不高时不能用下面的方式判断
+	// boolean res = context.contains(CONSTS.FILE_DIR_NOT_EXISTS);
 }
 
 func GetRedisClusterNode(sshClient *SSHClient, cmd, logKey string, paasResult *result.ResultBean) bool {

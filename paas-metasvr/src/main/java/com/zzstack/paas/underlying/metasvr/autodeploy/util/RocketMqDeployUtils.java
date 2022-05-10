@@ -448,10 +448,10 @@ public class RocketMqDeployUtils {
         for (int i = 0; i < rocketMqNameSrv.size(); i++) {
             JsonObject jsonRokectMq = rocketMqNameSrv.getJsonObject(i);
             if (!MetaDataDao.updateInstanceDeployFlag(jsonRokectMq.getString(FixHeader.HEADER_INST_ID), FixDefs.STR_TRUE, result, magicKey)) {
-                DeployLog.pubFailLog(logKey, "rocketmq namesrv start failed ......");
+                DeployLog.pubFailLog(logKey, "namesrv fake deploy failed ......");
                 return false;
             }
-            DeployLog.pubLog(logKey, "init rocketmq namesrv success ......");
+            DeployLog.pubLog(logKey, "namesrv fake deploy success ......");
         }
 
         JsonObject rocketMqVBrokerContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_VBROKER_CONTAINER);

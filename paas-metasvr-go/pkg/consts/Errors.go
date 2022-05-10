@@ -70,4 +70,6 @@ const (
 	ERR_PARSE_REDIS_MAX_MEM            = "parse redis max memoy error"
 	ERR_FORBIDEN_REMOVE_REDIS_MNODE    = "forbiden to remove redis master node"
 	ERR_RESET_TIDB_ROOT_PWD            = "reset tidb root password fail ......"
+	ERR_FILE_DIR_NOT_EXISTS            = "No such file or directory"
+	ERR_COMMAND_NOT_FOUND              = "command not found"
 )
