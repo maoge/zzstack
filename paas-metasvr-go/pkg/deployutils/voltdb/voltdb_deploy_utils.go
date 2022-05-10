@@ -101,7 +101,7 @@ func DeployVoltDBServer(voltdb map[string]interface{}, version, hosts, userName,
 	}
 
 	// DB_VOLTDB_FILE_ID -> 'voltdb-%VERSION%.tar.gz'
-	if !DeployUtils.FetchAndExtractTgzDeployFile(sshClient, consts.DB_VOLTDB_FILE_ID, consts.DB_TIDB_ROOT, version, logKey, paasResult) {
+	if !DeployUtils.FetchAndExtractTgzDeployFile(sshClient, consts.DB_VOLTDB_FILE_ID, consts.DB_VOLTDB_ROOT, version, logKey, paasResult) {
 		return false
 	}
 
@@ -186,6 +186,58 @@ func DeployVoltDBServer(voltdb map[string]interface{}, version, hosts, userName,
 
 	// update instance deploy flag
 	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func UndeployVoltDBServer(voltdb map[string]interface{}, version, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	instId := voltdb[consts.HEADER_INST_ID].(string)
+	sshId := voltdb[consts.HEADER_SSH_ID].(string)
+	internalPort := voltdb[consts.HEADER_VOLT_INTERNAL_PORT].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start undeploy voltdb-server, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, internalPort)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	oldName := DeployUtils.GetVersionedFileName(consts.DB_VOLTDB_FILE_ID, version, logKey, paasResult)
+	newName := fmt.Sprintf("%s_%s", oldName, internalPort)
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.DB_VOLTDB_ROOT, newName)
+	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop voltdb-server ......")
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortDown(sshClient, "voltdb-server", instId, internalPort, logKey, paasResult) {
+		return false
+	}
+
+	DeployUtils.CD(sshClient, "..", logKey, paasResult)
+	DeployUtils.RM(sshClient, newName, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
 

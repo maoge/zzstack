@@ -251,10 +251,8 @@ func DeployPdServer(pdServer map[string]interface{}, version, pdLongAddr, logKey
 	info := fmt.Sprintf("deploy pd-server: %s:%s, instId:%s", ssh.SERVER_IP, port, instId)
 	global.GLOBAL_RES.PubLog(logKey, info)
 
-	if DeployUtils.CheckPortUpPredeploy(sshClient, port, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, peerPort, logKey, paasResult) {
+	checkPorts := []string{port, peerPort}
+	if DeployUtils.CheckPortsUpPredeploy(sshClient, checkPorts, logKey, paasResult) {
 		return false
 	}
 

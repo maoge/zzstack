@@ -5,7 +5,6 @@ import (
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
-	"github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	TiDBDeployerUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/tidb"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
@@ -177,14 +176,14 @@ func (h *TiDBDeployer) UndeployService(servInstID string, force bool, logKey str
 func (h *TiDBDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
 		return false
 	}
 
 	serv := meta.CMPT_META.GetService(servInstID)
 	version := serv.VERSION
 	// 未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
 		return false
 	}
 
@@ -247,14 +246,14 @@ func (h *TiDBDeployer) DeployInstance(servInstID string, instID string, logKey s
 func (h *TiDBDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
 		return false
 	}
 
 	serv := meta.CMPT_META.GetService(servInstID)
 	version := serv.VERSION
 	// 未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
 		return false
 	}
 

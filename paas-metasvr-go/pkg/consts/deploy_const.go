@@ -42,5 +42,5 @@ const (
 )
 
 const (
-	CHECK_PORT_RETRY int = 100
+	CHECK_PORT_RETRY int = 1000
 )

@@ -11,6 +11,8 @@ const (
 	DB_DORIS                                              = "DB_DORIS"
 	DB_CLICKHOUSE                                         = "DB_CLICKHOUSE"
 	DB_VOLTDB                                             = "DB_VOLTDB"
+	MQ_PULSAR                                             = "MQ_PULSAR"
+	MQ_ROCKETMQ                                           = "MQ_ROCKETMQ"
 	HEADER_RET_CODE                                       = "RET_CODE"
 	HEADER_RET_INFO                                       = "RET_INFO"
 	HEADER_LOCAL_PORT                                     = "LOCAL_PORT"

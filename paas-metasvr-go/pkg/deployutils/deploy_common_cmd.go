@@ -192,13 +192,23 @@ func CheckPortUp(sshClient *SSHClient, cmpt, instId, port, logKey string, paasRe
 		info := fmt.Sprintf("deploy %s success, inst_id:%s, serv_ip:%s, port:%s", cmpt, instId, sshClient.Ip, port)
 		global.GLOBAL_RES.PubSuccessLog(logKey, info)
 	} else {
-		info := fmt.Sprintf("deploy %s fail, inst_id:%s, serv_ip:%s, port:%s startup fail", cmpt, instId, sshClient.Ip, port)
+		info := fmt.Sprintf("port:%s check fail", port)
 		global.GLOBAL_RES.PubFailLog(logKey, info)
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = info
 	}
 
 	return isUsed
+}
+
+func CheckPortsUp(sshClient *SSHClient, cmpt, instId string, ports []string, logKey string, paasResult *result.ResultBean) bool {
+	for _, port := range ports {
+		if !CheckPortUp(sshClient, cmpt, instId, port, logKey, paasResult) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func CheckPortDown(sshClient *SSHClient, cmpt, instId, port, logKey string, paasResult *result.ResultBean) bool {

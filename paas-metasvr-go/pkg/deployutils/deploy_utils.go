@@ -160,7 +160,7 @@ func CheckPortUpPredeploy(sshClient *SSHClient, port, logKey string, paasResult 
 	}
 
 	if using {
-		errMsg := fmt.Sprintf("redis-server: %s, port: %s is in using", sshClient.Ip, port)
+		errMsg := fmt.Sprintf("ip: %s, port: %s is in using", sshClient.Ip, port)
 		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
 
 		paasResult.RET_CODE = consts.REVOKE_NOK
@@ -168,6 +168,17 @@ func CheckPortUpPredeploy(sshClient *SSHClient, port, logKey string, paasResult 
 	}
 
 	return using
+}
+
+func CheckPortsUpPredeploy(sshClient *SSHClient, ports []string, logKey string, paasResult *result.ResultBean) bool {
+	for _, port := range ports {
+		using := CheckPortUpPredeploy(sshClient, port, logKey, paasResult)
+		if using {
+			return true
+		}
+	}
+
+	return false
 }
 
 func FetchAndExtractTgzDeployFile(sshClient *SSHClient, fileId int, subPath, version, logKey string, paasResult *result.ResultBean) bool {
@@ -344,6 +355,26 @@ func GetZKAddress(zkArr []map[string]interface{}) string {
 		line := fmt.Sprintf("server.%d=%s:%s:%s", (idx + 1), servIP, clientPort1, clientPort2)
 		if idx > 0 {
 			result += "\n"
+		}
+
+		result += line
+	}
+
+	return result
+}
+
+func GetZKShortAddress(zkArr []map[string]interface{}) string {
+	result := ""
+	for idx, item := range zkArr {
+		sshID := item[consts.HEADER_SSH_ID].(string)
+		clientPort := item[consts.HEADER_CLIENT_PORT].(string)
+
+		ssh := meta.CMPT_META.GetSshById(sshID)
+		servIP := ssh.SERVER_IP
+
+		line := fmt.Sprintf("%s:%s", servIP, clientPort)
+		if idx > 0 {
+			result += ","
 		}
 
 		result += line
