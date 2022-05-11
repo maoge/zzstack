@@ -29,6 +29,11 @@ func InitDeployerFactory() {
 		DEPLOYER_FACTORY.DeployerMap[consts.DB_TIDB] = new(deployer.TiDBDeployer)
 		DEPLOYER_FACTORY.DeployerMap[consts.DB_CLICKHOUSE] = new(deployer.ClickHouseDeployer)
 		DEPLOYER_FACTORY.DeployerMap[consts.DB_VOLTDB] = new(deployer.VoltDBDeployer)
+		DEPLOYER_FACTORY.DeployerMap[consts.DB_TDENGINE] = new(deployer.TDEngineDeployer)
+		DEPLOYER_FACTORY.DeployerMap[consts.DB_YUGABYTEDB] = new(deployer.YugaByteDBDeployer)
+
+		DEPLOYER_FACTORY.DeployerMap[consts.STORE_MINIO] = new(deployer.StoreMinioDeployer)
+		DEPLOYER_FACTORY.DeployerMap[consts.SERVERLESS_APISIX] = new(deployer.ServerlessApisixDeployer)
 	})
 }
 

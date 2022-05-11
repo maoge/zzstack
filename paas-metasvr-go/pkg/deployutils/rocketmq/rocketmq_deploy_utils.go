@@ -33,12 +33,28 @@ func GetNameSrvAddrs(nameSrvArr []map[string]interface{}) string {
 	return result
 }
 
-func DeployFakeService(servJson map[string]interface{}, servInstID, logKey, magicKey string, paasResult *result.ResultBean) bool {
+func GetSingleNameSrvAddrs(nameSrvArr []map[string]interface{}) string {
+	for _, nameSrv := range nameSrvArr {
+		sshId := nameSrv[consts.HEADER_SSH_ID].(string)
+		ssh := meta.CMPT_META.GetSshById(sshId)
+		if ssh == nil {
+			continue
+		}
+
+		servIp := ssh.SERVER_IP
+		port := nameSrv[consts.HEADER_LISTEN_PORT].(string)
+
+		return fmt.Sprintf("%s:%s", servIp, port)
+	}
+	return ""
+}
+
+func ModFakeServiceDeployFlag(servJson map[string]interface{}, servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
 	nameSrvContainer := servJson[consts.HEADER_ROCKETMQ_NAMESRV_CONTAINER].(map[string]interface{})
 	nameSrvArr := nameSrvContainer[consts.HEADER_ROCKETMQ_NAMESRV].([]map[string]interface{})
 	for _, nameSrv := range nameSrvArr {
 		rocketID := nameSrv[consts.HEADER_INST_ID].(string)
-		if !metadao.UpdateInstanceDeployFlag(rocketID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		if !metadao.UpdateInstanceDeployFlag(rocketID, deployFlag, logKey, magicKey, paasResult) {
 			global.GLOBAL_RES.PubFailLog(logKey, "namesrv fake deploy failed ......")
 			return false
 		}
@@ -52,7 +68,7 @@ func DeployFakeService(servJson map[string]interface{}, servInstID, logKey, magi
 		brokerArr := vbroker[consts.HEADER_ROCKETMQ_BROKER].([]map[string]interface{})
 		for _, broker := range brokerArr {
 			brokerID := broker[consts.HEADER_INST_ID].(string)
-			if !metadao.UpdateInstanceDeployFlag(brokerID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+			if !metadao.UpdateInstanceDeployFlag(brokerID, deployFlag, logKey, magicKey, paasResult) {
 				global.GLOBAL_RES.PubFailLog(logKey, "rocketmq broker fake deploy fail ......")
 				return false
 			}
@@ -60,15 +76,20 @@ func DeployFakeService(servJson map[string]interface{}, servInstID, logKey, magi
 		}
 	}
 
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	if !metadao.UpdateInstanceDeployFlag(servInstID, deployFlag, logKey, magicKey, paasResult) {
 		return false
 	}
 
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	if !metadao.UpdateServiceDeployFlag(servInstID, deployFlag, logKey, magicKey, paasResult) {
 		return false
 	}
 
-	if !metadao.ModServicePseudoFlag(servInstID, consts.DEPLOY_FLAG_PSEUDO, logKey, magicKey, paasResult) {
+	pseudoFlag := consts.DEPLOY_FLAG_PHYSICAL
+	if deployFlag == consts.STR_TRUE {
+		pseudoFlag = consts.DEPLOY_FLAG_PSEUDO
+	}
+
+	if !metadao.ModServicePseudoFlag(servInstID, pseudoFlag, logKey, magicKey, paasResult) {
 		return false
 	}
 
@@ -185,6 +206,56 @@ func DeployNameSrv(nameSrv map[string]interface{}, version, logKey, magicKey str
 
 	// update instance deploy flag
 	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func UndeployNameSrv(nameSrv map[string]interface{}, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	sshId := nameSrv[consts.HEADER_SSH_ID].(string)
+	port := nameSrv[consts.HEADER_LISTEN_PORT].(string)
+	instId := nameSrv[consts.HEADER_INST_ID].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start undeploy namesrv, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, port)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	newName := "rocketmq_namesrv_" + port
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.MQ_ROCKETMQ_ROOT, newName)
+
+	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop namesrv ......")
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortDown(sshClient, "namesrv", instId, port, logKey, paasResult) {
+		return false
+	}
+
+	DeployUtils.CD(sshClient, "..", logKey, paasResult)
+	DeployUtils.RM(sshClient, newName, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
 
@@ -329,6 +400,183 @@ func DeployBroker(broker map[string]interface{}, servInstID, namesrvAddrs, broke
 
 	// update instance deploy flag
 	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func UndeployBroker(broker map[string]interface{}, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	sshId := broker[consts.HEADER_SSH_ID].(string)
+	port := broker[consts.HEADER_LISTEN_PORT].(string)
+	instId := broker[consts.HEADER_INST_ID].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start undeploy rocketmq broker, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, port)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	newName := fmt.Sprintf("rocketmq_broker_%s", port)
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.MQ_ROCKETMQ_ROOT, newName)
+
+	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop rocketmq broker ......")
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortDown(sshClient, "rocketmq broker", instId, port, logKey, paasResult) {
+		return false
+	}
+
+	DeployUtils.CD(sshClient, "..", logKey, paasResult)
+	DeployUtils.RM(sshClient, newName, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func DeployConsole(console map[string]interface{}, servInstID, singleNameSrv, version, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	sshId := console[consts.HEADER_SSH_ID].(string)
+	consolePort := console[consts.HEADER_CONSOLE_PORT].(string)
+	instId := console[consts.HEADER_INST_ID].(string)
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	if ssh == nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_SSH_NOT_FOUND
+		return false
+	}
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("deploy rocketmq-console: %s:%s, instId:%s", ssh.SERVER_IP, consolePort, instId)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	if DeployUtils.CheckPortUpPredeploy(sshClient, consolePort, logKey, paasResult) {
+		return false
+	}
+
+	// ROCKETMQ_CONSOLE_FILE_ID -> 'rocketmq-console-1.1.0.tar.gz'
+	if !DeployUtils.FetchAndExtractTgzDeployFile(sshClient, consts.ROCKETMQ_CONSOLE_FILE_ID, consts.MQ_ROCKETMQ_ROOT, version, logKey, paasResult) {
+		return false
+	}
+
+	oldName := DeployUtils.GetVersionedFileName(consts.ROCKETMQ_CONSOLE_FILE_ID, version, logKey, paasResult)
+	newName := fmt.Sprintf("rocketmq-console_%s", consolePort)
+
+	if !DeployUtils.RM(sshClient, newName, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.MV(sshClient, newName, oldName, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.CD(sshClient, newName, logKey, paasResult) {
+		return false
+	}
+
+	global.GLOBAL_RES.PubLog(logKey, "modify rocketmq-console configure ......")
+	// sed 替换 start.sh 中的变量
+	// -Drocketmq.namesrv.addr=%NAMESRV_ADDR%
+	// -Dserver.port=%CONSOLE_PORT%
+	DeployUtils.SED(sshClient, consts.CONF_NAMESRV_ADDR, singleNameSrv, consts.START_SHELL, logKey, paasResult)
+	DeployUtils.SED(sshClient, consts.CONF_CONSOLE_PORT, consolePort, consts.START_SHELL, logKey, paasResult)
+
+	// start
+	global.GLOBAL_RES.PubLog(logKey, "start rocketmq-console ......")
+	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortUp(sshClient, "rocketmq-console", instId, consolePort, logKey, paasResult) {
+		return false
+	}
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func UndeployConsole(console map[string]interface{}, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	sshId := console[consts.HEADER_SSH_ID].(string)
+	consolePort := console[consts.HEADER_CONSOLE_PORT].(string)
+	instId := console[consts.HEADER_INST_ID].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if DeployUtils.IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start undeploy rocketmq console, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, consolePort)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	newName := fmt.Sprintf("rocketmq-console_%s", consolePort)
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.MQ_ROCKETMQ_ROOT, newName)
+
+	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop rocketmq-console ......")
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.CheckPortDown(sshClient, "rocketmq-console", instId, consolePort, logKey, paasResult) {
+		return false
+	}
+
+	DeployUtils.CD(sshClient, "..", logKey, paasResult)
+	DeployUtils.RM(sshClient, newName, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
 

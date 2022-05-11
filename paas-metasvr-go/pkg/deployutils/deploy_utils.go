@@ -444,6 +444,45 @@ func GetSpecifiedItem(jsonArr []map[string]interface{}, instID string) map[strin
 	return nil
 }
 
+func GetSpecifiedRocketMQBroker(vbrokerArr []map[string]interface{}, instID string) map[string]interface{} {
+	for _, vbroker := range vbrokerArr {
+		brokerArr := vbroker[consts.HEADER_ROCKETMQ_BROKER].([]map[string]interface{})
+		for _, broker := range brokerArr {
+			brokerInstId := broker[consts.HEADER_INST_ID].(string)
+			if brokerInstId == instID {
+				return broker
+			}
+		}
+	}
+	return nil
+}
+
+func GetSpecifiedVBrokerId(vbrokerArr []map[string]interface{}, instID string) string {
+	for _, vbroker := range vbrokerArr {
+		brokerArr := vbroker[consts.HEADER_ROCKETMQ_BROKER].([]map[string]interface{})
+		for _, broker := range brokerArr {
+			brokerInstId := broker[consts.HEADER_INST_ID].(string)
+			if brokerInstId == instID {
+				return vbroker[consts.HEADER_INST_ID].(string)
+			}
+		}
+	}
+	return ""
+}
+
+func GetSpecifiedBrokerArr(vbrokerArr []map[string]interface{}, instID string) []map[string]interface{} {
+	for _, vbroker := range vbrokerArr {
+		brokerArr := vbroker[consts.HEADER_ROCKETMQ_BROKER].([]map[string]interface{})
+		for _, broker := range brokerArr {
+			brokerInstId := broker[consts.HEADER_INST_ID].(string)
+			if brokerInstId == instID {
+				return brokerArr
+			}
+		}
+	}
+	return nil
+}
+
 func GetSpecifiedClickHouseItem(jsonArr []map[string]interface{}, instID string) (map[string]interface{}, string) {
 	for _, replicas := range jsonArr {
 		clickHouseArr := replicas[consts.HEADER_CLICKHOUSE_SERVER].([]map[string]interface{})
