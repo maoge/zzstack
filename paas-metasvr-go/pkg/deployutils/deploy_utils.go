@@ -653,19 +653,8 @@ func DeployZookeeper(zk map[string]interface{}, idx int, version, zkAddrList, lo
 	info := fmt.Sprintf("deploy zookeeper: %s:%s, instId:%s", ssh.SERVER_IP, adminPort, instId)
 	global.GLOBAL_RES.PubLog(logKey, info)
 
-	if CheckPortUpPredeploy(sshClient, clientPort, logKey, paasResult) {
-		return false
-	}
-
-	if CheckPortUpPredeploy(sshClient, adminPort, logKey, paasResult) {
-		return false
-	}
-
-	if CheckPortUpPredeploy(sshClient, clientPort1, logKey, paasResult) {
-		return false
-	}
-
-	if CheckPortUpPredeploy(sshClient, clientPort2, logKey, paasResult) {
+	checkPorts := []string{clientPort, adminPort, clientPort1, clientPort2}
+	if CheckPortsUpPredeploy(sshClient, checkPorts, logKey, paasResult) {
 		return false
 	}
 

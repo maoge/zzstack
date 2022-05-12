@@ -13,6 +13,7 @@ const (
 	PATH_SPLIT                                       = "/"
 	METASVR_ADDR_SPLIT                               = ","
 	PATH_COMMA                                       = ","
+	LINE_SEP                                         = "\n"
 	SMS_CONSOLE_PASSWD                               = "21232f297a57a5a743894a0e4a801fc3"
 	CMD_ADJUST_REDIS_WEIGHT                          = "AdjustRedisWeight"
 	CMD_SWITCH_DB_TYPE                               = "SwitchDBType"
@@ -24,6 +25,8 @@ const (
 	CLICKHOUSE_DEFAULT_PASSWD                        = "abcd.1234"
 	VOLTDB_ADMIN_NAME                                = "admin"
 	VOLTDB_ADMIN_PWD                                 = "admin.1234"
+	MINIO_ACCESS_KEY                                 = "zzadmin"
+	MINIO_SECRET_KEY                                 = "abcd.1234"
 	NOTIFY_RETRY_CNT                   int           = 3
 	OP_TYPE_ADD                        int           = 1
 	OP_TYPE_MOD                        int           = 2
@@ -140,6 +143,7 @@ const (
 	DB_CLICKHOUSE_ROOT                               = "db/clickhouse"
 	DB_VOLTDB_ROOT                                   = "db/voltdb"
 	DB_YUGABYTEDB_ROOT                               = "db/yugabyte"
+	STORE_MINIO_ROOT                                 = "store/minio"
 	CACHE_REDIS_PROXY                                = "cache_redis_proxy"
 	CACHE_REDIS_PROXY_PREFIX                         = "cache_redis_proxy_"
 	REDIS_CONF                                       = "redis.conf"
@@ -263,4 +267,14 @@ const (
 	CONF_BROKER_PORT                                 = "%BROKER_PORT%"
 	CONF_WEB_PORT                                    = "%WEB_PORT%"
 	CONF_BROKER_ADDRESS                              = "%BROKER_ADDRESS%"
+	CONF_MINIO_BROWSER                               = "%BROWSER%"
+	CONF_ADDRESS                                     = "%ADDRESS%"
+	CONF_CONSOLE_ADDRESS                             = "%CONSOLE_ADDRESS%"
+	CONF_ENDPOINTS                                   = "%ENDPOINTS%"
+	CONF_MINIO_REGION                                = "%MINIO_REGION%"
+	CONF_MINIO_USER                                  = "%MINIO_USER%"
+	CONF_MINIO_PASSWD                                = "%MINIO_PASSWD%"
+	CONF_FIRSTEP                                     = "%FIRSTEP%"
+	CONF_FQDN                                        = "%FQDN%"
+	CONF_ARBITRATOR_ADDR                             = "%ARBITRATOR_ADDR%"
 )

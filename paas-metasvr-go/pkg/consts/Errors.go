@@ -72,4 +72,5 @@ const (
 	ERR_RESET_TIDB_ROOT_PWD            = "reset tidb root password fail ......"
 	ERR_FILE_DIR_NOT_EXISTS            = "No such file or directory"
 	ERR_COMMAND_NOT_FOUND              = "command not found"
+	ERR_UNSURPORT_OPERATION            = "unsurport operation"
 )

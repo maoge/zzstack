@@ -38,4 +38,5 @@ const (
 	NGX_FILE_ID                         = 34
 	SMS_QUERY_SERVER_FILE_ID            = 35
 	NGX_SMS_QUERY_CONF_FILE_ID          = 36
+	STORE_MINIO_FILE_ID                 = 37
 )

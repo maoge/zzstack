@@ -6,7 +6,6 @@ import (
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
-	"github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	ClickHouseDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/clickhouse"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
@@ -18,12 +17,12 @@ type ClickHouseDeployer struct {
 }
 
 func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
 		return false
 	}
 
 	serv := meta.CMPT_META.GetService(servInstID)
-	if deployutils.IsServiceDeployed(logKey, serv, paasResult) {
+	if DeployUtils.IsServiceDeployed(logKey, serv, paasResult) {
 		return false
 	}
 
@@ -39,9 +38,9 @@ func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magic
 	zkArr := zkContainer[consts.HEADER_ZOOKEEPER].([]map[string]interface{})
 
 	// deploy zookeeper instances
-	zkAddrList := deployutils.GetZKAddress(zkArr)
+	zkAddrList := DeployUtils.GetZKAddress(zkArr)
 	for idx, zk := range zkArr {
-		if !deployutils.DeployZookeeper(zk, (idx + 1), version, zkAddrList, logKey, magicKey, paasResult) {
+		if !DeployUtils.DeployZookeeper(zk, (idx + 1), version, zkAddrList, logKey, magicKey, paasResult) {
 			global.GLOBAL_RES.PubErrorLog(logKey, "zookeeper deploy failed ......")
 			return false
 		}
@@ -51,7 +50,7 @@ func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magic
 	replicasContainer := servJson[consts.HEADER_CLICKHOUSE_REPLICAS_CONTAINER].(map[string]interface{})
 	replicasArr := replicasContainer[consts.HEADER_CLICKHOUSE_REPLICAS].([]map[string]interface{})
 	replicaCluster := ClickHouseDeployUtils.GetRelicaCluster(replicasArr)
-	zkCluster := deployutils.GetZkCluster(zkArr)
+	zkCluster := DeployUtils.GetZkCluster(zkArr)
 
 	replicaCluster = strings.ReplaceAll(replicaCluster, "/", "\\/")
 	replicaCluster = strings.ReplaceAll(replicaCluster, "\n", "\\\n")
@@ -105,14 +104,14 @@ func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magic
 func (h *ClickHouseDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
 		return false
 	}
 
 	serv := meta.CMPT_META.GetService(servInstID)
 	version := serv.VERSION
 	// 未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
 		return false
 	}
 
@@ -184,14 +183,14 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 	paasResult *result.ResultBean) bool {
 
 	// 新增clickhouse-server节点, 需要拉起新增节点, 再更新原clickhouse节点的配置<shard></shard>部分的配置
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
 		return false
 	}
 
 	serv := meta.CMPT_META.GetService(servInstID)
 	version := serv.VERSION
 	// 未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
 		return false
 	}
 
@@ -216,7 +215,7 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 	deployResult := false
 
 	replicaCluster := ClickHouseDeployUtils.GetRelicaCluster(replicasArr)
-	zkCluster := deployutils.GetZkCluster(zkArr)
+	zkCluster := DeployUtils.GetZkCluster(zkArr)
 
 	replicaCluster = strings.ReplaceAll(replicaCluster, "/", "\\/")
 	replicaCluster = strings.ReplaceAll(replicaCluster, "\n", "\\\n")
@@ -259,14 +258,14 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 func (h *ClickHouseDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
 		return false
 	}
 
 	serv := meta.CMPT_META.GetService(servInstID)
 	version := serv.VERSION
 	// 未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
+	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
 		return false
 	}
 

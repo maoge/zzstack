@@ -81,22 +81,8 @@ func DeployVoltDBServer(voltdb map[string]interface{}, version, hosts, userName,
 	info := fmt.Sprintf("deploy voltdb: %s:%s, instId:%s", ssh.SERVER_IP, internalPort, instId)
 	global.GLOBAL_RES.PubLog(logKey, info)
 
-	if DeployUtils.CheckPortUpPredeploy(sshClient, clientPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, adminPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, webPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, internalPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, replicaPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, zkPort, logKey, paasResult) {
+	checkPorts := []string{clientPort, adminPort, webPort, internalPort, replicaPort, zkPort}
+	if DeployUtils.CheckPortsUpPredeploy(sshClient, checkPorts, logKey, paasResult) {
 		return false
 	}
 

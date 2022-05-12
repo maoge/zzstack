@@ -32,6 +32,10 @@ var (
 	REDIS_CLUSTER_DELETE_NODE = []byte(">>> Sending CLUSTER RESET SOFT to the deleted node.")
 	REDIS_ADD_NODE_OK         = []byte("[OK] New node added correctly.")
 	REDIS_SLAVEOF_OK          = []byte("OK")
+	TAOS_SHELL                = []byte("taos> ")
+	TAOS_OK                   = []byte("Query OK")
+	TAOS_DNODE_READY          = "ready"
+	TAOS_DNODE_DROPPING       = "dropping"
 )
 
 type SSHClient struct {
@@ -383,8 +387,168 @@ func (h *SSHClient) ReshardingRedisSlot(cmd string) ([]byte, bool, error) {
 	return bytes, ok, nil
 }
 
+func (h *SSHClient) LoginTaosShell(cmd, logKey string, paasResult *result.ResultBean) bool {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		return false
+	}
+
+	return h.ReadTaosEnd()
+}
+
+func (h *SSHClient) CreateOrDropNode(cmd, logKey string, paasResult *result.ResultBean) bool {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		return false
+	}
+
+	return h.ReadTaosOK()
+}
+
+func (h *SSHClient) CheckTaosNodeOnline(cmd, node, logKey string, paasResult *result.ResultBean) bool {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		return false
+	}
+
+	out := make([]byte, 0)
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return false
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if isTaosOK(out) {
+				break
+			}
+		}
+	}
+
+	// id      |           end_point            | vnodes | cores  |   status   | role  |       create_time       |      offline reason      |
+	// ======================================================================================================================================
+	//       1 | 172.20.0.171:3001              |      1 |     56 | ready      | any   | 2021-03-10 15:40:45.600 |                          |
+	//       2 | 172.20.0.172:3001              |      0 |     56 | ready      | any   | 2021-03-10 15:48:30.122 |                          |
+	//       0 | 172.20.0.171:3000              |      0 |      0 | ready      | arb   | 1970-01-01 08:00:00.000 | -                        |
+
+	arr := strings.Split(string(out), "\n")
+	for _, line := range arr {
+		if strings.Index(line, node) == -1 {
+			continue
+		}
+
+		cols := strings.Split(line, "|")
+		status := strings.Trim(cols[4], " ")
+		return status == TAOS_DNODE_READY
+	}
+	return false
+}
+
+func (h *SSHClient) CheckTaosNodeOffLine(cmd, node, logKey string, paasResult *result.ResultBean) bool {
+	e := h.ExecInteractCmd(cmd)
+	if e != nil {
+		return false
+	}
+
+	out := make([]byte, 0)
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return false
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if isTaosOK(out) {
+				break
+			}
+		}
+	}
+
+	// id      |           end_point            | vnodes | cores  |   status   | role  |       create_time       |      offline reason      |
+	// ======================================================================================================================================
+	//       1 | 172.20.0.171:3001              |      1 |     56 | ready      | any   | 2021-03-10 15:40:45.600 |                          |
+	//       2 | 172.20.0.172:3001              |      0 |     56 | ready      | any   | 2021-03-10 15:48:30.122 |                          |
+	//       0 | 172.20.0.171:3000              |      0 |      0 | dropping   | arb   | 1970-01-01 08:00:00.000 | -                        |
+
+	arr := strings.Split(string(out), "\n")
+	for _, line := range arr {
+		if strings.Index(line, node) == -1 {
+			continue
+		}
+
+		cols := strings.Split(line, "|")
+		status := strings.Trim(cols[4], " ")
+		return status == TAOS_DNODE_DROPPING
+	}
+	return false
+}
+
 func (h *SSHClient) Wait() {
 	h.rawSession.Wait()
+}
+
+func (h *SSHClient) ReadTaosEnd() bool {
+	out := make([]byte, 0)
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return false
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if isTaosEnd(out) {
+				return true
+			}
+		}
+	}
+
+	return isTaosEnd(out)
+}
+
+func (h *SSHClient) ReadTaosOK() bool {
+	out := make([]byte, 0)
+	for {
+		tmp := make([]byte, 256)
+		size, err := h.outPipe.Read(tmp)
+		if err != nil {
+			utils.LOGGER.Error(err.Error())
+			return false
+		}
+
+		if size == 0 {
+			break
+		} else {
+			out = combine(out, trim(tmp))
+			if isTaosOK(out) {
+				return true
+			}
+		}
+	}
+
+	return isTaosOK(out)
+}
+
+func isTaosEnd(context []byte) bool {
+	return bytes.Index(context, TAOS_SHELL) != -1
+}
+
+func isTaosOK(context []byte) bool {
+	return bytes.Index(context, TAOS_OK) != -1
 }
 
 func (h *SSHClient) ReadRedisInitOkOrErr() ([]byte, error) {
