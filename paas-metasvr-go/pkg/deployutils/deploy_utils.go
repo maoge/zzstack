@@ -15,12 +15,95 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
+func LoadServTopo(servInstID, logKey string, checkFlag bool, paasResult *result.ResultBean) (map[string]interface{}, string, bool) {
+	if !GetServiceTopo(servInstID, logKey, paasResult) {
+		return nil, "", false
+	}
+
+	serv := meta.CMPT_META.GetService(servInstID)
+	if checkFlag {
+		if IsServiceDeployed(logKey, serv, paasResult) {
+			return nil, "", false
+		}
+	} else {
+		if IsServiceNotDeployed(logKey, serv, paasResult) {
+			return nil, "", false
+		}
+	}
+
+	inst := meta.CMPT_META.GetInstance(servInstID)
+	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	version := serv.VERSION
+
+	topoJson := paasResult.RET_INFO.(map[string]interface{})
+	paasResult.RET_INFO = ""
+
+	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
+
+	return servJson, version, true
+}
+
+func LoadServTopoForIncrDeploy(servInstID, instID, logKey string, checkFlag bool,
+	paasResult *result.ResultBean) (map[string]interface{}, string, bool) {
+
+	serv := meta.CMPT_META.GetService(servInstID)
+	// 未部署直接退出不往下执行
+	if IsServiceNotDeployed(logKey, serv, paasResult) {
+		return nil, "", false
+	}
+
+	if !GetServiceTopo(servInstID, logKey, paasResult) {
+		return nil, "", false
+	}
+
+	inst := meta.CMPT_META.GetInstance(instID)
+
+	if checkFlag {
+		if IsInstanceDeployed(logKey, inst, paasResult) {
+			return nil, "", false
+		}
+	} else {
+		if IsInstanceNotDeployed(logKey, inst, paasResult) {
+			return nil, "", false
+		}
+	}
+
+	servInst := meta.CMPT_META.GetInstance(servInstID)
+	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
+	version := serv.VERSION
+
+	topoJson := paasResult.RET_INFO.(map[string]interface{})
+	paasResult.RET_INFO = ""
+
+	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
+
+	return servJson, version, true
+}
+
+func PostProc(servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	if !metadao.UpdateInstanceDeployFlag(servInstID, deployFlag, logKey, magicKey, paasResult) {
+		return false
+	}
+	if !metadao.UpdateServiceDeployFlag(servInstID, deployFlag, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	info := ""
+	if deployFlag == consts.STR_TRUE {
+		info = fmt.Sprintf("service inst_id: %s, deploy sucess ......", servInstID)
+	} else {
+		info = fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
+	}
+	global.GLOBAL_RES.PubSuccessLog(logKey, info)
+
+	return true
+}
+
 func GetServiceTopo(servInstID, logKey string, paasResult *result.ResultBean) bool {
 	if !metadao.LoadServiceTopo(servInstID, paasResult) {
 		if logKey != "" {
 			global.GLOBAL_RES.PubFailLog(logKey, paasResult.RET_INFO.(string))
 		}
-
 		return false
 	}
 

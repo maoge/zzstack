@@ -3,6 +3,7 @@ package deployutils
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -12,8 +13,9 @@ import (
 )
 
 func ExecSimpleCmd(sshClient *SSHClient, cmd, logKey string, paasResult *result.ResultBean) bool {
-	_, err := sshClient.GeneralCommand(cmd)
+	context, err := sshClient.GeneralCommand(cmd)
 	if err == nil {
+		log.Print(context)
 		return true
 	} else {
 		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())

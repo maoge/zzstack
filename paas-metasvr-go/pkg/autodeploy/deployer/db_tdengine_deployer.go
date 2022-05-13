@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	CollectdDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/common"
 	TDengineDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/tdengine"
@@ -28,23 +27,11 @@ func getFirstDnodeAddr(dnode map[string]interface{}) string {
 func (h *TDEngineDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, true, paasResult)
+	if !ok {
 		return false
 	}
 
-	serv := meta.CMPT_META.GetService(servInstID)
-	if DeployUtils.IsServiceDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-	version := serv.VERSION
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 	arbitratorContainer := servJson[consts.HEADER_ARBITRATOR_CONTAINER].(map[string]interface{})
 	tdArbitrator := arbitratorContainer[consts.HEADER_TD_ARBITRATOR].(map[string]interface{})
 
@@ -83,16 +70,10 @@ func (h *TDEngineDeployer) DeployService(servInstID, deployFlag, logKey, magicKe
 		}
 	}
 
-	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	// mod is_deployed flag and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -100,23 +81,10 @@ func (h *TDEngineDeployer) DeployService(servInstID, deployFlag, logKey, magicKe
 func (h *TDEngineDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, _, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 
 	// 卸载collectd服务
 	collectdRaw := servJson[consts.HEADER_COLLECTD]
@@ -148,16 +116,10 @@ func (h *TDEngineDeployer) UndeployService(servInstID string, force bool, logKey
 		return false
 	}
 
-	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
+	// mod is_deployed flag and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -165,24 +127,10 @@ func (h *TDEngineDeployer) UndeployService(servInstID string, force bool, logKey
 func (h *TDEngineDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopoForIncrDeploy(servInstID, instID, logKey, true, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	arbitratorContainer := servJson[consts.HEADER_ARBITRATOR_CONTAINER].(map[string]interface{})
 	arbitrator := arbitratorContainer[consts.HEADER_TD_ARBITRATOR].(map[string]interface{})
@@ -222,23 +170,10 @@ func (h *TDEngineDeployer) DeployInstance(servInstID string, instID string, logK
 func (h *TDEngineDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, _, ok := DeployUtils.LoadServTopoForIncrDeploy(servInstID, instID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	// arbitratorContainer := servJson[consts.HEADER_ARBITRATOR_CONTAINER].(map[string]interface{})
 	// arbitrator := arbitratorContainer[consts.HEADER_TD_ARBITRATOR].(map[string]interface{})

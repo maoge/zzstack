@@ -2,7 +2,6 @@ package deployer
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
@@ -41,8 +40,6 @@ func (h *StoreMinioDeployer) DeployService(servInstID, deployFlag, logKey, magic
 	minioArr := minioContainer[consts.HEADER_MINIO].([]map[string]interface{})
 
 	endpoints := MinioDeployerUtils.GetEndpoints(minioArr)
-	endpoints += "2>./log/stderr.log 1>./log/stdout.log &"
-	endpoints = strings.ReplaceAll(endpoints, "/", "\\/")
 	for _, minioNode := range minioArr {
 		if !MinioDeployerUtils.DeployMinioNode(minioNode, endpoints, version, logKey, magicKey, paasResult) {
 			global.GLOBAL_RES.PubFailLog(logKey, "minio node deploy failed ......")

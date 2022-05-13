@@ -92,6 +92,7 @@ const (
 	SERV_TYPE_CACHE_REDIS_MASTER_SLAVE               = "CACHE_REDIS_MASTER_SLAVE"
 	SERV_TYPE_CACHE_REDIS_HA_CLUSTER                 = "CACHE_REDIS_HA_CLUSTER"
 	SERV_TYPE_SERVERLESS_APISIX                      = "SERVERLESS_APISIX"
+	SERV_TYPE_STORE_MINIO                            = "STORE_MINIO"
 	SERV_TYPE_MQ_ROCKETMQ                            = "MQ_ROCKETMQ"
 	SERV_TYPE_MQ_PULSAR                              = "MQ_PULSAR"
 	SERV_TYPE_DB_TIDB                                = "DB_TIDB"

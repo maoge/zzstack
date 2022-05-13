@@ -31,14 +31,14 @@ func GetEndpoints(minioArr []map[string]interface{}) string {
 
 		maxArr := len(mountArr) - 1
 		for j, mountPoint := range mountArr {
-			endPoint := fmt.Sprintf("    http://%s%s \\", ssh.SERVER_IP, mountPoint)
+			endPoint := fmt.Sprintf("\thttp://%s%s", ssh.SERVER_IP, mountPoint)
 			result += endPoint
 
 			if j == maxArr && i == maxMinio {
 				continue
 			}
 
-			result += "\\\n"
+			result += "\\n"
 		}
 	}
 	return result
@@ -81,8 +81,8 @@ func DeployMinioNode(minioNode map[string]interface{}, endpoints, version, logKe
 		return false
 	}
 
-	oldName := DeployUtils.GetVersionedFileName(consts.DB_VOLTDB_FILE_ID, version, logKey, paasResult)
-	newName := fmt.Sprintf("%s_%s", oldName, minioPort)
+	oldName := DeployUtils.GetVersionedFileName(consts.STORE_MINIO_FILE_ID, version, logKey, paasResult)
+	newName := fmt.Sprintf("minio_%s", minioPort)
 	if !DeployUtils.RM(sshClient, newName, logKey, paasResult) {
 		return false
 	}

@@ -46,7 +46,7 @@ public class MinioDeployer implements ServiceDeployer {
         JsonArray minioArr = minioContainer.getJsonArray(FixHeader.HEADER_MINIO);
         // 部署minio服务
         String endpoints = MinioDeployerUtils.getEndpoints(minioArr);
-        endpoints += "2>./log/stderr.log 1>./log/stdout.log &";
+        // endpoints += "2>./log/stderr.log 1>./log/stdout.log &";
         endpoints = endpoints.replaceAll("/", "\\\\/");//.replaceAll("\n", "\\\\\n");
         
         for (int i = 0; i < minioArr.size(); i++) {
