@@ -127,7 +127,7 @@ func (h *TDEngineDeployer) UndeployService(servInstID string, force bool, logKey
 func (h *TDEngineDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	servJson, version, ok := DeployUtils.LoadServTopoForIncrDeploy(servInstID, instID, logKey, true, paasResult)
+	servJson, version, ok := DeployUtils.LoadServTopoForIncrDeploy(servInstID, instID, logKey, false, paasResult)
 	if !ok {
 		return false
 	}

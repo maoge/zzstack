@@ -278,4 +278,5 @@ const (
 	CONF_FIRSTEP                                     = "%FIRSTEP%"
 	CONF_FQDN                                        = "%FQDN%"
 	CONF_ARBITRATOR_ADDR                             = "%ARBITRATOR_ADDR%"
+	CONF_END                                         = "%END%"
 )

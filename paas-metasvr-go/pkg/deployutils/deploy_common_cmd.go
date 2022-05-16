@@ -3,7 +3,6 @@ package deployutils
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -15,10 +14,10 @@ import (
 func ExecSimpleCmd(sshClient *SSHClient, cmd, logKey string, paasResult *result.ResultBean) bool {
 	context, err := sshClient.GeneralCommand(cmd)
 	if err == nil {
-		log.Print(context)
 		return true
 	} else {
 		global.GLOBAL_RES.PubErrorLog(logKey, err.Error())
+		global.GLOBAL_RES.PubErrorLog(logKey, context)
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = err.Error()
 		return false

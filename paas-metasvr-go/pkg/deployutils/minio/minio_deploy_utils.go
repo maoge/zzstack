@@ -31,14 +31,15 @@ func GetEndpoints(minioArr []map[string]interface{}) string {
 
 		maxArr := len(mountArr) - 1
 		for j, mountPoint := range mountArr {
-			endPoint := fmt.Sprintf("\thttp://%s%s", ssh.SERVER_IP, mountPoint)
+			endPoint := fmt.Sprintf("    http://%s%s ", ssh.SERVER_IP, mountPoint)
 			result += endPoint
 
 			if j == maxArr && i == maxMinio {
-				continue
+				result += consts.CONF_END + "\\"
+			} else {
+				result += "\\\n"
 			}
 
-			result += "\\n"
 		}
 	}
 	return result
@@ -109,6 +110,7 @@ func DeployMinioNode(minioNode map[string]interface{}, endpoints, version, logKe
 	DeployUtils.SED(sshClient, consts.CONF_ADDRESS, address, file, logKey, paasResult)
 	DeployUtils.SED(sshClient, consts.CONF_CONSOLE_ADDRESS, consoleAddress, file, logKey, paasResult)
 	DeployUtils.AppendMultiLine(sshClient, consts.CONF_ENDPOINTS, endpoints, file, logKey, paasResult)
+	DeployUtils.SED(sshClient, consts.CONF_END, "\\\\", file, logKey, paasResult)
 
 	global.GLOBAL_RES.PubLog(logKey, "start minio ......")
 	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
@@ -128,7 +130,7 @@ func DeployMinioNode(minioNode map[string]interface{}, endpoints, version, logKe
 	return true
 }
 
-func UndeployMinioNode(minioNode map[string]interface{}, version, logKey, magicKey string,
+func UndeployMinioNode(minioNode map[string]interface{}, logKey, magicKey string,
 	paasResult *result.ResultBean) bool {
 
 	instId := minioNode[consts.HEADER_INST_ID].(string)
@@ -152,8 +154,7 @@ func UndeployMinioNode(minioNode map[string]interface{}, version, logKey, magicK
 	info := fmt.Sprintf("start undeploy minio, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, minioPort)
 	global.GLOBAL_RES.PubLog(logKey, info)
 
-	oldName := DeployUtils.GetVersionedFileName(consts.STORE_MINIO_FILE_ID, version, logKey, paasResult)
-	newName := fmt.Sprintf("%s_%s", oldName, minioPort)
+	newName := fmt.Sprintf("minio_%s", minioPort)
 	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.STORE_MINIO_ROOT, newName)
 	if !DeployUtils.CD(sshClient, rootDir, logKey, paasResult) {
 		return false
