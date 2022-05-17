@@ -472,6 +472,75 @@ public class DeployUtils {
         return deployFile;
     }
 
+    public static String getEtcdLongAddr(JsonArray etcdNodeArr) {
+        StringBuilder sb = new StringBuilder("");
+        int maxIdx = etcdNodeArr.size() - 1;
+        for (int i = 0; i <= maxIdx; ++i) {
+            JsonObject etcdNode = etcdNodeArr.getJsonObject(i);
+            String sshId = etcdNode.getString(FixHeader.HEADER_SSH_ID);
+            PaasSsh ssh = DeployUtils.getSshById(sshId, null, null);
+            if (ssh == null)
+                continue;
+            
+            String etcdNodeIp = ssh.getServerIp();
+            String clientUrlsPort = etcdNode.getString(FixHeader.HEADER_CLIENT_URLS_PORT);
+            String addr = String.format("    - \"http\\:\\/\\/%s\\:%s\"", etcdNodeIp, clientUrlsPort);
+            
+            sb.append(addr);
+            if (i < maxIdx) {
+                sb.append("\\n");
+            }
+        }
+        
+        return sb.toString();
+    }
+
+    public static String getEtcdShortAddr(JsonArray etcdNodeArr) {
+        StringBuilder sb = new StringBuilder("");
+        int maxIdx = etcdNodeArr.size() - 1;
+        for (int i = 0; i <= maxIdx; ++i) {
+            JsonObject etcdNode = etcdNodeArr.getJsonObject(i);
+            String sshId = etcdNode.getString(FixHeader.HEADER_SSH_ID);
+            PaasSsh ssh = DeployUtils.getSshById(sshId, null, null);
+            if (ssh == null)
+                continue;
+            
+            String etcdNodeIp = ssh.getServerIp();
+            String clientUrlsPort = etcdNode.getString(FixHeader.HEADER_CLIENT_URLS_PORT);
+            String addr = String.format("- %s:%s", etcdNodeIp, clientUrlsPort);
+            
+            sb.append(addr);
+            if (i < maxIdx) {
+                sb.append(CONSTS.LINE_END);
+            }
+        }
+        
+        return sb.toString();
+    }
+
+    public static String getEtcdFullAddr(JsonArray etcdNodeArr) {
+        StringBuilder sb = new StringBuilder("");
+        for (int i = 0; i < etcdNodeArr.size(); ++i) {
+            JsonObject etcdNode = etcdNodeArr.getJsonObject(i);
+            String sshId = etcdNode.getString(FixHeader.HEADER_SSH_ID);
+            PaasSsh ssh = DeployUtils.getSshById(sshId, null, null);
+            if (ssh == null)
+                continue;
+            
+            String etcdNodeIp = ssh.getServerIp();
+            String peerUrlsPort = etcdNode.getString(FixHeader.HEADER_PEER_URLS_PORT);
+            String etcdInstId = etcdNode.getString(FixHeader.HEADER_INST_ID);
+            String addr = String.format("%s=http://%s:%s", etcdInstId, etcdNodeIp, peerUrlsPort);
+            
+            if (i > 0) {
+                sb.append(CONSTS.PATH_COMMA);
+            }
+            sb.append(addr);
+        }
+        
+        return sb.toString();
+    }
+
     public static boolean getRedisClusterNode(SSHExecutor ssh2, String cmd, String logKey, ResultBean result) {
         boolean res = true;
         try {

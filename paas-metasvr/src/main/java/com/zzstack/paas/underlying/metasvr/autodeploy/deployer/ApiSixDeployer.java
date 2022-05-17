@@ -6,6 +6,7 @@ import com.zzstack.paas.underlying.metasvr.autodeploy.ServiceDeployer;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.ApiSixDeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.DeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.InstanceOperationEnum;
+import com.zzstack.paas.underlying.metasvr.autodeploy.util.YugaByteDBDeployerUtils;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
 import com.zzstack.paas.underlying.metasvr.bean.PaasService;
@@ -51,34 +52,18 @@ public class ApiSixDeployer implements ServiceDeployer {
         JsonArray apiSixNodeArr = apiSixNodeContainer.getJsonArray(FixHeader.HEADER_APISIX_SERVER);
         String apiSixInstantId = apiSixNodeContainer.getString(FixHeader.HEADER_INST_ID);
         
-        // 先判断是否是生产环境,生产环境的话etcd必须至少是三个节点的集群,开发、测试环境部署单节点或者集群的etcd
-        boolean isNotEnoughProductCondition = serv.isProduct() && etcdNodeArr.size() < FixHeader.ETCD_PRODUCT_ENV_MIN_NODES;
-        if (isNotEnoughProductCondition) {
-            DeployLog.pubErrorLog(logKey, FixDefs.ERR_ETCD_NODE_REQUIRED_CLUSTER);
-            return false;
-        }
-        // etcd的节点不能小于1
-        if (etcdNodeArr.size() < 1) {
-            DeployLog.pubErrorLog(logKey, FixDefs.ERR_ETCD_NODE_LESS_THAN_ONE);
-            return false;
-        }
-        
-        // apisix的节点不能小于1
-        if (apiSixNodeArr.isEmpty()) {
-            DeployLog.pubErrorLog(logKey, FixDefs.ERR_APISIX_NODE_LESS_THAN_ONE);
+        if (YugaByteDBDeployerUtils.checkBeforeDeploy(serv, etcdNodeArr, apiSixNodeArr, logKey)) {
             return false;
         }
         
         // 1、先部署etcd
-        // 需要加协议头(apisix)
-        StringBuilder ectdAddrList = new StringBuilder();
-        // 不需要加协议头(apisix-dashboard)
-        StringJoiner ectdAddr = new StringJoiner(CONSTS.LINE_END);
-        StringJoiner etcdNodes = new StringJoiner(",");
-        ApiSixDeployUtils.getEtcdList(etcdNodeArr, ectdAddrList, ectdAddr, etcdNodes);
+        String etcdLongAddr = DeployUtils.getEtcdLongAddr(etcdNodeArr);
+        String etcdShortAddr = DeployUtils.getEtcdShortAddr(etcdNodeArr);
+        String etcdFullAddr = DeployUtils.getEtcdFullAddr(etcdNodeArr);
+        
         for (int i = 0; i < etcdNodeArr.size(); ++i) {
             JsonObject jsonEtcdNode = etcdNodeArr.getJsonObject(i);
-            if (!DeployUtils.deployEtcdNode(jsonEtcdNode, etcdNodes.toString(), etcdContainerInstId, logKey, magicKey, result)) {
+            if (!DeployUtils.deployEtcdNode(jsonEtcdNode, etcdFullAddr.toString(), etcdContainerInstId, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, result.getRetInfo());
                 return false;
             }
@@ -87,8 +72,8 @@ public class ApiSixDeployer implements ServiceDeployer {
         // 2、再部署apisix
         for (int i = 0; i < apiSixNodeArr.size(); ++i) {
             JsonObject jsonApiSixNode = apiSixNodeArr.getJsonObject(i);
-            if (!ApiSixDeployUtils.deployApiSixNode(jsonApiSixNode, apiSixInstantId, ectdAddrList.toString(),
-                    ectdAddr.toString(), version, logKey, magicKey, result)) {
+            if (!ApiSixDeployUtils.deployApiSixNode(jsonApiSixNode, apiSixInstantId, etcdLongAddr,
+                    etcdShortAddr, version, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, result.getRetInfo());
                 return false;
             }
@@ -121,8 +106,10 @@ public class ApiSixDeployer implements ServiceDeployer {
         if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
             return false;
         }
+        
         String info = String.format("service inst_id:%s, deploy sucess ......", servInstID);
         DeployLog.pubSuccessLog(logKey, info);
+        
         return true;
     }
 

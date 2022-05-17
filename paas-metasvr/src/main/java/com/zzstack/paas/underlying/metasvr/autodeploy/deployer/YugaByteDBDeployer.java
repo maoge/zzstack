@@ -111,7 +111,7 @@ public class YugaByteDBDeployer implements ServiceDeployer {
         // 2. undeploy yb-tserver
         JsonObject ybTServerContainer = servJson.getJsonObject(FixHeader.HEADER_YB_TSERVER_CONTAINER);
         JsonArray ybTServerArr = ybTServerContainer.getJsonArray(FixHeader.HEADER_YB_TSERVER);
-        for (int i = 0; i < ybMasterArr.size(); ++i) {
+        for (int i = 0; i < ybTServerArr.size(); ++i) {
             JsonObject ybTServer = ybTServerArr.getJsonObject(i);
             if (!YugaByteDBDeployerUtils.undeployTServer(ybTServer, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, "yb-tserver undeploy failed ......");

@@ -360,24 +360,6 @@ public class ApiSixDeployUtils {
         return true;
     }
     
-    public static void getEtcdList(JsonArray etcdNodeArr, StringBuilder ectdLongAddrList, StringJoiner ectdShortAddr, StringJoiner etcdFullAddr) {
-        for (int i = 0; i < etcdNodeArr.size(); ++i) {
-            JsonObject etcdNode = etcdNodeArr.getJsonObject(i);
-            String sshId = etcdNode.getString(FixHeader.HEADER_SSH_ID);
-            PaasSsh ssh = DeployUtils.getSshById(sshId, null, null);
-            if (ssh == null)
-                continue;
-            
-            String etcdNodeIp = ssh.getServerIp();
-            String peerUrlsPort = etcdNode.getString(FixHeader.HEADER_PEER_URLS_PORT);
-            String clientUrlsPort = etcdNode.getString(FixHeader.HEADER_CLIENT_URLS_PORT);
-            String etcdInstId = etcdNode.getString(FixHeader.HEADER_INST_ID);
-            ectdLongAddrList.append(String.format("- \"http\\:\\/\\/%s\\:%s\"%s    ", etcdNodeIp, clientUrlsPort, "\\n"));
-            ectdShortAddr.add(String.format("- %s:%s", etcdNodeIp, clientUrlsPort));
-            etcdFullAddr.add(String.format("%s=http://%s:%s", etcdInstId, etcdNodeIp, peerUrlsPort));
-        }
-    }
-    
     public static String getApisixMetricList(JsonArray apiSixNodeArr) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < apiSixNodeArr.size(); ++i) {
