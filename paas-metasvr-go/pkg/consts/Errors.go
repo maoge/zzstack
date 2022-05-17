@@ -73,4 +73,8 @@ const (
 	ERR_FILE_DIR_NOT_EXISTS            = "No such file or directory"
 	ERR_COMMAND_NOT_FOUND              = "command not found"
 	ERR_UNSURPORT_OPERATION            = "unsurport operation"
+	ERR_ETCD_NODE_REQUIRED_CLUSTER     = "product env must least 3 node ......"
+	ERR_ETCD_NODE_LESS_THAN_ONE        = "find etcd node less than one, but dev or test env must single or cluster"
+	ERR_APISIX_NODE_LESS_THAN_ONE      = "find apisix node less than one, but must single or cluster"
+	ERR_APISIX_NODE_INSTANT_NOT_FOUND  = " not find apisix node by instantId"
 )

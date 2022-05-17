@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	ClickHouseDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/clickhouse"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
@@ -16,24 +15,14 @@ import (
 type ClickHouseDeployer struct {
 }
 
-func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, true, paasResult)
+	if !ok {
 		return false
 	}
 
-	serv := meta.CMPT_META.GetService(servInstID)
-	if DeployUtils.IsServiceDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-	version := serv.VERSION
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 	zkContainer := servJson[consts.HEADER_ZOOKEEPER_CONTAINER].(map[string]interface{})
 	zkArr := zkContainer[consts.HEADER_ZOOKEEPER].([]map[string]interface{})
 
@@ -87,16 +76,10 @@ func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magic
 		}
 	}
 
-	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	// mod is_deployed flag and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -104,24 +87,11 @@ func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magic
 func (h *ClickHouseDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
 
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 	zkContainer := servJson[consts.HEADER_ZOOKEEPER_CONTAINER].(map[string]interface{})
 	zkArr := zkContainer[consts.HEADER_ZOOKEEPER].([]map[string]interface{})
 
@@ -166,15 +136,9 @@ func (h *ClickHouseDeployer) UndeployService(servInstID string, force bool, logK
 	}
 
 	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
+	if !DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -182,25 +146,11 @@ func (h *ClickHouseDeployer) UndeployService(servInstID string, force bool, logK
 func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	// 新增clickhouse-server节点, 需要拉起新增节点, 再更新原clickhouse节点的配置<shard></shard>部分的配置
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
 
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 	zkContainer := servJson[consts.HEADER_ZOOKEEPER_CONTAINER].(map[string]interface{})
 	zkArr := zkContainer[consts.HEADER_ZOOKEEPER].([]map[string]interface{})
 
@@ -258,24 +208,10 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 func (h *ClickHouseDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	prometheus := servJson[consts.HEADER_PROMETHEUS].(map[string]interface{})
 	grafana := servJson[consts.HEADER_GRAFANA].(map[string]interface{})

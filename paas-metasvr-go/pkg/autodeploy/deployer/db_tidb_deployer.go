@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	TiDBDeployerUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/tidb"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
@@ -18,23 +17,11 @@ type TiDBDeployer struct {
 func (h *TiDBDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, true, paasResult)
+	if !ok {
 		return false
 	}
 
-	serv := meta.CMPT_META.GetService(servInstID)
-	if DeployUtils.IsServiceDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-	version := serv.VERSION
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 	pdContainer := servJson[consts.HEADER_PD_SERVER_CONTAINER].(map[string]interface{})
 	pdArr := pdContainer[consts.HEADER_PD_SERVER].([]map[string]interface{})
 	// 部署pd-server服务
@@ -80,16 +67,10 @@ func (h *TiDBDeployer) DeployService(servInstID, deployFlag, logKey, magicKey st
 		}
 	}
 
-	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	// mod is_deployed flag and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -97,24 +78,10 @@ func (h *TiDBDeployer) DeployService(servInstID, deployFlag, logKey, magicKey st
 func (h *TiDBDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 
 	// 卸载tidb-server服务
 	tidbServerContainer := servJson[consts.HEADER_TIDB_SERVER_CONTAINER].(map[string]interface{})
@@ -160,15 +127,9 @@ func (h *TiDBDeployer) UndeployService(servInstID string, force bool, logKey str
 	}
 
 	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
+	if !DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -176,24 +137,10 @@ func (h *TiDBDeployer) UndeployService(servInstID string, force bool, logKey str
 func (h *TiDBDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	pdContainer := servJson[consts.HEADER_PD_SERVER_CONTAINER].(map[string]interface{})
 	tikvContainer := servJson[consts.HEADER_TIKV_SERVER_CONTAINER].(map[string]interface{})
@@ -246,24 +193,10 @@ func (h *TiDBDeployer) DeployInstance(servInstID string, instID string, logKey s
 func (h *TiDBDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	pdContainer := servJson[consts.HEADER_PD_SERVER_CONTAINER].(map[string]interface{})
 	tikvContainer := servJson[consts.HEADER_TIKV_SERVER_CONTAINER].(map[string]interface{})
@@ -297,6 +230,14 @@ func (h *TiDBDeployer) UndeployInstance(servInstID string, instID string, logKey
 		break
 	default:
 		break
+	}
+
+	if undeployResult {
+		info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("service inst_id: %s, undeploy fail ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
 	}
 
 	return undeployResult

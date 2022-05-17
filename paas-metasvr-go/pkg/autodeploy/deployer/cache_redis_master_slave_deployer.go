@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
-	"github.com/maoge/paas-metasvr-go/pkg/deployutils"
+	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
@@ -18,26 +17,13 @@ type RedisMasterSlaveDeployer struct {
 }
 
 func (h *RedisMasterSlaveDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, true, paasResult)
+	if !ok {
 		return false
 	}
 
-	serv := meta.CMPT_META.GetService(servInstID)
-	if deployutils.IsServiceDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
 	redisNodeArr := nodeContainer[consts.HEADER_REDIS_NODE].([]map[string]interface{})
-
-	version := serv.VERSION
 
 	if !RedisDeployUtils.CheckMasterNode(redisNodeArr, paasResult) {
 		global.GLOBAL_RES.PubFailLog(logKey, paasResult.RET_INFO.(string))
@@ -76,16 +62,10 @@ func (h *RedisMasterSlaveDeployer) DeployService(servInstID, deployFlag, logKey,
 		}
 	}
 
-	// 3.update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	// mod is_deployed flag and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -93,23 +73,11 @@ func (h *RedisMasterSlaveDeployer) DeployService(servInstID, deployFlag, logKey,
 func (h *RedisMasterSlaveDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, _, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
 	serv := meta.CMPT_META.GetService(servInstID)
-	// 未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 
 	// 卸载伪部署
 	if serv.PSEUDO_DEPLOY_FLAG == consts.DEPLOY_FLAG_PSEUDO {
@@ -147,15 +115,9 @@ func (h *RedisMasterSlaveDeployer) UndeployService(servInstID string, force bool
 	}
 
 	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
+	if !DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -163,36 +125,17 @@ func (h *RedisMasterSlaveDeployer) UndeployService(servInstID string, force bool
 func (h *RedisMasterSlaveDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	instCmpt := meta.CMPT_META.GetInstanceCmpt(instID)
-	if instCmpt == nil {
-		errMsg := fmt.Sprintf("instance %s component not found ......", instID)
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
-		return false
-	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
 	redisNodeArr := nodeContainer[consts.HEADER_REDIS_NODE].([]map[string]interface{})
 
-	// 服务未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	deployResult := false
 
 	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
 		selfNode := RedisDeployUtils.GetSelfRedisNode(redisNodeArr, instID)
@@ -206,23 +149,24 @@ func (h *RedisMasterSlaveDeployer) DeployInstance(servInstID string, instID stri
 
 		// 主节点直接部署，启动start脚本
 		// 从节点，先启动，再执行slaveof挂载到主节点上
-		if !RedisDeployUtils.DeploySingleRedisNode(selfNode, redisNodeArr, isMaster, version, logKey, magicKey, paasResult) {
-			return false
-		}
+		deployResult = RedisDeployUtils.DeploySingleRedisNode(selfNode, redisNodeArr, isMaster, version, logKey, magicKey, paasResult)
 	} else if instCmpt.CMPT_NAME == consts.CMPT_COLLECTD {
 		collectdRaw := servJson[consts.HEADER_COLLECTD]
 		if collectdRaw != nil {
 			collectd := collectdRaw.(map[string]interface{})
 			if len(collectd) > 0 {
-				if !common.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult) {
-					return false
-				}
+				deployResult = common.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult)
 			}
 		}
 	}
 
-	successLog := fmt.Sprintf("instance inst_id: %s, deploy sucess ......", instID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, successLog)
+	if deployResult {
+		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
+	}
 
 	return true
 }
@@ -230,34 +174,17 @@ func (h *RedisMasterSlaveDeployer) DeployInstance(servInstID string, instID stri
 func (h *RedisMasterSlaveDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	instCmpt := meta.CMPT_META.GetInstanceCmpt(instID)
-	if instCmpt == nil {
-		errMsg := fmt.Sprintf("instance %s component not found ......", instID)
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	servJson, _, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
-		return false
-	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
 	redisNodeArr := nodeContainer[consts.HEADER_REDIS_NODE].([]map[string]interface{})
 
-	// 服务未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	undeployResult := false
 
 	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
 		selfNode := RedisDeployUtils.GetSelfRedisNode(redisNodeArr, instID)
@@ -286,6 +213,14 @@ func (h *RedisMasterSlaveDeployer) UndeployInstance(servInstID string, instID st
 				}
 			}
 		}
+	}
+
+	if undeployResult {
+		info := fmt.Sprintf("service inst_id:%s, undeploy sucess ......", servInstID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("service inst_id:%s, undeploy failed ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
 	}
 
 	return true

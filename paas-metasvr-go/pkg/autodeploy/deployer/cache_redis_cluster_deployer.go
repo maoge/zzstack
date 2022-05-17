@@ -4,9 +4,8 @@ import (
 	"fmt"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
-	"github.com/maoge/paas-metasvr-go/pkg/deployutils"
-	"github.com/maoge/paas-metasvr-go/pkg/deployutils/common"
+	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
+	CommonDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/common"
 	RedisDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/redis"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
@@ -17,23 +16,13 @@ import (
 type RedisClusterDeployer struct {
 }
 
-func (h *RedisClusterDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+func (h *RedisClusterDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, true, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	if deployutils.IsServiceDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 
 	if deployFlag == consts.DEPLOY_FLAG_PSEUDO {
 		if !RedisDeployUtils.RedisClusterServiceFakeDeploy(servJson, servInstID, logKey, magicKey, consts.STR_DEPLOY, paasResult) {
@@ -46,7 +35,6 @@ func (h *RedisClusterDeployer) DeployService(servInstID, deployFlag, logKey, mag
 		return true
 	}
 
-	version := serv.VERSION
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
 	proxyContainer := servJson[consts.HEADER_REDIS_PROXY_CONTAINER].(map[string]interface{})
 
@@ -83,22 +71,16 @@ func (h *RedisClusterDeployer) DeployService(servInstID, deployFlag, logKey, mag
 	if collectdRaw != nil {
 		collectd := collectdRaw.(map[string]interface{})
 		if len(collectd) > 0 {
-			if !common.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult) {
+			if !CommonDeployUtils.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult) {
 				return false
 			}
 		}
 	}
 
-	// 4.update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	// mod is_deployed flag and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -106,23 +88,11 @@ func (h *RedisClusterDeployer) DeployService(servInstID, deployFlag, logKey, mag
 func (h *RedisClusterDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, _, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
 	serv := meta.CMPT_META.GetService(servInstID)
-	// 未部署直接退出不往下执行
-	if deployutils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 
 	// 卸载伪部署
 	if serv.PSEUDO_DEPLOY_FLAG == consts.DEPLOY_FLAG_PSEUDO {
@@ -164,22 +134,16 @@ func (h *RedisClusterDeployer) UndeployService(servInstID string, force bool, lo
 	if collectdRaw != nil {
 		collectd := collectdRaw.(map[string]interface{})
 		if len(collectd) > 0 {
-			if !common.UndeployCollectd(collectd, logKey, magicKey, paasResult) {
+			if !CommonDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult) {
 				return false
 			}
 		}
 	}
 
-	// 4.update t_meta_service is_deployed flag
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
+	// update t_meta_service.is_deployed and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -187,29 +151,10 @@ func (h *RedisClusterDeployer) UndeployService(servInstID string, force bool, lo
 func (h *RedisClusterDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	instCmpt := meta.CMPT_META.GetInstanceCmpt(instID)
-	if instCmpt == nil {
-		errMsg := fmt.Sprintf("instance %s component not found ......", instID)
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
 	proxyContainer := servJson[consts.HEADER_REDIS_PROXY_CONTAINER].(map[string]interface{})
@@ -219,6 +164,10 @@ func (h *RedisClusterDeployer) DeployInstance(servInstID string, instID string, 
 
 	node4cluster, nodes4proxy := RedisDeployUtils.GetClusterNodes(&redisNodeArr)
 
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	deployResult := false
+
 	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_PROXY {
 		for _, proxyJson := range proxyArr {
 			currId := proxyJson[consts.HEADER_INST_ID]
@@ -226,9 +175,7 @@ func (h *RedisClusterDeployer) DeployInstance(servInstID string, instID string, 
 				continue
 			}
 
-			if !RedisDeployUtils.DeployProxyNode(proxyJson, nodes4proxy, logKey, magicKey, paasResult) {
-				return false
-			}
+			deployResult = RedisDeployUtils.DeployProxyNode(proxyJson, nodes4proxy, logKey, magicKey, paasResult)
 			// TODO notify clients ......
 		}
 	} else if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
@@ -238,19 +185,23 @@ func (h *RedisClusterDeployer) DeployInstance(servInstID string, instID string, 
 				continue
 			}
 
-			if !RedisDeployUtils.DeployRedisNode(redisJson, false, false, true, true, node4cluster, version, logKey, magicKey, paasResult) {
-				return false
-			}
+			deployResult = RedisDeployUtils.DeployRedisNode(redisJson, false, false, true, true, node4cluster, version, logKey, magicKey, paasResult)
 		}
 	} else if instCmpt.CMPT_NAME == consts.CMPT_COLLECTD {
 		//卸载collectd服务
 		collectdRaw, found := servJson[consts.HEADER_COLLECTD]
 		if found {
 			collectd := collectdRaw.(map[string]interface{})
-			if !common.UndeployCollectd(collectd, logKey, magicKey, paasResult) {
-				return false
-			}
+			deployResult = CommonDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
 		}
+	}
+
+	if deployResult {
+		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
 	}
 
 	return true
@@ -259,33 +210,20 @@ func (h *RedisClusterDeployer) DeployInstance(servInstID string, instID string, 
 func (h *RedisClusterDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	instCmpt := meta.CMPT_META.GetInstanceCmpt(instID)
-	if instCmpt == nil {
-		errMsg := fmt.Sprintf("instance %s component not found ......", instID)
-		global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = errMsg
+	servJson, _, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	if !deployutils.GetServiceTopo(servInstID, logKey, paasResult) {
-		return false
-	}
-
-	servInst := meta.CMPT_META.GetInstance(servInstID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servCmpt := meta.CMPT_META.GetCmptById(servInst.CMPT_ID)
-	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	nodeContainer := servJson[consts.HEADER_REDIS_NODE_CONTAINER].(map[string]interface{})
 	proxyContainer := servJson[consts.HEADER_REDIS_PROXY_CONTAINER].(map[string]interface{})
 
 	redisNodeArr := nodeContainer[consts.HEADER_REDIS_NODE].([]map[string]interface{})
 	proxyArr := proxyContainer[consts.HEADER_REDIS_PROXY].([]map[string]interface{})
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	undeployResult := false
 
 	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_PROXY {
 		for _, proxyJson := range proxyArr {
@@ -294,9 +232,7 @@ func (h *RedisClusterDeployer) UndeployInstance(servInstID string, instID string
 				continue
 			}
 
-			if !RedisDeployUtils.UndeployProxyNode(proxyJson, false, logKey, magicKey, paasResult) {
-				return false
-			}
+			undeployResult = RedisDeployUtils.UndeployProxyNode(proxyJson, false, logKey, magicKey, paasResult)
 			// TODO notify clients ......
 		}
 	} else if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
@@ -305,19 +241,23 @@ func (h *RedisClusterDeployer) UndeployInstance(servInstID string, instID string
 			if currId != instID {
 				continue
 			}
-			if !RedisDeployUtils.UndeployRedisNode(redisJson, true, logKey, magicKey, paasResult) {
-				return false
-			}
+			undeployResult = RedisDeployUtils.UndeployRedisNode(redisJson, true, logKey, magicKey, paasResult)
 		}
 	} else if instCmpt.CMPT_NAME == consts.CMPT_COLLECTD {
 		//卸载collectd服务
 		collectdRaw, found := servJson[consts.HEADER_COLLECTD]
 		if found {
 			collectd := collectdRaw.(map[string]interface{})
-			if !common.UndeployCollectd(collectd, logKey, magicKey, paasResult) {
-				return false
-			}
+			undeployResult = CommonDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
 		}
+	}
+
+	if undeployResult {
+		info := fmt.Sprintf("service inst_id:%s, undeploy sucess ......", servInstID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("service inst_id:%s, undeploy failed ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
 	}
 
 	return true

@@ -1,10 +1,7 @@
 package deployer
 
 import (
-	"fmt"
-
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
-	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	VoltDBDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/voltdb"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
@@ -18,23 +15,12 @@ type VoltDBDeployer struct {
 func (h *VoltDBDeployer) DeployService(servInstID, deployFlag, logKey, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, true, paasResult)
+	if !ok {
 		return false
 	}
-
 	serv := meta.CMPT_META.GetService(servInstID)
-	if DeployUtils.IsServiceDeployed(logKey, serv, paasResult) {
-		return false
-	}
 
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-	version := serv.VERSION
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 	voltdbContainer := servJson[consts.HEADER_VOLTDB_CONTAINER].(map[string]interface{})
 	voltdbServerArr := voltdbContainer[consts.HEADER_VOLTDB_SERVER].([]map[string]interface{})
 
@@ -58,16 +44,10 @@ func (h *VoltDBDeployer) DeployService(servInstID, deployFlag, logKey, magicKey 
 		return false
 	}
 
-	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
+	// mod is_deployed flag and local cache
+	if !DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
@@ -75,24 +55,10 @@ func (h *VoltDBDeployer) DeployService(servInstID, deployFlag, logKey, magicKey 
 func (h *VoltDBDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
-	if !DeployUtils.GetServiceTopo(servInstID, logKey, paasResult) {
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
 		return false
 	}
-
-	serv := meta.CMPT_META.GetService(servInstID)
-	version := serv.VERSION
-	// 未部署直接退出不往下执行
-	if DeployUtils.IsServiceNotDeployed(logKey, serv, paasResult) {
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(servInstID)
-	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
-
-	topoJson := paasResult.RET_INFO.(map[string]interface{})
-	paasResult.RET_INFO = ""
-
-	servJson := topoJson[cmpt.CMPT_NAME].(map[string]interface{})
 
 	voltdbContainer := servJson[consts.HEADER_VOLTDB_CONTAINER].(map[string]interface{})
 	voltdbServerArr := voltdbContainer[consts.HEADER_VOLTDB_SERVER].([]map[string]interface{})
@@ -106,15 +72,9 @@ func (h *VoltDBDeployer) UndeployService(servInstID string, force bool, logKey s
 	}
 
 	// update t_meta_service.is_deployed and local cache
-	if !metadao.UpdateInstanceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
+	if !DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
 		return false
 	}
-	if !metadao.UpdateServiceDeployFlag(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-	global.GLOBAL_RES.PubSuccessLog(logKey, info)
 
 	return true
 }
