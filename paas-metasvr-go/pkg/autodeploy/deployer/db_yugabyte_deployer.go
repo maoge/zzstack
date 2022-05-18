@@ -5,6 +5,7 @@ import (
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	YugaByteDBDeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/yugabytedb"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
+	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
 )
 
@@ -22,7 +23,7 @@ func (h *YugaByteDBDeployer) DeployService(servInstID, deployFlag, logKey, magic
 	// 1. deploy yb-master
 	ybMasterContainer := servJson[consts.HEADER_YB_MASTER_CONTAINER].(map[string]interface{})
 	ybMasterArr := ybMasterContainer[consts.HEADER_YB_MASTER].([]map[string]interface{})
-	masterList := YugaByteDBDeployUtils.GetYbMasterList(ybMasterArr, magicKey, paasResult)
+	masterList := YugaByteDBDeployUtils.GetYbMasterList(ybMasterArr)
 	for _, ybMaster := range ybMasterArr {
 		if !YugaByteDBDeployUtils.DeployMaster(ybMaster, version, masterList, logKey, magicKey, paasResult) {
 			global.GLOBAL_RES.PubFailLog(logKey, "yb-master deploy failed ......")
@@ -86,11 +87,75 @@ func (h *YugaByteDBDeployer) UndeployService(servInstID string, force bool, logK
 func (h *YugaByteDBDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
+	servJson, version, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
+		return false
+	}
+
+	ybMasterContainer := servJson[consts.HEADER_YB_MASTER_CONTAINER].(map[string]interface{})
+	ybTServerContainer := servJson[consts.HEADER_YB_TSERVER_CONTAINER].(map[string]interface{})
+
+	ybMasterArr := ybMasterContainer[consts.HEADER_YB_MASTER].([]map[string]interface{})
+	ybTServerArr := ybTServerContainer[consts.HEADER_YB_TSERVER].([]map[string]interface{})
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	deployResult := false
+
+	masterList := YugaByteDBDeployUtils.GetYbMasterList(ybMasterArr)
+
+	switch instCmpt.CMPT_NAME {
+	case consts.HEADER_YB_MASTER:
+		ybMasterItem := DeployUtils.GetSpecifiedItem(ybMasterArr, instID)
+		deployResult = YugaByteDBDeployUtils.DeployMaster(ybMasterItem, version, masterList, logKey, magicKey, paasResult)
+		break
+
+	case consts.HEADER_YB_TSERVER:
+		ybTServerItem := DeployUtils.GetSpecifiedItem(ybTServerArr, instID)
+		deployResult = YugaByteDBDeployUtils.DeployTServer(ybTServerItem, version, masterList, logKey, magicKey, paasResult)
+		break
+
+	default:
+		break
+	}
+
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return true
 }
 
 func (h *YugaByteDBDeployer) UndeployInstance(servInstID string, instID string, logKey string, magicKey string,
 	paasResult *result.ResultBean) bool {
 
+	servJson, _, ok := DeployUtils.LoadServTopo(servInstID, logKey, false, paasResult)
+	if !ok {
+		return false
+	}
+
+	ybMasterContainer := servJson[consts.HEADER_YB_MASTER_CONTAINER].(map[string]interface{})
+	ybTServerContainer := servJson[consts.HEADER_YB_TSERVER_CONTAINER].(map[string]interface{})
+
+	ybMasterArr := ybMasterContainer[consts.HEADER_YB_MASTER].([]map[string]interface{})
+	ybTServerArr := ybTServerContainer[consts.HEADER_YB_TSERVER].([]map[string]interface{})
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	undeployResult := false
+
+	switch instCmpt.CMPT_NAME {
+	case consts.HEADER_YB_MASTER:
+		ybMasterItem := DeployUtils.GetSpecifiedItem(ybMasterArr, instID)
+		undeployResult = YugaByteDBDeployUtils.UndeployMaster(ybMasterItem, logKey, magicKey, paasResult)
+		break
+
+	case consts.HEADER_YB_TSERVER:
+		ybTServerItem := DeployUtils.GetSpecifiedItem(ybTServerArr, instID)
+		undeployResult = YugaByteDBDeployUtils.UndeployTServer(ybTServerItem, logKey, magicKey, paasResult)
+		break
+
+	default:
+		break
+	}
+
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 	return true
 }

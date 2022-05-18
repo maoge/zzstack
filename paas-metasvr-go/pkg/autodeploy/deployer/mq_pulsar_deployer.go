@@ -1,8 +1,6 @@
 package deployer
 
 import (
-	"fmt"
-
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	PulsarDeployerUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/pulsar"
@@ -210,38 +208,37 @@ func (h *PulsarDeployer) DeployInstance(servInstID string, instID string, logKey
 		zkAddrList := DeployUtils.GetZKAddress(zkArr)
 		deployResult = DeployUtils.DeployZookeeper(zk, len(zkArr), version, zkAddrList, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PULSAR_BOOKKEEPER:
 		bookie := DeployUtils.GetSpecifiedItem(bookieArr, instID)
 		deployResult = PulsarDeployerUtils.DeployBookie(bookie, version, zkShortAddress, logKey, magicKey, false, paasResult)
 		break
+
 	case consts.HEADER_PULSAR_BROKER:
 		pulsar := DeployUtils.GetSpecifiedItem(pulsarArr, instID)
 		brokerAddrList := PulsarDeployerUtils.GetPulsarBrokerList(pulsarArr, "")
 		deployResult = PulsarDeployerUtils.DeployPulsar(pulsar, pulsarClusterName, brokerAddrList, version, zkShortAddress, logKey, magicKey, false, paasResult)
 		break
+
 	case consts.HEADER_PULSAR_MANAGER:
 		deployResult = PulsarDeployerUtils.DeployPulsarManager(pulsarManager, bookies, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PROMETHEUS:
 		brokers := PulsarDeployerUtils.GetPulsarBrokerListForPrometheus(pulsarArr)
 		zks := PulsarDeployerUtils.GetPulsarZKListForPrometheus(bookieArr)
 		deployResult = PulsarDeployerUtils.DeployPulsarPrometheus(prometheus, pulsarClusterName, brokers, bookies, zks, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_GRAFANA:
 		deployResult = DeployUtils.DeployGrafana(grafana, version, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return true
 }
 
@@ -276,36 +273,35 @@ func (h *PulsarDeployer) UndeployInstance(servInstID string, instID string, logK
 		zk := DeployUtils.GetSpecifiedItem(zkArr, instID)
 		undeployResult = DeployUtils.UndeployZookeeper(zk, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PULSAR_BOOKKEEPER:
 		bookie := DeployUtils.GetSpecifiedItem(bookieArr, instID)
 		undeployResult = PulsarDeployerUtils.UndeployBookie(bookie, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PULSAR_BROKER:
 		pulsar := DeployUtils.GetSpecifiedItem(pulsarArr, instID)
 		pulsarClusterName := pulsarContainer[consts.HEADER_INST_ID].(string)
 		brokerAddrList := PulsarDeployerUtils.GetPulsarBrokerList(pulsarArr, instID)
 		undeployResult = PulsarDeployerUtils.UndeployPulsar(pulsar, pulsarClusterName, brokerAddrList, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PULSAR_MANAGER:
 		undeployResult = PulsarDeployerUtils.UndeployPulsarManager(pulsarManager, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PROMETHEUS:
 		undeployResult = DeployUtils.UndeployPrometheus(prometheus, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_GRAFANA:
 		undeployResult = DeployUtils.UndeployGrafana(grafana, version, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if undeployResult {
-		info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id: %s, undeploy fail ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 	return true
 }

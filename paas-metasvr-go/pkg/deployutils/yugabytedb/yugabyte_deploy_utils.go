@@ -11,7 +11,7 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/result"
 )
 
-func GetYbMasterList(ybMasterArr []map[string]interface{}, magicKey string, paasResult *result.ResultBean) string {
+func GetYbMasterList(ybMasterArr []map[string]interface{}) string {
 	result := ""
 	for idx, ybMaster := range ybMasterArr {
 		sshId := ybMaster[consts.HEADER_SSH_ID].(string)

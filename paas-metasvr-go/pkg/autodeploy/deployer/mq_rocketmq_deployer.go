@@ -195,6 +195,7 @@ func (h *RocketMQDeployer) DeployInstance(servInstID string, instID string, logK
 		nameSrv := DeployUtils.GetSpecifiedItem(nameSrvArr, instID)
 		deployResult = RocketMqDeployUtils.DeployNameSrv(nameSrv, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_ROCKETMQ_BROKER:
 		broker := DeployUtils.GetSpecifiedRocketMQBroker(vbrokerArr, instID)
 		vbrokerInstId := DeployUtils.GetSpecifiedVBrokerId(vbrokerArr, instID)
@@ -202,26 +203,22 @@ func (h *RocketMQDeployer) DeployInstance(servInstID string, instID string, logK
 		brokerId := fmt.Sprintf("%d", len(brokerArr)-1)
 		deployResult = RocketMqDeployUtils.DeployBroker(broker, vbrokerInstId, namesrvAddrs, brokerId, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_COLLECTD:
 		collectd := servJson[consts.HEADER_COLLECTD].(map[string]interface{})
 		deployResult = CollectdDeployUtils.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_ROCKETMQ_CONSOLE:
 		console := servJson[consts.HEADER_ROCKETMQ_CONSOLE].(map[string]interface{})
 		deployResult = RocketMqDeployUtils.DeployConsole(console, servInstID, namesrvAddrs, version, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return true
 }
 
@@ -248,29 +245,26 @@ func (h *RocketMQDeployer) UndeployInstance(servInstID string, instID string, lo
 		nameSrv := DeployUtils.GetSpecifiedItem(nameSrvArr, instID)
 		undeployResult = RocketMqDeployUtils.UndeployNameSrv(nameSrv, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_ROCKETMQ_BROKER:
 		broker := DeployUtils.GetSpecifiedRocketMQBroker(vbrokerArr, instID)
 		undeployResult = RocketMqDeployUtils.UndeployBroker(broker, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_COLLECTD:
 		collectd := servJson[consts.HEADER_COLLECTD].(map[string]interface{})
 		undeployResult = CollectdDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_ROCKETMQ_CONSOLE:
 		console := servJson[consts.HEADER_ROCKETMQ_CONSOLE].(map[string]interface{})
 		undeployResult = RocketMqDeployUtils.UndeployConsole(console, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if undeployResult {
-		info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id: %s, undeploy fail ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 	return true
 }

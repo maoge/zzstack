@@ -137,7 +137,8 @@ func (h *RedisMasterSlaveDeployer) DeployInstance(servInstID string, instID stri
 	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
 	deployResult := false
 
-	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
+	switch instCmpt.CMPT_NAME {
+	case consts.CMPT_REDIS_NODE:
 		selfNode := RedisDeployUtils.GetSelfRedisNode(redisNodeArr, instID)
 		strNodeType := selfNode[consts.ATTR_NODE_TYPE].(string)
 		isMaster := strNodeType == consts.TYPE_REDIS_MASTER_NODE
@@ -150,24 +151,18 @@ func (h *RedisMasterSlaveDeployer) DeployInstance(servInstID string, instID stri
 		// 主节点直接部署，启动start脚本
 		// 从节点，先启动，再执行slaveof挂载到主节点上
 		deployResult = RedisDeployUtils.DeploySingleRedisNode(selfNode, redisNodeArr, isMaster, version, logKey, magicKey, paasResult)
-	} else if instCmpt.CMPT_NAME == consts.CMPT_COLLECTD {
-		collectdRaw := servJson[consts.HEADER_COLLECTD]
-		if collectdRaw != nil {
-			collectd := collectdRaw.(map[string]interface{})
-			if len(collectd) > 0 {
-				deployResult = common.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult)
-			}
-		}
+		break
+
+	case consts.CMPT_COLLECTD:
+		collectd := servJson[consts.HEADER_COLLECTD].(map[string]interface{})
+		deployResult = common.DeployCollectd(collectd, servInstID, logKey, magicKey, paasResult)
+		break
+
+	default:
+		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return true
 }
 
@@ -186,7 +181,8 @@ func (h *RedisMasterSlaveDeployer) UndeployInstance(servInstID string, instID st
 	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
 	undeployResult := false
 
-	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
+	switch instCmpt.CMPT_NAME {
+	case consts.CMPT_REDIS_NODE:
 		selfNode := RedisDeployUtils.GetSelfRedisNode(redisNodeArr, instID)
 		strNodeType := selfNode[consts.ATTR_NODE_TYPE].(string)
 		isMaster := strNodeType == consts.TYPE_REDIS_MASTER_NODE
@@ -199,29 +195,18 @@ func (h *RedisMasterSlaveDeployer) UndeployInstance(servInstID string, instID st
 			return false
 		}
 
-		if !RedisDeployUtils.UndeploySingleRedisNode(selfNode, true, logKey, magicKey, paasResult) {
-			return false
-		}
-	} else if instCmpt.CMPT_NAME == consts.CMPT_COLLECTD {
-		collectdRaw := servJson[consts.HEADER_COLLECTD]
-		if collectdRaw != nil {
-			collectd := collectdRaw.(map[string]interface{})
-			if len(collectd) > 0 {
-				if !common.UndeployCollectd(collectd, logKey, magicKey, paasResult) {
-					global.GLOBAL_RES.PubFailLog(logKey, "collectd undeploy failed ......")
-					return false
-				}
-			}
-		}
+		undeployResult = RedisDeployUtils.UndeploySingleRedisNode(selfNode, true, logKey, magicKey, paasResult)
+		break
+
+	case consts.CMPT_COLLECTD:
+		collectd := servJson[consts.HEADER_COLLECTD].(map[string]interface{})
+		undeployResult = common.UndeployCollectd(collectd, logKey, magicKey, paasResult)
+		break
+
+	default:
+		break
 	}
 
-	if undeployResult {
-		info := fmt.Sprintf("service inst_id:%s, undeploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, undeploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 	return true
 }

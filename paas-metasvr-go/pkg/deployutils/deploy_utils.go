@@ -99,6 +99,16 @@ func PostProc(servInstID, deployFlag, logKey, magicKey string, paasResult *resul
 	return true
 }
 
+func PostDeployLog(isOk bool, servInstID, logKey string) {
+	if isOk {
+		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
+		global.GLOBAL_RES.PubSuccessLog(logKey, info)
+	} else {
+		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
+		global.GLOBAL_RES.PubFailLog(logKey, info)
+	}
+}
+
 func GetServiceTopo(servInstID, logKey string, paasResult *result.ResultBean) bool {
 	if !metadao.LoadServiceTopo(servInstID, paasResult) {
 		if logKey != "" {

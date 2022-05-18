@@ -168,42 +168,27 @@ func (h *RedisClusterDeployer) DeployInstance(servInstID string, instID string, 
 	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
 	deployResult := false
 
-	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_PROXY {
-		for _, proxyJson := range proxyArr {
-			currId := proxyJson[consts.HEADER_INST_ID]
-			if currId != instID {
-				continue
-			}
+	switch instCmpt.CMPT_NAME {
+	case consts.CMPT_REDIS_PROXY:
+		proxyJson := DeployUtils.GetSpecifiedItem(proxyArr, instID)
+		deployResult = RedisDeployUtils.DeployProxyNode(proxyJson, nodes4proxy, logKey, magicKey, paasResult)
+		break
 
-			deployResult = RedisDeployUtils.DeployProxyNode(proxyJson, nodes4proxy, logKey, magicKey, paasResult)
-			// TODO notify clients ......
-		}
-	} else if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
-		for _, redisJson := range redisNodeArr {
-			currId := redisJson[consts.HEADER_INST_ID]
-			if currId != instID {
-				continue
-			}
+	case consts.CMPT_REDIS_NODE:
+		redisJson := DeployUtils.GetSpecifiedItem(redisNodeArr, instID)
+		deployResult = RedisDeployUtils.DeployRedisNode(redisJson, false, false, true, true, node4cluster, version, logKey, magicKey, paasResult)
+		break
 
-			deployResult = RedisDeployUtils.DeployRedisNode(redisJson, false, false, true, true, node4cluster, version, logKey, magicKey, paasResult)
-		}
-	} else if instCmpt.CMPT_NAME == consts.CMPT_COLLECTD {
-		//卸载collectd服务
-		collectdRaw, found := servJson[consts.HEADER_COLLECTD]
-		if found {
-			collectd := collectdRaw.(map[string]interface{})
-			deployResult = CommonDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
-		}
+	case consts.CMPT_COLLECTD:
+		collectd := servJson[consts.HEADER_COLLECTD].(map[string]interface{})
+		deployResult = CommonDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
+		break
+
+	default:
+		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return true
 }
 
@@ -225,40 +210,27 @@ func (h *RedisClusterDeployer) UndeployInstance(servInstID string, instID string
 	instCmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
 	undeployResult := false
 
-	if instCmpt.CMPT_NAME == consts.CMPT_REDIS_PROXY {
-		for _, proxyJson := range proxyArr {
-			currId := proxyJson[consts.HEADER_INST_ID]
-			if currId != instID {
-				continue
-			}
+	switch instCmpt.CMPT_NAME {
+	case consts.CMPT_REDIS_PROXY:
+		proxyJson := DeployUtils.GetSpecifiedItem(proxyArr, instID)
+		undeployResult = RedisDeployUtils.UndeployProxyNode(proxyJson, false, logKey, magicKey, paasResult)
+		// TODO notify clients ......
+		break
 
-			undeployResult = RedisDeployUtils.UndeployProxyNode(proxyJson, false, logKey, magicKey, paasResult)
-			// TODO notify clients ......
-		}
-	} else if instCmpt.CMPT_NAME == consts.CMPT_REDIS_NODE {
-		for _, redisJson := range redisNodeArr {
-			currId := redisJson[consts.HEADER_INST_ID]
-			if currId != instID {
-				continue
-			}
-			undeployResult = RedisDeployUtils.UndeployRedisNode(redisJson, true, logKey, magicKey, paasResult)
-		}
-	} else if instCmpt.CMPT_NAME == consts.CMPT_COLLECTD {
-		//卸载collectd服务
-		collectdRaw, found := servJson[consts.HEADER_COLLECTD]
-		if found {
-			collectd := collectdRaw.(map[string]interface{})
-			undeployResult = CommonDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
-		}
+	case consts.CMPT_REDIS_NODE:
+		redisJson := DeployUtils.GetSpecifiedItem(redisNodeArr, instID)
+		undeployResult = RedisDeployUtils.UndeployRedisNode(redisJson, true, logKey, magicKey, paasResult)
+		break
+
+	case consts.CMPT_COLLECTD:
+		collectd := servJson[consts.HEADER_COLLECTD].(map[string]interface{})
+		undeployResult = CommonDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
+		break
+
+	default:
+		break
 	}
 
-	if undeployResult {
-		info := fmt.Sprintf("service inst_id:%s, undeploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, undeploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 	return true
 }

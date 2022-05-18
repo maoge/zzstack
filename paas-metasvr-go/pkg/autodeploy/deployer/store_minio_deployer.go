@@ -1,8 +1,6 @@
 package deployer
 
 import (
-	"fmt"
-
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	MinioDeployerUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/minio"
@@ -87,18 +85,12 @@ func (h *StoreMinioDeployer) DeployInstance(servInstID string, instID string, lo
 		minioNode := DeployUtils.GetSpecifiedItem(minioArr, instID)
 		deployResult = MinioDeployerUtils.DeployMinioNode(minioNode, endpoints, version, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return true
 }
 

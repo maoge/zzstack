@@ -179,29 +179,26 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 		zkAddrList := DeployUtils.GetZKAddress(zkArr)
 		deployResult = DeployUtils.DeployZookeeper(zk, len(zkArr), version, zkAddrList, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PROMETHEUS:
 		exporters := ClickHouseDeployUtils.GetExporterList(replicasArr)
 		deployResult = ClickHouseDeployUtils.DeployPrometheus(prometheus, servInstID, exporters, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_GRAFANA:
 		deployResult = DeployUtils.DeployGrafana(grafana, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_CLICKHOUSE_SERVER:
 		clickhouse, replicasID := DeployUtils.GetSpecifiedClickHouseItem(replicasArr, instID)
 		deployResult = ClickHouseDeployUtils.DeployClickHouseServer(clickhouse, version, replicasID, replicaCluster, zkCluster, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("new instance inst_id:%s, deploy sucess ......", instID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("new instance inst_id:%s, deploy failed ......", instID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return deployResult
 }
 
@@ -227,23 +224,19 @@ func (h *ClickHouseDeployer) UndeployInstance(servInstID string, instID string, 
 		info := fmt.Sprintf("service inst_id:%s, undeploy not support ......", servInstID)
 		global.GLOBAL_RES.PubFailLog(logKey, info)
 		break
+
 	case consts.HEADER_PROMETHEUS:
 		undeployResult = DeployUtils.UndeployPrometheus(prometheus, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_GRAFANA:
 		undeployResult = DeployUtils.UndeployGrafana(grafana, version, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if undeployResult {
-		info := fmt.Sprintf("instance inst_id:%s, undeploy sucess ......", instID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("instance inst_id:%s, undeploy failed ......", instID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 	return undeployResult
 }

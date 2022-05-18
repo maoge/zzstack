@@ -146,24 +146,19 @@ func (h *TDEngineDeployer) DeployInstance(servInstID string, instID string, logK
 	case consts.HEADER_TD_ARBITRATOR:
 		deployResult = TDengineDeployUtils.DeployArbitrator(arbitrator, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_TD_DNODE:
 		dnode := DeployUtils.GetSpecifiedItem(dnodeArr, instID)
 		arbitratorAddr := TDengineDeployUtils.GetArbitratorAddr(arbitrator)
 		firstDNodeAddr := getFirstDnodeAddr(dnodeArr[0])
 		deployResult = TDengineDeployUtils.DeployDnode(dnode, false, arbitratorAddr, firstDNodeAddr, version, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return true
 }
 
@@ -175,9 +170,6 @@ func (h *TDEngineDeployer) UndeployInstance(servInstID string, instID string, lo
 		return false
 	}
 
-	// arbitratorContainer := servJson[consts.HEADER_ARBITRATOR_CONTAINER].(map[string]interface{})
-	// arbitrator := arbitratorContainer[consts.HEADER_TD_ARBITRATOR].(map[string]interface{})
-
 	dnodeContainer := servJson[consts.HEADER_DNODE_CONTAINER].(map[string]interface{})
 	dnodeArr := dnodeContainer[consts.HEADER_TD_DNODE].([]map[string]interface{})
 
@@ -188,27 +180,26 @@ func (h *TDEngineDeployer) UndeployInstance(servInstID string, instID string, lo
 	switch instCmpt.CMPT_NAME {
 	case consts.HEADER_TD_ARBITRATOR:
 		// 服务集群依赖于arbitrator不能单独卸载实例
+		// arbitratorContainer := servJson[consts.HEADER_ARBITRATOR_CONTAINER].(map[string]interface{})
+		// arbitrator := arbitratorContainer[consts.HEADER_TD_ARBITRATOR].(map[string]interface{})
 		// undeployResult = TDengineDeployUtils.UndeployArbitrator(arbitrator, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_TD_DNODE:
 		dnode := DeployUtils.GetSpecifiedItem(dnodeArr, instID)
 		undeployResult = TDengineDeployUtils.UndeployDnode(dnode, true, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_COLLECTD:
 		collectd := servJson[consts.HEADER_COLLECTD].(map[string]interface{})
 		undeployResult = CollectdDeployUtils.UndeployCollectd(collectd, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if undeployResult {
-		info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id: %s, undeploy fail ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 
 	return true
 }

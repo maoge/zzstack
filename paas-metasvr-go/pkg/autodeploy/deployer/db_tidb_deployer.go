@@ -1,8 +1,6 @@
 package deployer
 
 import (
-	"fmt"
-
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	DeployUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	TiDBDeployerUtils "github.com/maoge/paas-metasvr-go/pkg/deployutils/tidb"
@@ -163,30 +161,27 @@ func (h *TiDBDeployer) DeployInstance(servInstID string, instID string, logKey s
 		tidbItem := DeployUtils.GetSpecifiedItem(tidbArr, instID)
 		deployResult = TiDBDeployerUtils.DeployTidbServer(tidbItem, version, pdShortAddr, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_TIKV_SERVER:
 		tikvItem := DeployUtils.GetSpecifiedItem(tikvArr, instID)
 		deployResult = TiDBDeployerUtils.DeployTikvServer(tikvItem, version, pdShortAddr, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_PD_SERVER:
 		pdItem := DeployUtils.GetSpecifiedItem(pdArr, instID)
 		deployResult = TiDBDeployerUtils.DeployPdServer(pdItem, version, pdLongAddr, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_DASHBOARD_PROXY:
 		pdAddress := TiDBDeployerUtils.GetFirstPDAddress(pdArr)
 		deployResult = TiDBDeployerUtils.DeployDashboard(dashboard, version, pdAddress, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if deployResult {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
 	return deployResult
 }
 
@@ -216,29 +211,26 @@ func (h *TiDBDeployer) UndeployInstance(servInstID string, instID string, logKey
 		tidbItem := DeployUtils.GetSpecifiedItem(tidbArr, instID)
 		undeployResult = TiDBDeployerUtils.UndeployTidbServer(tidbItem, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_TIKV_SERVER:
 		tikvItem := DeployUtils.GetSpecifiedItem(tikvArr, instID)
 		pdCtl := pdArr[0]
 		undeployResult = TiDBDeployerUtils.UndeployTikvServer(tikvItem, pdCtl, version, logKey, magicKey, false, paasResult)
 		break
+
 	case consts.HEADER_PD_SERVER:
 		pdItem := DeployUtils.GetSpecifiedItem(pdArr, instID)
 		undeployResult = TiDBDeployerUtils.UndeployPdServer(pdItem, version, logKey, magicKey, paasResult)
 		break
+
 	case consts.HEADER_DASHBOARD_PROXY:
 		undeployResult = TiDBDeployerUtils.UndeployDashboard(dashboard, version, logKey, magicKey, paasResult)
 		break
+
 	default:
 		break
 	}
 
-	if undeployResult {
-		info := fmt.Sprintf("service inst_id: %s, undeploy sucess ......", servInstID)
-		global.GLOBAL_RES.PubSuccessLog(logKey, info)
-	} else {
-		info := fmt.Sprintf("service inst_id: %s, undeploy fail ......", servInstID)
-		global.GLOBAL_RES.PubFailLog(logKey, info)
-	}
-
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
 	return undeployResult
 }
