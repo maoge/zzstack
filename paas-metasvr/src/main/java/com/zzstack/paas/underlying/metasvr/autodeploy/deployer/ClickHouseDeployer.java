@@ -6,9 +6,8 @@ import com.zzstack.paas.underlying.metasvr.autodeploy.util.DeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.InstanceOperationEnum;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
-import com.zzstack.paas.underlying.metasvr.bean.PaasService;
+import com.zzstack.paas.underlying.metasvr.bean.TopoResult;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
-import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
 import com.zzstack.paas.underlying.metasvr.global.DeployLog;
 import com.zzstack.paas.underlying.metasvr.metadata.CmptMeta;
 import com.zzstack.paas.underlying.metasvr.singleton.MetaSvrGlobalRes;
@@ -18,32 +17,18 @@ import com.zzstack.paas.underlying.utils.bean.ResultBean;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-
-/**
- * clickhouse自动部署
- */
 public class ClickHouseDeployer implements ServiceDeployer {
 
     @Override
     public boolean deployService(String servInstID, String deployFlag, String logKey, String magicKey,
             ResultBean result) {
         
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, true, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getVersion();
-
-        PaasInstance inst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(inst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        if (DeployUtils.isServiceDeployed(serv, logKey, result)) {
-            return false;
-        }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
         
         JsonObject zkContainer = servJson.getJsonObject(FixHeader.HEADER_ZOOKEEPER_CONTAINER);
         JsonArray zkArr = zkContainer.getJsonArray(FixHeader.HEADER_ZOOKEEPER);
@@ -99,17 +84,8 @@ public class ClickHouseDeployer implements ServiceDeployer {
             }
         }
         
-        // update t_meta_service.is_deployed and local cache
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
-            return false;
-        }
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
-            return false;
-        }
-
-        String info = String.format("service inst_id:%s, deploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
-        
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_TRUE, logKey, magicKey, result);
         return true;
     }
 
@@ -117,22 +93,12 @@ public class ClickHouseDeployer implements ServiceDeployer {
     public boolean undeployService(String servInstID, boolean force, String logKey, String magicKey,
             ResultBean result) {
         
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getVersion();
-
-        PaasInstance inst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(inst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        if (DeployUtils.isServiceNotDeployed(serv, logKey, result)) {
-            return false;
-        }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
         
         JsonObject zkContainer = servJson.getJsonObject(FixHeader.HEADER_ZOOKEEPER_CONTAINER);
         JsonArray zkArr = zkContainer.getJsonArray(FixHeader.HEADER_ZOOKEEPER);
@@ -179,35 +145,21 @@ public class ClickHouseDeployer implements ServiceDeployer {
             }
         }
         
-        // 4. update t_meta_service is_deployed flag
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) {
-            return false;
-        }
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) {
-            return false;
-        }
-        String info = String.format("service inst_id: %s, undeploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
-        
+        // 4. update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
         return true;
     }
 
     @Override
     public boolean deployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
-        // 新增clickhouse-server节点, 需要拉起新增节点, 再更新原clickhouse节点的配置<shard></shard>部分的配置
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
+        // TODO新增clickhouse-server节点, 需要拉起新增节点, 再更新原clickhouse节点的配置<shard></shard>部分的配置
+        
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getVersion();
-        
-        PaasInstance servInst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt servCmpt = cmptMeta.getCmptById(servInst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(servCmpt.getCmptName());
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
         
         JsonObject zkContainer = servJson.getJsonObject(FixHeader.HEADER_ZOOKEEPER_CONTAINER);
         JsonArray zkArr = zkContainer.getJsonArray(FixHeader.HEADER_ZOOKEEPER);
@@ -218,6 +170,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
         JsonObject prometheus = servJson.getJsonObject(FixHeader.HEADER_PROMETHEUS);
         JsonObject grafana = servJson.getJsonObject(FixHeader.HEADER_GRAFANA);
         
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
         PaasInstance inst = cmptMeta.getInstance(instID);
         PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
         boolean deployResult = false;
@@ -251,13 +204,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
             break;
         }
         
-        if (deployResult) {
-            String info = String.format("new instance inst_id:%s, deploy sucess ......", instID);
-            DeployLog.pubSuccessLog(logKey, info);
-        } else {
-            String info = String.format("new instance inst_id:%s, deploy failed ......", instID);
-            DeployLog.pubFailLog(logKey, info);
-        }
+        DeployUtils.postDeployLog(deployResult, servInstID, logKey, "deploy");
         return deployResult;
     }
 
@@ -265,24 +212,17 @@ public class ClickHouseDeployer implements ServiceDeployer {
     public boolean undeployInstance(String servInstID, String instID, String logKey, String magicKey,
             ResultBean result) {
         
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        
-        PaasService serv = cmptMeta.getService(servInstID);
-        PaasInstance servInst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(servInst.getCmptId());
-        
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        String version = serv.getVersion();
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
         
         JsonObject prometheus = servJson.getJsonObject(FixHeader.HEADER_PROMETHEUS);
         JsonObject grafana = servJson.getJsonObject(FixHeader.HEADER_GRAFANA);
         
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
         PaasInstance inst = cmptMeta.getInstance(instID);
         PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
         boolean undeployResult = false;
@@ -304,14 +244,7 @@ public class ClickHouseDeployer implements ServiceDeployer {
             break;
         }
         
-        if (undeployResult) {
-            String info = String.format("instance inst_id:%s, undeploy sucess ......", instID);
-            DeployLog.pubSuccessLog(logKey, info);
-        } else {
-            String info = String.format("instance inst_id:%s, undeploy failed ......", instID);
-            DeployLog.pubFailLog(logKey, info);
-        }
-        
+        DeployUtils.postDeployLog(undeployResult, servInstID, logKey, "undeploy");
         return undeployResult;
     }
 

@@ -8,35 +8,30 @@ import com.zzstack.paas.underlying.metasvr.autodeploy.util.RocketMqDeployUtils;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
 import com.zzstack.paas.underlying.metasvr.bean.PaasService;
+import com.zzstack.paas.underlying.metasvr.bean.TopoResult;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
-import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
 import com.zzstack.paas.underlying.metasvr.global.DeployLog;
 import com.zzstack.paas.underlying.metasvr.metadata.CmptMeta;
 import com.zzstack.paas.underlying.metasvr.singleton.MetaSvrGlobalRes;
 import com.zzstack.paas.underlying.utils.FixHeader;
 import com.zzstack.paas.underlying.utils.bean.ResultBean;
 import com.zzstack.paas.underlying.utils.consts.CONSTS;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RocketMqDeployer implements ServiceDeployer {
 
     @Override
-    public boolean deployService(String servInstID, String deployFlag, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)){
-            return false;
-        }
-        PaasService serv = MetaSvrGlobalRes.get().getCmptMeta().getService(servInstID);
-        String version = serv.getVersion();
+    public boolean deployService(String servInstID, String deployFlag, String logKey, String magicKey,
+            ResultBean result) {
         
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        if (DeployUtils.isServiceDeployed(serv, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, true, result);
+        if (!topoResult.isOk()) {
             return false;
         }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
 
         if (CONSTS.DEPLOY_FLAG_PSEUDO.equals(deployFlag)) {
             if (!RocketMqDeployUtils.deployFakeService(servJson, logKey, servInstID, result, magicKey)) {
@@ -48,10 +43,9 @@ public class RocketMqDeployer implements ServiceDeployer {
             return true;
         }
 
-        //部署namesrv服务
+        // 部署namesrv服务
         JsonObject nameSrvContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_NAMESRV_CONTAINER);
         JsonArray nameSrvArr = nameSrvContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_NAMESRV);
-        
         for(int i = 0; i <nameSrvArr.size();i++){
             JsonObject nameSrv = nameSrvArr.getJsonObject(i);
             if(!RocketMqDeployUtils.deployNamesrv(nameSrv, version, logKey, magicKey, result)){
@@ -61,14 +55,12 @@ public class RocketMqDeployer implements ServiceDeployer {
             }
         }
 
-        //部署broker服务
+        // 部署broker服务
         JsonObject rocketMqVBrokerContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_VBROKER_CONTAINER);
         JsonArray vbrokerArr = rocketMqVBrokerContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_VBROKER);
         String namesrvAddrs = RocketMqDeployUtils.getNameSrvAddrs(nameSrvArr);
-        
         for (int i = 0; i < vbrokerArr.size(); i++) {
             JsonObject vbroker = vbrokerArr.getJsonObject(i);
-            // String vbrokerInstId = vbroker.getString(FixHeader.HEADER_INST_ID);
             JsonArray brokerArr = vbroker.getJsonArray(FixHeader.HEADER_ROCKETMQ_BROKER);
             for (int j = 0; j< brokerArr.size(); j++) {
                 JsonObject broker = brokerArr.getJsonObject(j);
@@ -106,38 +98,23 @@ public class RocketMqDeployer implements ServiceDeployer {
             }
         }
 
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
-            return false;
-        }
-
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
-            return false;
-        }
-
-        String info = String.format("service inst_id:%s, deploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
-
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_TRUE, logKey, magicKey, result);
         return true;
     }
 
     @Override
     public boolean undeployService(String servInstID, boolean force, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)){
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        PaasService serv = MetaSvrGlobalRes.get().getCmptMeta().getService(servInstID);
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
+        JsonObject servJson = topoResult.getServJson();
+        
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasService serv = cmptMeta.getService(servInstID);
 
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-
-        if (!force && DeployUtils.isServiceNotDeployed(serv, logKey, result)){
-            return false;
-        }
-
-        //卸载伪部署
+        // 卸载伪部署
         if (CONSTS.DEPLOY_FLAG_PSEUDO.equals(serv.getPseudoDeployFlag())) { //服务是伪部署的话
             if (!RocketMqDeployUtils.undeployFakeService(servJson, logKey, servInstID, result, magicKey)) {
                 return false;
@@ -148,35 +125,35 @@ public class RocketMqDeployer implements ServiceDeployer {
             return true;
         }
 
-        JsonObject rocketMqNameSrvContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_NAMESRV_CONTAINER);
-        JsonArray rocketMqNameSrv = rocketMqNameSrvContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_NAMESRV);
+        JsonObject nameSrvContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_NAMESRV_CONTAINER);
+        JsonArray nameSrvArr = nameSrvContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_NAMESRV);
 
-        JsonObject rocketMqVBrokerContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_VBROKER_CONTAINER);
-        JsonArray rocketMqVBroker = rocketMqVBrokerContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_VBROKER);
+        JsonObject vbrokerContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_VBROKER_CONTAINER);
+        JsonArray vbrokerArr = vbrokerContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_VBROKER);
 
-        //卸载broker服务
-        for (int i = 0; i < rocketMqVBroker.size(); i++) {
-            JsonObject jsonRocketbroker = rocketMqVBroker.getJsonObject(i);
-            JsonArray jsonBrokerArray = jsonRocketbroker.getJsonArray(FixHeader.HEADER_ROCKETMQ_BROKER);
-            for (int j = 0; j < jsonBrokerArray.size(); j++) {
-                JsonObject jsonRokectBroker = jsonBrokerArray.getJsonObject(j);
-                if (!RocketMqDeployUtils.undeployBroker(jsonRokectBroker, logKey, magicKey, result)) {
+        // 卸载broker服务
+        for (int i = 0; i < vbrokerArr.size(); i++) {
+            JsonObject vbroker = vbrokerArr.getJsonObject(i);
+            JsonArray brokerArr = vbroker.getJsonArray(FixHeader.HEADER_ROCKETMQ_BROKER);
+            for (int j = 0; j < brokerArr.size(); j++) {
+                JsonObject broker = brokerArr.getJsonObject(j);
+                if (!RocketMqDeployUtils.undeployBroker(broker, logKey, magicKey, result)) {
                     DeployLog.pubFailLog(logKey, "rocketmq broker undeploy failed ......");
                     return false;
                 }
             }
         }
 
-        //卸载namesrv服务
-        for (int i = 0; i <rocketMqNameSrv.size();i++) {
-            JsonObject jsonRokectMq = rocketMqNameSrv.getJsonObject(i);
-            if (!RocketMqDeployUtils.undeployNamesrv(jsonRokectMq, logKey, magicKey, result)) {
+        // 卸载namesrv服务
+        for (int i = 0; i < nameSrvArr.size();i++) {
+            JsonObject nameSrv = nameSrvArr.getJsonObject(i);
+            if (!RocketMqDeployUtils.undeployNamesrv(nameSrv, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey,"rocketmq namesrv undeploy failed ......");
                 return false;
             }
         }
 
-        //卸载collectd服务
+        // 卸载collectd服务
         if (servJson.containsKey(FixHeader.HEADER_COLLECTD)) {
             JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
             if (!collectd.isEmpty()) {
@@ -198,37 +175,19 @@ public class RocketMqDeployer implements ServiceDeployer {
             }
         }
 
-        // 3. update t_meta_service is_deployed flag
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) {
-            return false;
-        }
-
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) {
-            return false;
-        }
-
-        String info = String.format("service inst_id: %s, undeploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
-
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
         return true;
     }
 
     @Override
     public boolean deployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getVersion();
-        
-        PaasInstance inst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(inst.getCmptId());
-        
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
 
         JsonObject nameSrvContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_NAMESRV_CONTAINER);
         JsonArray nameSrvArr = nameSrvContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_NAMESRV);
@@ -237,9 +196,13 @@ public class RocketMqDeployer implements ServiceDeployer {
         JsonArray vbrokerArr = rocketMqVBrokerContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_VBROKER);
         
         String namesrvAddrs = RocketMqDeployUtils.getNameSrvAddrs(nameSrvArr);
+        
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasInstance inst = cmptMeta.getInstance(instID);
+        PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
         boolean deployResult = false;
         
-        switch (cmpt.getCmptName()) {
+        switch (instCmpt.getCmptName()) {
         case FixHeader.HEADER_ROCKETMQ_NAMESRV:
             JsonObject nameSrv = DeployUtils.getSpecifiedItem(nameSrvArr, instID);
             deployResult = RocketMqDeployUtils.deployNamesrv(nameSrv, version, logKey, magicKey, result);
@@ -263,37 +226,30 @@ public class RocketMqDeployer implements ServiceDeployer {
             break;
         }
 
-        if (deployResult) {
-            String info = String.format("service inst_id:%s, deploy sucess ......", servInstID);
-            DeployLog.pubSuccessLog(logKey, info);
-        } else {
-            String info = String.format("service inst_id:%s, deploy failed ......", servInstID);
-            DeployLog.pubFailLog(logKey, info);
-            DeployLog.pubFailLog(logKey, result.getRetInfo());
-        }
-        return true;
+        DeployUtils.postDeployLog(deployResult, servInstID, logKey, "deploy");
+        return deployResult;
     }
 
     @Override
     public boolean undeployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
-
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
+        JsonObject servJson = topoResult.getServJson();
 
         JsonObject nameSrvContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_NAMESRV_CONTAINER);
         JsonArray nameSrvArr = nameSrvContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_NAMESRV);
 
         JsonObject vbrokerContainer = servJson.getJsonObject(FixHeader.HEADER_ROCKETMQ_VBROKER_CONTAINER);
         JsonArray vbrokerArr = vbrokerContainer.getJsonArray(FixHeader.HEADER_ROCKETMQ_VBROKER);
-
+        
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasInstance inst = cmptMeta.getInstance(instID);
+        PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
         boolean undeployResult = false;
-        switch (cmpt.getCmptName()) {
+
+        switch (instCmpt.getCmptName()) {
         case FixHeader.HEADER_ROCKETMQ_NAMESRV:
             JsonObject nameSrv = DeployUtils.getSpecifiedItem(nameSrvArr, instID);
             undeployResult = RocketMqDeployUtils.undeployNamesrv(nameSrv, logKey, magicKey, result);
@@ -314,14 +270,8 @@ public class RocketMqDeployer implements ServiceDeployer {
             break;
         }
 
-        if (undeployResult) {
-            String info = String.format("service inst_id: %s, undeploy sucess ......", servInstID);
-            DeployLog.pubSuccessLog(logKey, info);
-        } else {
-            String info = String.format("service inst_id: %s, undeploy fail ......", servInstID);
-            DeployLog.pubFailLog(logKey, info);
-        }
-        return true;
+        DeployUtils.postDeployLog(undeployResult, servInstID, logKey, "undeploy");
+        return undeployResult;
     }
 
     @Override

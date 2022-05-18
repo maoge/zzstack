@@ -11,6 +11,8 @@ import com.zzstack.paas.underlying.metasvr.singleton.MetaSvrGlobalRes;
 import com.zzstack.paas.underlying.utils.FixHeader;
 import com.zzstack.paas.underlying.utils.bean.ResultBean;
 import com.zzstack.paas.underlying.utils.consts.CONSTS;
+
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,30 @@ public class TDengineDeployerUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(TDengineDeployerUtils.class);
 
+    public static String getArbitratorAddr(JsonObject arbitrator) {
+        String sshId = arbitrator.getString(FixHeader.HEADER_SSH_ID);
+        String port = arbitrator.getString(FixHeader.HEADER_PORT);
+        
+        PaasSsh ssh = DeployUtils.getSshById(sshId, null, null);
+        String ip = ssh.getServerIp();
+        
+        return String.format("%s:%s", ip, port);
+    }
+    
+    public static String getFirstNode(JsonArray dnodeArr) {
+        if (dnodeArr == null || dnodeArr.isEmpty())
+            return null;
+        
+        JsonObject firstNode = dnodeArr.getJsonObject(0);
+        String sshId = firstNode.getString(FixHeader.HEADER_SSH_ID);
+        String port = firstNode.getString(FixHeader.HEADER_PORT);
+        
+        PaasSsh ssh = DeployUtils.getSshById(sshId, null, null);
+        String ip = ssh.getServerIp();
+        
+        return String.format("%s:%s", ip, port);
+    }
+    
     public static boolean deployArbitrator(JsonObject tdArbitrator, String version, String logKey, String magicKey, ResultBean result) {
         String sshId = tdArbitrator.getString(FixHeader.HEADER_SSH_ID);
         String port = tdArbitrator.getString(FixHeader.HEADER_PORT);
@@ -101,7 +127,7 @@ public class TDengineDeployerUtils {
         return true;
     }
 
-    public static boolean deployDnode(JsonObject tdArbitrator, String arbitratorAddr, String firstNodeIp,
+    public static boolean deployDnode(JsonObject tdArbitrator, String arbitratorAddr, String firstNode,
                                       boolean bIsFirst, String version, String logKey, String magicKey, ResultBean result) {
         String sshId = tdArbitrator.getString(FixHeader.HEADER_SSH_ID);
         String port = tdArbitrator.getString(FixHeader.HEADER_PORT);
@@ -146,7 +172,7 @@ public class TDengineDeployerUtils {
         }
         DeployLog.pubLog(logKey, "modify taos configure files ......");
         String newConf = "etc/taos.cfg";
-        if (!DeployUtils.sed(ssh2, FixDefs.CONF_FIRSTEP, firstNodeIp, newConf, logKey, result)) {
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_FIRSTEP, firstNode, newConf, logKey, result)) {
             ssh2.close();
             return false;
         }
@@ -203,7 +229,7 @@ public class TDengineDeployerUtils {
                 return false;
             }
             
-            String[] strNodeIp = firstNodeIp.split(":");
+            String[] strNodeIp = firstNode.split(":");
             String loginFirstNode = String.format("./bin/taos -h %s -P %s -c ./etc", strNodeIp[0], strNodeIp[1]);
             if (!loginTaosShell(ssh2, loginFirstNode, logKey, result)) {
                 DeployLog.pubErrorLog(logKey, "login taosd failed ......");
@@ -219,7 +245,7 @@ public class TDengineDeployerUtils {
             //解析show dnodes;
             String showNodes = String.format("show dnodes;");
 
-            if (!checkNodeOnline(ssh2, showNodes, firstNodeIp, logKey, result)) {
+            if (!checkNodeOnline(ssh2, showNodes, firstNode, logKey, result)) {
                 DeployLog.pubErrorLog(logKey, "taosd status is offline ......");
                 ssh2.close();
                 return false;
@@ -298,7 +324,7 @@ public class TDengineDeployerUtils {
         return true;
     }
 
-    public static boolean undeployDnode(JsonObject tdArbitrator, String logKey, ResultBean result, boolean isDeployNode, String magicKey) {
+    public static boolean undeployDnode(JsonObject tdArbitrator, String logKey, ResultBean result, boolean dropFlag, String magicKey) {
         String sshId = tdArbitrator.getString(FixHeader.HEADER_SSH_ID);
         String port = tdArbitrator.getString(FixHeader.HEADER_PORT);
         String instId = tdArbitrator.getString(FixHeader.HEADER_INST_ID);
@@ -332,9 +358,9 @@ public class TDengineDeployerUtils {
             ssh2.close();
             return false;
         }
-        //删除服务不需要考虑节点
-        if (isDeployNode) {
-            //删除单节点时操作，集群中删除该节点
+        // 删除服务不需要考虑节点
+        if (dropFlag) {
+            // 删除单节点时操作，集群中删除该节点
             String export = String.format("export LANG=zh_CN.UTF-8 %s" +
                             "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib"
                     , CONSTS.LINE_SEP);

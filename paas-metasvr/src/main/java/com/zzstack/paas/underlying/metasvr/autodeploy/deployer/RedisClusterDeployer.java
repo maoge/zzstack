@@ -10,42 +10,29 @@ import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
 import com.zzstack.paas.underlying.metasvr.bean.PaasRedisCluster;
 import com.zzstack.paas.underlying.metasvr.bean.PaasService;
 import com.zzstack.paas.underlying.metasvr.bean.PaasSsh;
+import com.zzstack.paas.underlying.metasvr.bean.TopoResult;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
-import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
 import com.zzstack.paas.underlying.metasvr.global.DeployLog;
 import com.zzstack.paas.underlying.metasvr.metadata.CmptMeta;
 import com.zzstack.paas.underlying.metasvr.singleton.MetaSvrGlobalRes;
 import com.zzstack.paas.underlying.metasvr.utils.StringUtils;
 import com.zzstack.paas.underlying.utils.FixHeader;
 import com.zzstack.paas.underlying.utils.bean.ResultBean;
-
 import com.zzstack.paas.underlying.utils.consts.CONSTS;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-/**
- * 
- * Redis Cluster自动部署实现
- * 
- */
 public class RedisClusterDeployer implements ServiceDeployer {
     
     @Override
     public boolean deployService(String servInstID, String deployFlag, String logKey, String magicKey, ResultBean result) {
-        
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) return false;
-
-        PaasService serv = MetaSvrGlobalRes.get().getCmptMeta().getService(servInstID);
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
-        
-        String version = serv.getVersion();
-
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        
-        if (DeployUtils.isServiceDeployed(serv, logKey, result)) return false;
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, true, result);
+        if (!topoResult.isOk()) {
+            return false;
+        }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
 
         if (CONSTS.DEPLOY_FLAG_PSEUDO.equals(deployFlag)) {
             if (!RedisDeployUtils.deployFakeClusterService(servJson, result, servInstID, magicKey)) {
@@ -87,7 +74,7 @@ public class RedisClusterDeployer implements ServiceDeployer {
                 return false;
         }
 
-        //部署collectd服务
+        // 部署collectd服务
         if (servJson.containsKey(FixHeader.HEADER_COLLECTD)) {
             JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
             if (!collectd.isEmpty()) {
@@ -98,31 +85,22 @@ public class RedisClusterDeployer implements ServiceDeployer {
             }
         }
 
-        // 3. update t_service.is_deployed and local cache
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) return false;
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) return false;
-
-        String info = String.format("service inst_id:%s, deploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
-        
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_TRUE, logKey, magicKey, result);
         return true;
     }
 
 
     @Override
     public boolean undeployService(String servInstID, boolean force, String logKey, String magicKey, ResultBean result) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
+            return false;
+        }
+        JsonObject servJson = topoResult.getServJson();
         
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) return false;
-        
-        PaasService serv = MetaSvrGlobalRes.get().getCmptMeta().getService(servInstID);
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
-        
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        
-        if (!force && DeployUtils.isServiceNotDeployed(serv, logKey, result)) return false;
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasService serv = cmptMeta.getService(servInstID);
 
         //卸载伪部署
         if (CONSTS.DEPLOY_FLAG_PSEUDO.equals(serv.getPseudoDeployFlag())) { //服务是伪部署的话
@@ -160,7 +138,7 @@ public class RedisClusterDeployer implements ServiceDeployer {
                 if (!force) return false;
             }
         }
-        //卸载collectd服务
+        // 卸载collectd服务
         if (servJson.containsKey(FixHeader.HEADER_COLLECTD)) {
             JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
             if (!collectd.isEmpty()) {
@@ -170,39 +148,23 @@ public class RedisClusterDeployer implements ServiceDeployer {
                 }
             }
         }
-        // 3. update zz_service is_deployed flag
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) return false;
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) return false;
-
-        String info = String.format("service inst_id: %s, undeploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
+        
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
         return true;
     }
 
     @Override
     public boolean deployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
-        StringBuilder metaCmptName = new StringBuilder();
-        if (!DeployUtils.getInstCmptName(instID, metaCmptName, logKey, result)) return false;
-        String cmptName = metaCmptName.toString();
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
+            return false;
+        }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
 
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) return false;
-        
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        
-        PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getVersion();
-
-        PaasInstance inst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(inst.getCmptId());
-
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        
-        // JsonObject collectdJson = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
         JsonObject nodeContainer = servJson.getJsonObject(FixHeader.HEADER_REDIS_NODE_CONTAINER);
         JsonObject proxyContainer = servJson.getJsonObject(FixHeader.HEADER_REDIS_PROXY_CONTAINER);
-        JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
 
         JsonArray redisNodeArr = nodeContainer.getJsonArray(FixHeader.HEADER_REDIS_NODE);
         JsonArray proxyArr = proxyContainer.getJsonArray(FixHeader.HEADER_REDIS_PROXY);
@@ -210,18 +172,18 @@ public class RedisClusterDeployer implements ServiceDeployer {
         StringBuilder node4cluster = new StringBuilder();
         StringBuilder nodes4proxy = new StringBuilder();
         if (!RedisDeployUtils.getClusterNodes(redisNodeArr, node4cluster, nodes4proxy, logKey, result)) return false;
+        
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasInstance inst = cmptMeta.getInstance(instID);
+        PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
+        boolean deployResult = false;
 
-        if (cmptName.equals(FixDefs.CMPT_REDIS_PROXY)) {
-            int proxySize = proxyArr.size();
-            for (int idx = 0; idx < proxySize; ++idx) {
-                JsonObject proxyJson = proxyArr.getJsonObject(idx);
-                String curr_id = proxyJson.getString(FixHeader.HEADER_INST_ID);
-                if (!curr_id.equals(instID)) continue;
-
-                if (!RedisDeployUtils.deployProxyNode(proxyJson, nodes4proxy.toString(), logKey, magicKey, result))
-                    return false;
-            }
-        } else if (cmptName.equals(FixDefs.CMPT_REDIS_NODE)) {
+        switch (instCmpt.getCmptName()) {
+        case FixDefs.CMPT_REDIS_PROXY:
+            JsonObject proxyJson = DeployUtils.getSpecifiedItem(proxyArr, instID);
+            deployResult = RedisDeployUtils.deployProxyNode(proxyJson, nodes4proxy.toString(), logKey, magicKey, result);
+            break;
+        case FixDefs.CMPT_REDIS_NODE:
             String joinIp = "", joinPort = "", sshUser = "", sshPasswd = "";
             int sshPort = 22;
             int nodeSize = redisNodeArr.size();
@@ -283,77 +245,57 @@ public class RedisClusterDeployer implements ServiceDeployer {
                     }
                 }
             }
-        } else if (cmptName.equals(FixDefs.CMPT_COLLECTD)) {
-            String collectdId = collectd.getString(FixHeader.HEADER_INST_ID);
-            
-            if (collectdId.equals(instID)) {
-                if (!CollectdDeployUtils.deployCollectd(collectd, servInstID, logKey, magicKey, result)) {
-                    DeployLog.pubFailLog(logKey, "collectd start failed ......");
-                    return false;
-                }
-            }
+            break;
+        case FixDefs.CMPT_COLLECTD:
+            JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
+            deployResult = CollectdDeployUtils.deployCollectd(collectd, servInstID, logKey, magicKey, result);
+            break;
+        default:
+            break;
         }
 
-        String successLog = String.format("instance inst_id: %s, deploy sucess ......", instID);
-        DeployLog.pubSuccessLog(logKey, successLog);
-        return true;
+        DeployUtils.postDeployLog(deployResult, servInstID, logKey, "deploy");
+        return deployResult;
     }
 
     @Override
     public boolean undeployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
+            return false;
+        }
+        JsonObject servJson = topoResult.getServJson();
         
-        StringBuilder metaCmptName = new StringBuilder();
-        if (!DeployUtils.getInstCmptName(instID, metaCmptName, logKey, result)) return false;
-        String cmptName = metaCmptName.toString();
-
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) return false;
-
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
-
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        
-        // JsonObject collectdJson = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
         JsonObject nodeContainer = servJson.getJsonObject(FixHeader.HEADER_REDIS_NODE_CONTAINER);
         JsonObject proxyContainer = servJson.getJsonObject(FixHeader.HEADER_REDIS_PROXY_CONTAINER);
 
         JsonArray redisNodeArr = nodeContainer.getJsonArray(FixHeader.HEADER_REDIS_NODE);
         JsonArray proxyArr = proxyContainer.getJsonArray(FixHeader.HEADER_REDIS_PROXY);
+        
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasInstance inst = cmptMeta.getInstance(instID);
+        PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
+        boolean undeployResult = false;
 
-        if (cmptName.equals(FixDefs.CMPT_REDIS_PROXY)) {
-            int proxySize = proxyArr.size();
-            for (int idx = 0; idx < proxySize; ++idx) {
-                JsonObject proxyJson = proxyArr.getJsonObject(idx);
-                String curr_id = proxyJson.getString(FixHeader.HEADER_INST_ID);
-                if (!curr_id.equals(instID)) continue;
-
-                if (!RedisDeployUtils.undeployProxyNode(proxyJson, false, logKey, magicKey, result)) return false;
-                // TODO notify clients ......
-            }
-        } else if (cmptName.equals(FixDefs.CMPT_REDIS_NODE)) {
-            int nodeSize = redisNodeArr.size();
-            for (int i = 0; i < nodeSize; ++i) {
-                JsonObject redisJson = redisNodeArr.getJsonObject(i);
-                String currId = redisJson.getString(FixHeader.HEADER_INST_ID);
-                if (!currId.equals(instID)) continue;
-
-                if (!RedisDeployUtils.undeployRedisNode(redisJson, true, logKey, magicKey, result)) return false;
-            }
-        }
-        //卸载collectd服务
-        if (servJson.containsKey(FixHeader.HEADER_COLLECTD)) {
+        switch (instCmpt.getCmptName()) {
+        case FixDefs.CMPT_REDIS_PROXY:
+            JsonObject proxyJson = DeployUtils.getSpecifiedItem(proxyArr, instID);
+            undeployResult = RedisDeployUtils.undeployProxyNode(proxyJson, false, logKey, magicKey, result);
+            break;
+        case FixDefs.CMPT_REDIS_NODE:
+            JsonObject redisJson = DeployUtils.getSpecifiedItem(redisNodeArr, instID);
+            undeployResult = RedisDeployUtils.undeployRedisNode(redisJson, true, logKey, magicKey, result);
+            break;
+        case FixHeader.HEADER_COLLECTD:
             JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
-            if (!collectd.isEmpty()) {
-                if (!CollectdDeployUtils.undeployCollectd(collectd, logKey, magicKey, result)) {
-                    DeployLog.pubFailLog(logKey, "collectd undeploy failed ......");
-                    return false;
-                }
-            }
+            undeployResult = CollectdDeployUtils.undeployCollectd(collectd, logKey, magicKey, result);
+            break;
+        default:
+            break;
         }
         
-        return true;
+        DeployUtils.postDeployLog(undeployResult, servInstID, logKey, "undeploy");
+        return undeployResult;
     }
 
     @Override

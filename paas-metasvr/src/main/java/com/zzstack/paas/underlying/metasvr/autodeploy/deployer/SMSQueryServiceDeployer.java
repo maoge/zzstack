@@ -6,9 +6,8 @@ import com.zzstack.paas.underlying.metasvr.autodeploy.util.InstanceOperationEnum
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.SmsQueryServiceDeployUtils;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
-import com.zzstack.paas.underlying.metasvr.bean.PaasService;
+import com.zzstack.paas.underlying.metasvr.bean.TopoResult;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
-import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
 import com.zzstack.paas.underlying.metasvr.metadata.CmptMeta;
 import com.zzstack.paas.underlying.metasvr.singleton.MetaSvrGlobalRes;
 import com.zzstack.paas.underlying.utils.FixHeader;
@@ -21,19 +20,12 @@ public class SMSQueryServiceDeployer implements ServiceDeployer {
 
     @Override
     public boolean deployService(String servInstID, String deployFlag, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
-            return false;
-        }
-        PaasService serv = MetaSvrGlobalRes.get().getCmptMeta().getService(servInstID);
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        if (DeployUtils.isServiceDeployed(serv, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, true, result);
+        if (!topoResult.isOk()) {
             return false;
         }
         
+        JsonObject servJson = topoResult.getServJson();
         JsonObject ngxContainer = servJson.getJsonObject(FixHeader.HEADER_NGX_CONTAINER);
         JsonObject smsQueryContainer = servJson.getJsonObject(FixHeader.HEADER_SMS_QUERY_CONTAINER);
         String servList = SmsQueryServiceDeployUtils.getSmsQueryServList(FixHeader.HEADER_SMS_QUERY, smsQueryContainer);
@@ -52,27 +44,19 @@ public class SMSQueryServiceDeployer implements ServiceDeployer {
             return false;
         }
         
-        DeployUtils.updateSerivceDeployFlag(servInstID, FixDefs.STR_TRUE, logKey, magicKey, result);
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_TRUE, logKey, magicKey, result);
         return true;
     }
 
     @Override
     public boolean undeployService(String servInstID, boolean force, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
-            return false;
-        }
-        PaasService serv = MetaSvrGlobalRes.get().getCmptMeta().getService(servInstID);
-        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(servInstID);
-        PaasMetaCmpt cmpt = MetaSvrGlobalRes.get().getCmptMeta().getCmptById(inst.getCmptId());
-
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-
-        if (!force && DeployUtils.isServiceNotDeployed(serv, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
         
+        JsonObject servJson = topoResult.getServJson();
         JsonObject ngxContainer = servJson.getJsonObject(FixHeader.HEADER_NGX_CONTAINER);
         JsonObject smsQueryContainer = servJson.getJsonObject(FixHeader.HEADER_SMS_QUERY_CONTAINER);
         
@@ -90,61 +74,86 @@ public class SMSQueryServiceDeployer implements ServiceDeployer {
             return false;
         }
         
-        DeployUtils.updateSerivceDeployFlag(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
         return true;
     }
 
     @Override
     public boolean deployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
+            return false;
+        }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
+        
+        JsonObject ngxContainer = servJson.getJsonObject(FixHeader.HEADER_NGX_CONTAINER);
+        JsonObject smsQueryContainer = servJson.getJsonObject(FixHeader.HEADER_SMS_QUERY_CONTAINER);
+        
+        JsonArray ngxArr = ngxContainer.getJsonArray(FixHeader.HEADER_NGX);
+        JsonArray smsQueryArr = smsQueryContainer.getJsonArray(FixHeader.HEADER_SMS_QUERY);
+        
         CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasInstance instance = cmptMeta.getInstance(instID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(instance.getCmptId());
-        boolean res = false;
+        PaasInstance inst = cmptMeta.getInstance(instID);
+        PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
+        boolean deployResult = false;
         
-        JsonObject instItem = new JsonObject();
-        MetaDataDao.loadInstanceMeta(instItem, instID);
-        String version = DeployUtils.getServiceVersion(servInstID, instID);
-        
-        switch (cmpt.getCmptName()) {
+        switch (instCmpt.getCmptName()) {
         case FixHeader.HEADER_NGX:
             String servList = SmsQueryServiceDeployUtils.getSmsQueryServList(servInstID);
-            res = SmsQueryServiceDeployUtils.deployNgxNode(instItem, servList, version, logKey, magicKey, result);
+            JsonObject ngx = DeployUtils.getSpecifiedItem(ngxArr, instID);
+            deployResult = SmsQueryServiceDeployUtils.deployNgxNode(ngx, servList, version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_SMS_QUERY:
-            res = SmsQueryServiceDeployUtils.deploySmsQueryNode(instItem, version, logKey, magicKey, result);
+            JsonObject smsQry = DeployUtils.getSpecifiedItem(smsQueryArr, instID);
+            deployResult = SmsQueryServiceDeployUtils.deploySmsQueryNode(smsQry, version, logKey, magicKey, result);
             break;
         default:
             break;
         }
         
-        return res;
+        DeployUtils.postDeployLog(deployResult, servInstID, logKey, "deploy");
+        return deployResult;
     }
 
     @Override
     public boolean undeployInstance(String servInstID, String instID, String logKey, String magicKey,
             ResultBean result) {
         
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
+            return false;
+        }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
+        
+        JsonObject ngxContainer = servJson.getJsonObject(FixHeader.HEADER_NGX_CONTAINER);
+        JsonObject smsQueryContainer = servJson.getJsonObject(FixHeader.HEADER_SMS_QUERY_CONTAINER);
+        
+        JsonArray ngxArr = ngxContainer.getJsonArray(FixHeader.HEADER_NGX);
+        JsonArray smsQueryArr = smsQueryContainer.getJsonArray(FixHeader.HEADER_SMS_QUERY);
+        
         CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasInstance instance = cmptMeta.getInstance(instID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(instance.getCmptId());
-        boolean res = false;
+        PaasInstance inst = cmptMeta.getInstance(instID);
+        PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
+        boolean undeployResult = false;
         
-        JsonObject instItem = new JsonObject();
-        MetaDataDao.loadInstanceMeta(instItem, instID);
-        String version = DeployUtils.getServiceVersion(servInstID, instID);
-        
-        switch (cmpt.getCmptName()) {
+        switch (instCmpt.getCmptName()) {
         case FixHeader.HEADER_NGX:
-            res = SmsQueryServiceDeployUtils.undeployNgxNode(instItem, version, logKey, magicKey, result);
+            JsonObject ngx = DeployUtils.getSpecifiedItem(ngxArr, instID);
+            undeployResult = SmsQueryServiceDeployUtils.undeployNgxNode(ngx, version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_SMS_QUERY:
-            res = SmsQueryServiceDeployUtils.undeploySmsQueryNode(instItem, version, logKey, magicKey, result);
+            JsonObject smsQry = DeployUtils.getSpecifiedItem(smsQueryArr, instID);
+            undeployResult = SmsQueryServiceDeployUtils.undeploySmsQueryNode(smsQry, version, logKey, magicKey, result);
             break;
         default:
             break;
         }
         
-        return res;
+        DeployUtils.postDeployLog(undeployResult, servInstID, logKey, "undeploy");
+        return undeployResult;
     }
 
     @Override

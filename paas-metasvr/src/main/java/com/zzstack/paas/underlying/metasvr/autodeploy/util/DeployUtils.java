@@ -16,9 +16,11 @@ import com.zzstack.paas.underlying.metasvr.bean.PaasDeployFile;
 import com.zzstack.paas.underlying.metasvr.bean.PaasDeployHost;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstAttr;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
+import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
 import com.zzstack.paas.underlying.metasvr.bean.PaasService;
 import com.zzstack.paas.underlying.metasvr.bean.PaasSsh;
 import com.zzstack.paas.underlying.metasvr.bean.PaasTopology;
+import com.zzstack.paas.underlying.metasvr.bean.TopoResult;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
 import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
 import com.zzstack.paas.underlying.metasvr.exception.SSHException;
@@ -36,7 +38,77 @@ import io.vertx.core.json.JsonObject;
 public class DeployUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(DeployUtils.class);
+    
+    public static TopoResult LoadServTopo(String servInstID, String logKey, boolean checkFlag, ResultBean result) {
+        JsonObject topoJson = new JsonObject();
+        if (!getServiceTopo(topoJson, servInstID, logKey, result)) {
+            return new TopoResult(null, "", false);
+        }
 
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasService serv = cmptMeta.getService(servInstID);
+        if (checkFlag) {
+            if (isServiceDeployed(serv, logKey, result)) {
+                return new TopoResult(null, "", false);
+            }
+        } else {
+            if (isServiceNotDeployed(serv, logKey, result)) {
+                return new TopoResult(null, "", false);
+            }
+        }
+
+        PaasInstance servInst = cmptMeta.getInstance(servInstID);
+        PaasMetaCmpt servCmpt = cmptMeta.getCmptById(servInst.getCmptId());
+        String version = serv.getVersion();
+
+        JsonObject servJson = topoJson.getJsonObject(servCmpt.getCmptName());
+        return new TopoResult(servJson, version, true);
+    }
+    
+    public static boolean postProc(String servInstID, String flag, String logKey, String magicKey,
+            ResultBean result) {
+
+        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
+            return false;
+        }
+        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
+            return false;
+        }
+
+        String info;
+        if (flag.equals(FixDefs.STR_TRUE)) {
+            info = String.format("service inst_id: %s, deploy sucess ......", servInstID);
+        } else {
+            info = String.format("service inst_id: %s, undeploy sucess ......", servInstID);
+        }
+        DeployLog.pubSuccessLog(logKey, info);
+
+        return true;
+    }
+    
+    public static void postDeployLog(boolean isOk, String servInstID, String logKey, String flag) {
+        if (isOk) {
+            String info = String.format("service inst_id:%s, %s sucess ......", servInstID, flag);
+            DeployLog.pubSuccessLog(logKey, info);
+        } else {
+            String info = String.format("service inst_id:%s, %s failed ......", servInstID, flag);
+            DeployLog.pubFailLog(logKey, info);
+        }
+    }
+
+    public static JsonObject getSpecifiedOrclInst(JsonArray dgContainer, String instID) {
+        for (int j = 0; j < dgContainer.size(); j++) {
+            JsonArray orclInst = dgContainer.getJsonObject(j).getJsonArray(FixHeader.HEADER_ORCL_INSTANCE);
+            for (int i = 0; i < orclInst.size(); i++) {
+                JsonObject jsonOrclInst = orclInst.getJsonObject(i);
+                if (instID.equals(jsonOrclInst.getString(FixHeader.HEADER_INST_ID))) {
+                    return jsonOrclInst;
+                }
+            }
+        }
+        return null;
+    }
+    
     public static boolean getServiceTopo(JsonObject jsonTopo, final String servInstID, final String logKey,
                                          ResultBean result) {
 

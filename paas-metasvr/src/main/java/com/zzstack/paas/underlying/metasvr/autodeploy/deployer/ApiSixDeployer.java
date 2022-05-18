@@ -1,7 +1,5 @@
 package com.zzstack.paas.underlying.metasvr.autodeploy.deployer;
 
-import java.util.StringJoiner;
-
 import com.zzstack.paas.underlying.metasvr.autodeploy.ServiceDeployer;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.ApiSixDeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.DeployUtils;
@@ -10,40 +8,33 @@ import com.zzstack.paas.underlying.metasvr.autodeploy.util.YugaByteDBDeployerUti
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
 import com.zzstack.paas.underlying.metasvr.bean.PaasService;
+import com.zzstack.paas.underlying.metasvr.bean.TopoResult;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
-import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
 import com.zzstack.paas.underlying.metasvr.global.DeployLog;
 import com.zzstack.paas.underlying.metasvr.metadata.CmptMeta;
 import com.zzstack.paas.underlying.metasvr.singleton.MetaSvrGlobalRes;
 import com.zzstack.paas.underlying.utils.FixHeader;
 import com.zzstack.paas.underlying.utils.bean.ResultBean;
-import com.zzstack.paas.underlying.utils.consts.CONSTS;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-/**
- * apisix网关自动部署
- */
 public class ApiSixDeployer implements ServiceDeployer {
 
     @Override
-    public boolean deployService(String servInstID, String deployFlag, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
-            return false;
-        }
+    public boolean deployService(String servInstID, String deployFlag, String logKey, String magicKey,
+            ResultBean result) {
+        
         CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
         PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getVersion();
         
-        PaasInstance inst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(inst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        if (DeployUtils.isServiceDeployed(serv, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, true, result);
+        if (!topoResult.isOk()) {
             return false;
         }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
+        
         JsonObject etcdContainer = servJson.getJsonObject(FixHeader.HEADER_ETCD_CONTAINER);
         String etcdContainerInstId = etcdContainer.getString(FixHeader.HEADER_INST_ID);
         JsonArray etcdNodeArr = etcdContainer.getJsonArray(FixHeader.HEADER_ETCD);
@@ -63,7 +54,7 @@ public class ApiSixDeployer implements ServiceDeployer {
         
         for (int i = 0; i < etcdNodeArr.size(); ++i) {
             JsonObject jsonEtcdNode = etcdNodeArr.getJsonObject(i);
-            if (!DeployUtils.deployEtcdNode(jsonEtcdNode, etcdFullAddr.toString(), etcdContainerInstId, logKey, magicKey, result)) {
+            if (!DeployUtils.deployEtcdNode(jsonEtcdNode, etcdFullAddr, etcdContainerInstId, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, result.getRetInfo());
                 return false;
             }
@@ -100,38 +91,21 @@ public class ApiSixDeployer implements ServiceDeployer {
             }
         }
         
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
-            return false;
-        }
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
-            return false;
-        }
-        
-        String info = String.format("service inst_id:%s, deploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
-        
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_TRUE, logKey, magicKey, result);
         return true;
     }
 
     @Override
-    public boolean undeployService(String servInstID, boolean force, String logKey, String magicKey, ResultBean result) {
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
+    public boolean undeployService(String servInstID, boolean force, String logKey, String magicKey,
+            ResultBean result) {
+        
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasService serv = cmptMeta.getService(servInstID);
-        PaasInstance inst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(inst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
-        String version = serv.getVersion();
-        if (!force && DeployUtils.isServiceNotDeployed(serv, logKey, result)) {
-            return false;
-        }
-        if (DeployUtils.isServiceNotDeployed(serv, logKey, result)) {
-            return false;
-        }
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
         
         // 1. undeploy grafana and prometheus
         JsonObject grafana = servJson.getJsonObject(FixHeader.HEADER_GRAFANA);
@@ -173,36 +147,19 @@ public class ApiSixDeployer implements ServiceDeployer {
             }
         }
 
-        // 4. update zz_service is_deployed flag
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) {
-            return false;
-        }
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_FALSE, result, magicKey)) {
-            return false;
-        }
-        String info = String.format("service inst_id: %s, undeploy sucess ......", servInstID);
-        DeployLog.pubSuccessLog(logKey, info);
+        // update deploy flag and local cache
+        DeployUtils.postProc(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
         return true;
     }
 
     @Override
     public boolean deployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
-        StringBuilder metaCmptName = new StringBuilder();
-        if (!DeployUtils.getInstCmptName(instID, metaCmptName, logKey, result)) {
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
-            return false;
-        }
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasService serv = cmptMeta.getService(servInstID);
-        String version = serv.getVersion();
-        
-        PaasInstance servInst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(servInst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
         
         JsonObject apiSixNodeContainer = servJson.getJsonObject(FixHeader.HEADER_APISIX_CONTAINER);
         JsonArray apiSixNodeArr = apiSixNodeContainer.getJsonArray(FixHeader.HEADER_APISIX_SERVER);
@@ -214,11 +171,11 @@ public class ApiSixDeployer implements ServiceDeployer {
         JsonObject prometheus = servJson.getJsonObject(FixHeader.HEADER_PROMETHEUS);
         JsonObject grafana = servJson.getJsonObject(FixHeader.HEADER_GRAFANA);
         
-        StringBuilder ectdLongAddrList = new StringBuilder();
-        StringJoiner ectdShortAddr = new StringJoiner(CONSTS.LINE_END);
-        StringJoiner etcdFullAddr = new StringJoiner(",");
-        ApiSixDeployUtils.getEtcdList(etcdNodeArr, ectdLongAddrList, ectdShortAddr, etcdFullAddr);
+        String etcdLongAddr = DeployUtils.getEtcdLongAddr(etcdNodeArr);
+        String etcdShortAddr = DeployUtils.getEtcdShortAddr(etcdNodeArr);
+        String etcdFullAddr = DeployUtils.getEtcdFullAddr(etcdNodeArr);
         
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
         PaasInstance inst = cmptMeta.getInstance(instID);
         PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
         boolean deployResult = false;
@@ -226,13 +183,11 @@ public class ApiSixDeployer implements ServiceDeployer {
         switch (instCmpt.getCmptName()) {
         case FixHeader.HEADER_APISIX_SERVER:
             JsonObject apiSixNode = DeployUtils.getSpecifiedItem(apiSixNodeArr, instID);
-            String etcdLongAddrs = ectdLongAddrList.toString();
-            String etcdShortAddrs = ectdShortAddr.toString();
-            deployResult = ApiSixDeployUtils.deployApiSixNode(apiSixNode, servInstID, etcdLongAddrs, etcdShortAddrs, version, logKey, magicKey, result);
+            deployResult = ApiSixDeployUtils.deployApiSixNode(apiSixNode, servInstID, etcdLongAddr, etcdShortAddr, version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_ETCD:
             JsonObject etcdNode = DeployUtils.getSpecifiedItem(etcdNodeArr, instID);
-            deployResult = DeployUtils.deployEtcdNode(etcdNode, etcdFullAddr.toString(), etcdContainerInstId, logKey, magicKey, result);
+            deployResult = DeployUtils.deployEtcdNode(etcdNode, etcdFullAddr, etcdContainerInstId, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_PROMETHEUS:
             String apisixMetricList = ApiSixDeployUtils.getApisixMetricList(apiSixNodeArr);
@@ -245,40 +200,20 @@ public class ApiSixDeployer implements ServiceDeployer {
             break;
         }
         
-        if (deployResult) {
-            String info = String.format("new instance inst_id:%s, deploy sucess ......", instID);
-            DeployLog.pubSuccessLog(logKey, info);
-        } else {
-            String info = String.format("new instance inst_id:%s, deploy failed ......", instID);
-            DeployLog.pubFailLog(logKey, info);
-            DeployLog.pubFailLog(logKey, result.getRetInfo());
-        }
-        
-        return true;
+        DeployUtils.postDeployLog(deployResult, servInstID, logKey, "deploy");
+        return deployResult;
     }
 
     @Override
-    public boolean undeployInstance(String servInstID, String instID, String logKey, String magicKey, ResultBean result) {
-        StringBuilder metaCmptName = new StringBuilder();
-        if (!DeployUtils.getInstCmptName(instID, metaCmptName, logKey, result)) {
+    public boolean undeployInstance(String servInstID, String instID, String logKey, String magicKey,
+            ResultBean result) {
+        
+        TopoResult topoResult = DeployUtils.LoadServTopo(servInstID, logKey, false, result);
+        if (!topoResult.isOk()) {
             return false;
         }
-        JsonObject retJson = new JsonObject();
-        if (!DeployUtils.getServiceTopo(retJson, servInstID, logKey, result)) {
-            return false;
-        }
-        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
-        PaasService serv = cmptMeta.getService(servInstID);
-        if (DeployUtils.isServiceNotDeployed(serv, logKey, result)) {
-            return true;
-        }
-        
-        String version = serv.getVersion();
-        
-        PaasInstance servInst = cmptMeta.getInstance(servInstID);
-        PaasMetaCmpt cmpt = cmptMeta.getCmptById(servInst.getCmptId());
-        JsonObject topoJson = retJson.getJsonObject(FixHeader.HEADER_RET_INFO);
-        JsonObject servJson = topoJson.getJsonObject(cmpt.getCmptName());
+        JsonObject servJson = topoResult.getServJson();
+        String version = topoResult.getVersion();
         
         JsonObject apiSixNodeContainer = servJson.getJsonObject(FixHeader.HEADER_APISIX_CONTAINER);
         JsonArray apiSixNodeArr = apiSixNodeContainer.getJsonArray(FixHeader.HEADER_APISIX_SERVER);
@@ -289,6 +224,7 @@ public class ApiSixDeployer implements ServiceDeployer {
         JsonObject prometheus = servJson.getJsonObject(FixHeader.HEADER_PROMETHEUS);
         JsonObject grafana = servJson.getJsonObject(FixHeader.HEADER_GRAFANA);
 
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
         PaasInstance inst = cmptMeta.getInstance(instID);
         PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
         boolean undeployResult = false;
@@ -312,15 +248,8 @@ public class ApiSixDeployer implements ServiceDeployer {
             break;
         }
         
-        if (undeployResult) {
-            String info = String.format("instance inst_id:%s, undeploy sucess ......", instID);
-            DeployLog.pubSuccessLog(logKey, info);
-        } else {
-            String info = String.format("instance inst_id:%s, undeploy failed ......", instID);
-            DeployLog.pubFailLog(logKey, info);
-        }
-        
-        return true;
+        DeployUtils.postDeployLog(undeployResult, servInstID, logKey, "undeploy");
+        return undeployResult;
     }
 
     @Override
