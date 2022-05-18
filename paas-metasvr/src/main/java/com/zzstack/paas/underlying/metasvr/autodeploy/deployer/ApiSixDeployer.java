@@ -43,7 +43,7 @@ public class ApiSixDeployer implements ServiceDeployer {
         JsonArray apiSixNodeArr = apiSixNodeContainer.getJsonArray(FixHeader.HEADER_APISIX_SERVER);
         String apiSixInstantId = apiSixNodeContainer.getString(FixHeader.HEADER_INST_ID);
         
-        if (YugaByteDBDeployerUtils.checkBeforeDeploy(serv, etcdNodeArr, apiSixNodeArr, logKey)) {
+        if (!DeployUtils.etcdCheckBeforeDeploy(serv, etcdNodeArr, apiSixNodeArr, logKey)) {
             return false;
         }
         

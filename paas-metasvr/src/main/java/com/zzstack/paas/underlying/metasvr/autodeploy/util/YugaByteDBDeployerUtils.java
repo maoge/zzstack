@@ -1,7 +1,6 @@
 package com.zzstack.paas.underlying.metasvr.autodeploy.util;
 
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
-import com.zzstack.paas.underlying.metasvr.bean.PaasService;
 import com.zzstack.paas.underlying.metasvr.bean.PaasSsh;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
 import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
@@ -16,29 +15,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class YugaByteDBDeployerUtils {
-    
-    public static boolean checkBeforeDeploy(PaasService serv, JsonArray etcdNodeArr, JsonArray apiSixNodeArr, String logKey) {
-        // 先判断是否是生产环境,生产环境的话etcd必须至少是三个节点的集群,开发、测试环境部署单节点或者集群的etcd
-        boolean isNotEnoughProductCondition = serv.isProduct() && etcdNodeArr.size() < FixHeader.ETCD_PRODUCT_ENV_MIN_NODES;
-        if (isNotEnoughProductCondition) {
-            DeployLog.pubErrorLog(logKey, FixDefs.ERR_ETCD_NODE_REQUIRED_CLUSTER);
-            return false;
-        }
-        // etcd的节点不能小于1
-        if (etcdNodeArr.size() < 1) {
-            DeployLog.pubErrorLog(logKey, FixDefs.ERR_ETCD_NODE_LESS_THAN_ONE);
-            return false;
-        }
         
-        // apisix的节点不能小于1
-        if (apiSixNodeArr.isEmpty()) {
-            DeployLog.pubErrorLog(logKey, FixDefs.ERR_APISIX_NODE_LESS_THAN_ONE);
-            return false;
-        }
-        
-        return true;
-    }
-    
     public static boolean deployMaster(JsonObject ybMaster, String version, String masterList,
             String logKey, String magicKey, ResultBean result) {
         
