@@ -4,7 +4,6 @@ import com.zzstack.paas.underlying.metasvr.autodeploy.ServiceDeployer;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.ApiSixDeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.DeployUtils;
 import com.zzstack.paas.underlying.metasvr.autodeploy.util.InstanceOperationEnum;
-import com.zzstack.paas.underlying.metasvr.autodeploy.util.YugaByteDBDeployerUtils;
 import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasMetaCmpt;
 import com.zzstack.paas.underlying.metasvr.bean.PaasService;
@@ -74,7 +73,7 @@ public class ApiSixDeployer implements ServiceDeployer {
         JsonObject prometheus = servJson.getJsonObject(FixHeader.HEADER_PROMETHEUS);
         if (prometheus != null) {
             String apisixMetricList = ApiSixDeployUtils.getApisixMetricList(apiSixNodeArr);
-            if (!DeployUtils.deployPrometheus(prometheus, servInstID, apisixMetricList, version, logKey, magicKey, result)) {
+            if (!ApiSixDeployUtils.deployPrometheus(prometheus, servInstID, apisixMetricList, version, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, "prometheus deploy failed ......");
                 DeployLog.pubFailLog(logKey, result.getRetInfo());
                 return false;
@@ -107,15 +106,23 @@ public class ApiSixDeployer implements ServiceDeployer {
         JsonObject servJson = topoResult.getServJson();
         String version = topoResult.getVersion();
         
-        // 1. undeploy grafana and prometheus
         JsonObject grafana = servJson.getJsonObject(FixHeader.HEADER_GRAFANA);
+        JsonObject prometheus = servJson.getJsonObject(FixHeader.HEADER_PROMETHEUS);
+        
+        JsonObject apiSixNodeContainer = servJson.getJsonObject(FixHeader.HEADER_APISIX_CONTAINER);
+        JsonArray apiSixNodeArr = apiSixNodeContainer.getJsonArray(FixHeader.HEADER_APISIX_SERVER);
+        
+        JsonObject etcdContainer = servJson.getJsonObject(FixHeader.HEADER_ETCD_CONTAINER);
+        JsonArray etcdNodeArr = etcdContainer.getJsonArray(FixHeader.HEADER_ETCD);
+        
+        // 1. undeploy grafana and prometheus
         if (grafana != null) {
             if (!DeployUtils.undeployGrafana(grafana, version, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, "grafana undeploy failed ......");
                 return false;
             }
         }
-        JsonObject prometheus = servJson.getJsonObject(FixHeader.HEADER_PROMETHEUS);
+        
         if (prometheus != null) {
             if (!DeployUtils.undeployPrometheus(prometheus, version, logKey, magicKey, result)) {
                 DeployLog.pubFailLog(logKey, "prometheus undeploy failed ......");
@@ -124,8 +131,6 @@ public class ApiSixDeployer implements ServiceDeployer {
         }
         
         // 2. undeploy apisix nodes
-        JsonObject apiSixNodeContainer = servJson.getJsonObject(FixHeader.HEADER_APISIX_CONTAINER);
-        JsonArray apiSixNodeArr = apiSixNodeContainer.getJsonArray(FixHeader.HEADER_APISIX_SERVER);
         for (int i = 0; i < apiSixNodeArr.size(); i++) {
             JsonObject jsonApiSixNode = apiSixNodeArr.getJsonObject(i);
             if (!ApiSixDeployUtils.undeployApiSixNode(jsonApiSixNode, version, logKey, magicKey, result)) {
@@ -135,8 +140,6 @@ public class ApiSixDeployer implements ServiceDeployer {
         }
         
         // 3. undeploy etcd nodes
-        JsonObject etcdContainer = servJson.getJsonObject(FixHeader.HEADER_ETCD_CONTAINER);
-        JsonArray etcdNodeArr = etcdContainer.getJsonArray(FixHeader.HEADER_ETCD);
         int etcdNodeSize = etcdNodeArr.size();
         for (int idx = 0; idx < etcdNodeSize; ++idx) {
             JsonObject jsonEtcdNode = etcdNodeArr.getJsonObject(idx);
@@ -191,7 +194,7 @@ public class ApiSixDeployer implements ServiceDeployer {
             break;
         case FixHeader.HEADER_PROMETHEUS:
             String apisixMetricList = ApiSixDeployUtils.getApisixMetricList(apiSixNodeArr);
-            deployResult = DeployUtils.deployPrometheus(prometheus, servInstID, apisixMetricList, version, logKey, magicKey, result);
+            deployResult = ApiSixDeployUtils.deployPrometheus(prometheus, servInstID, apisixMetricList, version, logKey, magicKey, result);
             break;
         case FixHeader.HEADER_GRAFANA:
             deployResult = DeployUtils.deployGrafana(grafana, version, logKey, magicKey, result);

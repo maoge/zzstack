@@ -227,24 +227,28 @@ public class ApiSixDeployUtils {
         if (!DeployUtils.cd(ssh2, "../apisix-dashboard", logKey, result)) {
             ssh2.close();
             String createStartShellErrorinfo = String.format("service inst_id:%s, cd apisix-dashboard fail ......", instId);
-            DeployLog.pubSuccessLog(logKey, createStartShellErrorinfo);
+            DeployLog.pubFailLog(logKey, createStartShellErrorinfo);
+            return false;
         }
         // modify config
         String dashboardConf = String.format("conf/%s", FixDefs.APISIX_DASHBOARD_CONF);
         if (!DeployUtils.sed(ssh2, FixDefs.CONF_DASHBOARD_IP, servIp, dashboardConf, logKey, result)) {
             ssh2.close();
             String modifyErrorinfo = String.format("service inst_id:%s, modify apisix-dashboard config %s fail ......", instId, FixDefs.CONF_DASHBOARD_IP);
-            DeployLog.pubSuccessLog(logKey, modifyErrorinfo);
+            DeployLog.pubFailLog(logKey, modifyErrorinfo);
+            return false;
         }
         if (!DeployUtils.sed(ssh2, FixDefs.CONF_DASHBOARD_PORT, apiSixDashBoardPort, dashboardConf, logKey, result)) {
             ssh2.close();
             String modifyErrorinfo = String.format("service inst_id:%s, modify apisix-dashboard config %s fail ......", instId, FixDefs.CONF_DASHBOARD_PORT);
-            DeployLog.pubSuccessLog(logKey, modifyErrorinfo);
+            DeployLog.pubFailLog(logKey, modifyErrorinfo);
+            return false;
         }
         if (!DeployUtils.sed(ssh2, FixDefs.CONF_ETCD_ADDR, ectdAddr, dashboardConf, logKey, result)) {
             ssh2.close();
             String modifyErrorinfo = String.format("service inst_id:%s, modify apisix-dashboard config %s fail ......", instId, FixDefs.CONF_ETCD_ADDR);
-            DeployLog.pubSuccessLog(logKey, modifyErrorinfo);
+            DeployLog.pubFailLog(logKey, modifyErrorinfo);
+            return false;
         }
         
         // start apisix-dashboard
@@ -253,12 +257,14 @@ public class ApiSixDeployUtils {
         if (!DeployUtils.execSimpleCmd(ssh2, dashboardCmd, logKey, result)) {
             ssh2.close();
             String startShellErrorinfo = String.format("service inst_id:%s, start apisix-dashboard fail ......", instId);
-            DeployLog.pubSuccessLog(logKey, startShellErrorinfo);
+            DeployLog.pubFailLog(logKey, startShellErrorinfo);
+            return false;
         }
         if (!DeployUtils.checkPortUp(ssh2, "apisix-dashboard", instId, servIp, apiSixDashBoardPort, logKey, result)) {
             ssh2.close();
             String checkPortUpErrorinfo = String.format("service inst_id:%s, checkPortUp apisix-dashboard fail ......", instId);
-            DeployLog.pubSuccessLog(logKey, checkPortUpErrorinfo);
+            DeployLog.pubFailLog(logKey, checkPortUpErrorinfo);
+            return false;
         }
 
         // update instance deploy flag
@@ -380,6 +386,124 @@ public class ApiSixDeployUtils {
         }
         
         return sb.toString();
+    }
+    
+    public static boolean deployPrometheus(JsonObject prometheus, String clusterName, String apisixMetricList,
+            String version, String logKey, String magicKey, ResultBean result) {
+
+        String instId = prometheus.getString(FixHeader.HEADER_INST_ID);
+        String sshId = prometheus.getString(FixHeader.HEADER_SSH_ID);
+        String prometheusPort = prometheus.getString(FixHeader.HEADER_PROMETHEUS_PORT);
+        
+        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(instId);
+        if (DeployUtils.isInstanceDeployed(inst, logKey, result)) return true;
+
+        PaasSsh ssh = DeployUtils.getSshById(sshId, logKey, result);
+        if (ssh == null) return false;
+        String servIp = ssh.getServerIp();
+        String sshName = ssh.getSshName();
+        String sshPwd = ssh.getSshPwd();
+        int sshPort = ssh.getSshPort();
+        
+        {
+            String info = String.format("deploy prometheus: %s:%s, instId:%s", servIp, prometheusPort, instId);
+            DeployLog.pubLog(logKey, info);
+        }
+        
+        SSHExecutor ssh2 = new SSHExecutor(sshName, sshPwd, servIp, sshPort);
+        if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
+        
+        if (DeployUtils.checkPortUpPredeploy(ssh2, "prometheus", instId, servIp, prometheusPort, logKey, result)) {
+            ssh2.close();
+            result.setRetCode(CONSTS.REVOKE_NOK);
+            result.setRetInfo("prometheus.prometheusPort is in use");
+            return false;
+        }
+        
+        //获取文件,解压文件
+        if (!DeployUtils.fetchAndExtractTGZDeployFile(ssh2, FixDefs.PROMETHEUS_FILE_ID, FixDefs.COMMON_TOOLS_ROOT, version, logKey, result))
+            return false;
+        
+        //修改文件名
+        PaasDeployFile deployFile = DeployUtils.getDeployFile(FixDefs.PROMETHEUS_FILE_ID, logKey, result);
+        String srcFileName = deployFile.getFileName();
+
+        if (version == null || version.isEmpty()) {
+            version = deployFile.getVersion();
+        }
+        if (srcFileName.indexOf(CONSTS.REG_VERSION) != -1 && version != null && !version.isEmpty()) {
+            srcFileName = srcFileName.replaceFirst(CONSTS.REG_VERSION, version);
+        }
+
+        int i = srcFileName.indexOf(CONSTS.TAR_GZ_SURFIX);
+        String oldName = srcFileName.substring(0, i);
+
+        String newName = oldName + "_" + prometheusPort;
+        if (!DeployUtils.rm(ssh2, newName, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.mv(ssh2, newName, oldName, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.cd(ssh2, newName, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        // start.sh stop.sh %LISTEN_ADDRESS%
+        String prometheusAddr = String.format("%s:%s", servIp, prometheusPort);
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_LISTEN_ADDRESS, prometheusAddr, FixDefs.START_SHELL, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_LISTEN_ADDRESS, prometheusAddr, FixDefs.STOP_SHELL, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        // scp prometheus_apisix.yml
+        if (!DeployUtils.fetchFile(ssh2, FixDefs.PROMETHEUS_APISIX_YML_FILE_ID, logKey, result)) {
+            DeployLog.pubFailLog(logKey, "scp prometheus_apisix.yml fail ......");
+            return false;
+        }
+        
+        // cluster: %CLUSTER_NAME%
+        // - targets: [%APISIX_LIST%]
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_CLUSTER_NAME, clusterName, FixDefs.PROMETHEUS_APISIX_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.sed(ssh2, FixDefs.CONF_APISIX_LIST, apisixMetricList, FixDefs.PROMETHEUS_APISIX_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        if (!DeployUtils.mv(ssh2, FixDefs.PROMETHEUS_YML, FixDefs.PROMETHEUS_APISIX_YML, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        // start
+        DeployLog.pubLog(logKey, "start prometheus ......");
+        String cmd = String.format("./%s", FixDefs.START_SHELL);
+        if (!DeployUtils.execSimpleCmd(ssh2, cmd, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+        
+        if (!DeployUtils.checkPortUp(ssh2, "prometheus", instId, servIp, prometheusPort, logKey, result)) {
+            ssh2.close();
+            return false;
+        }
+
+        // 3. update t_meta_instance is_deployed flag
+        if (!MetaDataDao.updateInstanceDeployFlag(instId, FixDefs.STR_TRUE, result, magicKey)) {
+            ssh2.close();
+            return false;
+        }
+        
+        return true;
     }
     
 }
