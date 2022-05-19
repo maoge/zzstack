@@ -225,7 +225,7 @@ public class FixDefs {
     public static final String APISIX_LUAROCKS_CONFIG             =   "config-5.1.lua";
     public static final String CONF_CONTROL_PORT                  =   "%CONTROL_PORT%";
     public static final String CONF_APISIX_IP                     =   "%APISIX_IP%";
-    public static final String CONF_ETCD_ADDR_LIST                =   "\"%ETCD_ADDR_LIST%\"";
+    public static final String CONF_ETCD_ADDR_LIST                =   "%ETCD_ADDR_LIST%";
     public static final String CONF_HTTP_PORT                     =   "%HTTP_PORT%";
     public static final String CONF_TCP_PORT                      =   "%TCP_PORT%";
     public static final String CONF_MYSQL_PORT                    =   "%MYSQL_PORT%";
