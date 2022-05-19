@@ -2415,8 +2415,15 @@ public class MetaDataDao {
                 JsonObject node = subs.getJsonObject(i);
                 String instId = node.getString(FixHeader.HEADER_INST_ID);
 
-                if (instId.equals("") || node.isEmpty())
+                if (instId.equals("") || node.isEmpty()) {
+                    logger.error("enumSaveServiceNode missing INST_ID");
                     continue;
+                }
+                
+                // 防止前端未保存实例的情况下，第一次保存opType传了2
+                if (MetaSvrGlobalRes.get().getCmptMeta().getInstance(instId) == null) {
+                    opType = CONSTS.OP_TYPE_ADD;
+                }
 
                 if (opType == CONSTS.OP_TYPE_ADD) {
                     // 1. add instance
