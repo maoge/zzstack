@@ -90,7 +90,7 @@ func (h *StoreMinioDeployer) DeployInstance(servInstID string, instID string, lo
 		break
 	}
 
-	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey, "deploy")
 	return true
 }
 

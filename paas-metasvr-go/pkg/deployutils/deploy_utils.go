@@ -99,12 +99,12 @@ func PostProc(servInstID, deployFlag, logKey, magicKey string, paasResult *resul
 	return true
 }
 
-func PostDeployLog(isOk bool, servInstID, logKey string) {
+func PostDeployLog(isOk bool, servInstID, logKey, flag string) {
 	if isOk {
-		info := fmt.Sprintf("service inst_id:%s, deploy sucess ......", servInstID)
+		info := fmt.Sprintf("service inst_id:%s, %s sucess ......", servInstID, flag)
 		global.GLOBAL_RES.PubSuccessLog(logKey, info)
 	} else {
-		info := fmt.Sprintf("service inst_id:%s, deploy failed ......", servInstID)
+		info := fmt.Sprintf("service inst_id:%s, %s failed ......", servInstID, flag)
 		global.GLOBAL_RES.PubFailLog(logKey, info)
 	}
 }
@@ -118,6 +118,101 @@ func GetServiceTopo(servInstID, logKey string, paasResult *result.ResultBean) bo
 	}
 
 	return true
+}
+
+func CheckBeforeDeploy(serv *proto.PaasService, etcdNodeArr []map[string]interface{}, logKey string,
+	paasResult *result.ResultBean) bool {
+
+	etcdNodeCnt := len(etcdNodeArr)
+
+	// 先判断是否是生产环境,生产环境的话etcd必须至少是三个节点的集群,开发、测试环境部署单节点或者集群的etcd
+	if serv.IsProduct() {
+		if etcdNodeCnt < consts.ETCD_PRODUCT_ENV_MIN_NODES {
+			global.GLOBAL_RES.PubErrorLog(logKey, consts.ERR_ETCD_NODE_REQUIRED_CLUSTER)
+			paasResult.RET_CODE = consts.REVOKE_NOK
+			paasResult.RET_INFO = consts.ERR_ETCD_NODE_REQUIRED_CLUSTER
+			return false
+		}
+	} else {
+		// etcd的节点不能小于1
+		if etcdNodeCnt < 1 {
+			global.GLOBAL_RES.PubErrorLog(logKey, consts.ERR_ETCD_NODE_LESS_THAN_ONE)
+			paasResult.RET_CODE = consts.REVOKE_NOK
+			paasResult.RET_INFO = consts.ERR_ETCD_NODE_LESS_THAN_ONE
+			return false
+		}
+	}
+
+	return true
+}
+
+func GetEtcdLongAddr(etcdNodeArr []map[string]interface{}) string {
+	result := ""
+	maxIdx := len(etcdNodeArr) - 1
+	for idx, etcdNode := range etcdNodeArr {
+		sshId := etcdNode[consts.HEADER_SSH_ID].(string)
+		ssh := meta.CMPT_META.GetSshById(sshId)
+		if ssh == nil {
+			continue
+		}
+
+		etcdNodeIp := ssh.SERVER_IP
+		clientUrlsPort := etcdNode[consts.HEADER_CLIENT_URLS_PORT].(string)
+		addr := fmt.Sprintf("    - \"http://%s:%s\"", etcdNodeIp, clientUrlsPort)
+
+		result += addr
+		if idx < maxIdx {
+			result += "\\\n"
+		}
+	}
+
+	return result
+}
+
+func GetEtcdShortAddr(etcdNodeArr []map[string]interface{}) string {
+	result := ""
+	maxIdx := len(etcdNodeArr) - 1
+	for idx, etcdNode := range etcdNodeArr {
+		sshId := etcdNode[consts.HEADER_SSH_ID].(string)
+		ssh := meta.CMPT_META.GetSshById(sshId)
+		if ssh == nil {
+			continue
+		}
+
+		etcdNodeIp := ssh.SERVER_IP
+		clientUrlsPort := etcdNode[consts.HEADER_CLIENT_URLS_PORT].(string)
+		addr := fmt.Sprintf("      - %s:%s", etcdNodeIp, clientUrlsPort)
+
+		result += addr
+		if idx < maxIdx {
+			result += "\\\n"
+		}
+	}
+
+	return result
+}
+
+func GetEtcdFullAddr(etcdNodeArr []map[string]interface{}) string {
+	result := ""
+	for idx, etcdNode := range etcdNodeArr {
+		sshId := etcdNode[consts.HEADER_SSH_ID].(string)
+		ssh := meta.CMPT_META.GetSshById(sshId)
+		if ssh == nil {
+			continue
+		}
+
+		etcdNodeIp := ssh.SERVER_IP
+		peerUrlsPort := etcdNode[consts.HEADER_PEER_URLS_PORT].(string)
+		etcdInstId := etcdNode[consts.HEADER_INST_ID].(string)
+		addr := fmt.Sprintf("%s=http://%s:%s", etcdInstId, etcdNodeIp, peerUrlsPort)
+
+		if idx > 0 {
+			result += consts.PATH_COMMA
+		}
+		result += addr
+	}
+
+	return result
 }
 
 func GetService(instID string, logKey string, paasResult *result.ResultBean) (*proto.PaasService, bool) {
@@ -185,15 +280,15 @@ func IsServiceNotDeployed(logKey string, service *proto.PaasService, paasResult 
 
 func IsInstanceDeployed(logKey string, inst *proto.PaasInstance, paasResult *result.ResultBean) bool {
 	if inst.IsDeployed() {
-		errMsg := fmt.Sprintf("instance is allready deployed, inst_id:%s", inst.INST_ID)
-		utils.LOGGER.Error(errMsg)
+		// errMsg := fmt.Sprintf("instance is allready deployed, inst_id:%s", inst.INST_ID)
+		// utils.LOGGER.Error(errMsg)
 
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = consts.ERR_INSTANCE_ALLREADY_DEPLOYED
 
-		if logKey != "" {
-			global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-		}
+		// if logKey != "" {
+		// 	global.GLOBAL_RES.PubFailLog(logKey, errMsg)
+		// }
 
 		return true
 	}
@@ -203,15 +298,15 @@ func IsInstanceDeployed(logKey string, inst *proto.PaasInstance, paasResult *res
 
 func IsInstanceNotDeployed(logKey string, inst *proto.PaasInstance, paasResult *result.ResultBean) bool {
 	if !inst.IsDeployed() {
-		errMsg := fmt.Sprintf("instance is not deployed, inst_id:%s", inst.INST_ID)
-		utils.LOGGER.Error(errMsg)
+		// errMsg := fmt.Sprintf("instance is not deployed, inst_id:%s", inst.INST_ID)
+		// utils.LOGGER.Error(errMsg)
 
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = consts.ERR_INSTANCE_NOT_DEPLOYED
 
-		if logKey != "" {
-			global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-		}
+		// if logKey != "" {
+		// 	global.GLOBAL_RES.PubFailLog(logKey, errMsg)
+		// }
 
 		return true
 	}
@@ -1112,6 +1207,148 @@ func UndeployPrometheus(prometheus map[string]interface{}, version, logKey, magi
 	}
 
 	if !CheckPortDown(sshClient, "prometheus", instId, prometheusPort, logKey, paasResult) {
+		return false
+	}
+
+	CD(sshClient, "..", logKey, paasResult)
+	RM(sshClient, newName, logKey, paasResult)
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_FALSE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func DeployEtcdNode(etcdNode map[string]interface{}, etcdFullAddr, etcdContainerInstId, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	instId := etcdNode[consts.HEADER_INST_ID].(string)
+	sshId := etcdNode[consts.HEADER_SSH_ID].(string)
+	clientUrlsPort := etcdNode[consts.HEADER_CLIENT_URLS_PORT].(string)
+	peerUrlsPort := etcdNode[consts.HEADER_PEER_URLS_PORT].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if IsInstanceDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := NewSSHClientBySSH(ssh)
+	if !ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start deploy etcd, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, clientUrlsPort)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	checkPorts := []string{clientUrlsPort, peerUrlsPort}
+	if CheckPortsUpPredeploy(sshClient, checkPorts, logKey, paasResult) {
+		return false
+	}
+
+	// SERVERLESS_ETCD_FILE_ID -> 'etcd-3.4.14.tar.gz'
+	if !FetchAndExtractTgzDeployFile(sshClient, consts.SERVERLESS_ETCD_FILE_ID, consts.COMMON_TOOLS_ROOT, "", logKey, paasResult) {
+		return false
+	}
+
+	oldName := GetVersionedFileName(consts.SERVERLESS_ETCD_FILE_ID, "", logKey, paasResult)
+	newName := fmt.Sprintf("etcd_%s", clientUrlsPort)
+
+	if !RM(sshClient, newName, logKey, paasResult) {
+		return false
+	}
+	if !MV(sshClient, newName, oldName, logKey, paasResult) {
+		return false
+	}
+	if !CD(sshClient, newName, logKey, paasResult) {
+		return false
+	}
+
+	global.GLOBAL_RES.PubLog(logKey, "replace start and stop shell variants ......")
+	// start.sh
+	// --name %NAME% \
+	// --listen-client-urls http://%LISTEN_CLIENT_URLS% \
+	// --listen-peer-urls http://%LISTEN_PEER_URLS% \
+	// --advertise-client-urls http://%ADVERTISE_CLIENT_URLS% \
+	// --initial-advertise-peer-urls http://%ADVERTISE_PEER_URLS% \
+	// --initial-cluster %CLUSTER_NODES% \
+	// --initial-cluster-token %CLUSTER_TOKEN% \
+
+	servIp := ssh.SERVER_IP
+	listenClntUrls := fmt.Sprintf("%s:%s", servIp, clientUrlsPort)
+	listenPeerUrls := fmt.Sprintf("%s:%s", servIp, peerUrlsPort)
+	advertiseClntUrls := fmt.Sprintf("%s:%s", servIp, clientUrlsPort)
+	advertisePeerUrls := fmt.Sprintf("%s:%s", servIp, peerUrlsPort)
+	clusterNodes := strings.ReplaceAll(etcdFullAddr, "/", "\\/")
+	clusterToken := utils.MD5V(etcdContainerInstId)
+
+	SED(sshClient, consts.CONF_NAME, instId, consts.START_SHELL, logKey, paasResult)
+	SED(sshClient, consts.CONF_LISTEN_CLIENT_URLS, listenClntUrls, consts.START_SHELL, logKey, paasResult)
+	SED(sshClient, consts.CONF_LISTEN_PEER_URLS, listenPeerUrls, consts.START_SHELL, logKey, paasResult)
+	SED(sshClient, consts.CONF_ADVERTISE_CLIENT_URLS, advertiseClntUrls, consts.START_SHELL, logKey, paasResult)
+	SED(sshClient, consts.CONF_ADVERTISE_PEER_URLS, advertisePeerUrls, consts.START_SHELL, logKey, paasResult)
+	SED(sshClient, consts.CONF_CLUSTER_NODES, clusterNodes, consts.START_SHELL, logKey, paasResult)
+	SED(sshClient, consts.CONF_CLUSTER_TOKEN, clusterToken, consts.START_SHELL, logKey, paasResult)
+
+	// start
+	global.GLOBAL_RES.PubLog(logKey, "start etcd ......")
+	cmd := fmt.Sprintf("./%s", consts.START_SHELL)
+	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !CheckPortUp(sshClient, "etcd", instId, clientUrlsPort, logKey, paasResult) {
+		return false
+	}
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_TRUE, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func UndeployEtcdNode(etcdNode map[string]interface{}, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	instId := etcdNode[consts.HEADER_INST_ID].(string)
+	sshId := etcdNode[consts.HEADER_SSH_ID].(string)
+	clientUrlsPort := etcdNode[consts.HEADER_CLIENT_URLS_PORT].(string)
+
+	inst := meta.CMPT_META.GetInstance(instId)
+	if IsInstanceNotDeployed(logKey, inst, paasResult) {
+		return true
+	}
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	sshClient := NewSSHClientBySSH(ssh)
+	if !ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	info := fmt.Sprintf("start undeploy etcd, inst_id:%s, serv_ip:%s, http_port:%s", instId, ssh.SERVER_IP, clientUrlsPort)
+	global.GLOBAL_RES.PubLog(logKey, info)
+
+	newName := fmt.Sprintf("etcd_%s", clientUrlsPort)
+	rootDir := fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.COMMON_TOOLS_ROOT, newName)
+
+	if !CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	// stop
+	global.GLOBAL_RES.PubLog(logKey, "stop etcd ......")
+	cmd := fmt.Sprintf("./%s", consts.STOP_SHELL)
+	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	if !CheckPortDown(sshClient, "etcd", instId, clientUrlsPort, logKey, paasResult) {
 		return false
 	}
 

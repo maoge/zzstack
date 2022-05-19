@@ -145,19 +145,8 @@ func DeployClickHouseServer(clickhouse map[string]interface{}, version, parentID
 	info := fmt.Sprintf("deploy clickhouse-server: %s:%s, instId:%s", ssh.SERVER_IP, tcpPort, instId)
 	global.GLOBAL_RES.PubLog(logKey, info)
 
-	if DeployUtils.CheckPortUpPredeploy(sshClient, httpPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, tcpPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, mysqlPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, exporterPort, logKey, paasResult) {
-		return false
-	}
-	if DeployUtils.CheckPortUpPredeploy(sshClient, interServerHttpPort, logKey, paasResult) {
+	checkPorts := []string{httpPort, tcpPort, mysqlPort, exporterPort, interServerHttpPort}
+	if DeployUtils.CheckPortsUpPredeploy(sshClient, checkPorts, logKey, paasResult) {
 		return false
 	}
 

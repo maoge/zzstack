@@ -160,6 +160,27 @@ func SED(sshClient *SSHClient, oldValue, newValue, file, logKey string, paasResu
 	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
 }
 
+func CreateFile(sshClient *SSHClient, fileName, fileContent, logKey string,
+	paasResult *result.ResultBean) bool {
+
+	if IsFileExist(sshClient, fileName, false, logKey, paasResult) {
+		RM(sshClient, fileName, logKey, paasResult)
+	}
+	if !ExecSimpleCmd(sshClient, consts.CMD_SETH_PLUS, logKey, paasResult) {
+		return false
+	}
+	idx := strings.LastIndex(fileName, "/")
+	cmd := fmt.Sprintf("%s %s", consts.CMD_MKDIR, fileName[:idx])
+	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+	cmd = fmt.Sprintf("%s -e \"%s\">>%s", consts.CMD_ECHO, fileContent, fileName)
+	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+	return ChMod(sshClient, fileName, "+x", logKey, paasResult)
+}
+
 func AddLine(sshClient *SSHClient, context, confFile, logKey string, paasResult *result.ResultBean) bool {
 	if !ExecSimpleCmd(sshClient, consts.CMD_SETH_PLUS, logKey, paasResult) {
 		return false

@@ -1694,6 +1694,11 @@ func enumSaveServiceNode(parentId string, opType int, nodeJson map[string]interf
 
 			instId := instIdRaw.(string)
 
+			// 防止前端未保存实例的情况下，第一次保存opType传了2
+			if meta.CMPT_META.GetInstance(instId) == nil {
+				opType = consts.OP_TYPE_ADD
+			}
+
 			if opType == consts.OP_TYPE_ADD {
 				// 1. add instance
 				addInstance(instId, cmpt, &node, resultBean, events, magicKey)

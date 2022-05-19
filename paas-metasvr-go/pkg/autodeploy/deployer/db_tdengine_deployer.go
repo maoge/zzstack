@@ -158,7 +158,7 @@ func (h *TDEngineDeployer) DeployInstance(servInstID string, instID string, logK
 		break
 	}
 
-	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey, "deploy")
 	return true
 }
 
@@ -199,7 +199,7 @@ func (h *TDEngineDeployer) UndeployInstance(servInstID string, instID string, lo
 		break
 	}
 
-	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey, "undeploy")
 
 	return true
 }

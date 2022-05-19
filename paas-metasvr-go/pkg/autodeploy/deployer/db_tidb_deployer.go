@@ -181,7 +181,7 @@ func (h *TiDBDeployer) DeployInstance(servInstID string, instID string, logKey s
 		break
 	}
 
-	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey, "deploy")
 	return deployResult
 }
 
@@ -231,6 +231,6 @@ func (h *TiDBDeployer) UndeployInstance(servInstID string, instID string, logKey
 		break
 	}
 
-	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey, "undeploy")
 	return undeployResult
 }

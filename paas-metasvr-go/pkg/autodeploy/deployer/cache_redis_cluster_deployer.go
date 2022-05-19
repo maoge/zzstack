@@ -188,7 +188,7 @@ func (h *RedisClusterDeployer) DeployInstance(servInstID string, instID string, 
 		break
 	}
 
-	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey, "deploy")
 	return true
 }
 
@@ -231,6 +231,6 @@ func (h *RedisClusterDeployer) UndeployInstance(servInstID string, instID string
 		break
 	}
 
-	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey, "undeploy")
 	return true
 }

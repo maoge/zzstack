@@ -77,11 +77,7 @@ func (h *ClickHouseDeployer) DeployService(servInstID, deployFlag, logKey, magic
 	}
 
 	// mod is_deployed flag and local cache
-	if !DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	return true
+	return DeployUtils.PostProc(servInstID, consts.STR_TRUE, logKey, magicKey, paasResult)
 }
 
 func (h *ClickHouseDeployer) UndeployService(servInstID string, force bool, logKey string, magicKey string,
@@ -136,11 +132,7 @@ func (h *ClickHouseDeployer) UndeployService(servInstID string, force bool, logK
 	}
 
 	// update t_meta_service.is_deployed and local cache
-	if !DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult) {
-		return false
-	}
-
-	return true
+	return DeployUtils.PostProc(servInstID, consts.STR_FALSE, logKey, magicKey, paasResult)
 }
 
 func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, logKey string, magicKey string,
@@ -198,7 +190,7 @@ func (h *ClickHouseDeployer) DeployInstance(servInstID string, instID string, lo
 		break
 	}
 
-	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey, "deploy")
 	return deployResult
 }
 
@@ -237,6 +229,6 @@ func (h *ClickHouseDeployer) UndeployInstance(servInstID string, instID string, 
 		break
 	}
 
-	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey, "undeploy")
 	return undeployResult
 }

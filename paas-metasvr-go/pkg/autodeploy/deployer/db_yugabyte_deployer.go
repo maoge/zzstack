@@ -119,7 +119,7 @@ func (h *YugaByteDBDeployer) DeployInstance(servInstID string, instID string, lo
 		break
 	}
 
-	DeployUtils.PostDeployLog(deployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(deployResult, servInstID, logKey, "deploy")
 	return true
 }
 
@@ -156,6 +156,6 @@ func (h *YugaByteDBDeployer) UndeployInstance(servInstID string, instID string, 
 		break
 	}
 
-	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey)
+	DeployUtils.PostDeployLog(undeployResult, servInstID, logKey, "undeploy")
 	return true
 }
