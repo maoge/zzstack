@@ -7,6 +7,7 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/deployer"
 	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/deployerIntf"
 	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/factory"
+	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/maintainer"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
 )
@@ -20,6 +21,7 @@ func InitDeployerFactory() {
 	deployer_barrier.Do(func() {
 		DEPLOYER_FACTORY = factory.NewDeployerFactory()
 
+		// deployer
 		DEPLOYER_FACTORY.DeployerMap[consts.CACHE_REDIS_CLUSTER] = new(deployer.RedisClusterDeployer)
 		DEPLOYER_FACTORY.DeployerMap[consts.CACHE_REDIS_MASTER_SLAVE] = new(deployer.RedisMasterSlaveDeployer)
 
@@ -34,6 +36,12 @@ func InitDeployerFactory() {
 
 		DEPLOYER_FACTORY.DeployerMap[consts.STORE_MINIO] = new(deployer.StoreMinioDeployer)
 		DEPLOYER_FACTORY.DeployerMap[consts.SERVERLESS_APISIX] = new(deployer.ServerlessApisixDeployer)
+
+		DEPLOYER_FACTORY.DeployerMap[consts.SMS_GATEWAY] = new(deployer.SmsGatewayDeployer)
+		DEPLOYER_FACTORY.DeployerMap[consts.SMS_QUERY_SERVICE] = new(deployer.SmsQueryDeployer)
+
+		// maintainer
+		DEPLOYER_FACTORY.MaintainerMap[consts.SMS_GATEWAY] = new(maintainer.SmsGatewayMaintainer)
 	})
 }
 

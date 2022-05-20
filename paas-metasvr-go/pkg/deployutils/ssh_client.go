@@ -143,6 +143,31 @@ func (h *SSHClient) ExecInteractCmd(cmd string) error {
 	return nil
 }
 
+func (h *SSHClient) IsProcExist(identify, logKey string) (bool, error) {
+	cmd := fmt.Sprintf("%s -ef | grep %s | grep -v grep | wc -l", consts.CMD_PS, identify)
+	context, err := h.GeneralCommand(cmd)
+	if err != nil {
+		return false, err
+	}
+
+	arr := strings.Split(context, consts.LINUX_SHELL_SEP)
+	len := len(arr)
+	result := 0
+	if len > 2 {
+		result, _ = strconv.Atoi(arr[len-2])
+	}
+
+	return result > 0, nil
+}
+
+func (h *SSHClient) Tail(file string, lines int) (string, error) {
+	if lines < 0 {
+		lines = 100
+	}
+	cmd := fmt.Sprintf("%s -n %d %s", consts.CMD_TAIL, lines, file)
+	return h.GeneralCommand(cmd)
+}
+
 func (h *SSHClient) IsFileExist(fileName string, isDir bool) (bool, error) {
 	var extendParam string = "-d"
 	if isDir {

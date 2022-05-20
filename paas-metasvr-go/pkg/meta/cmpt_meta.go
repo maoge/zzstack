@@ -476,6 +476,23 @@ func (m *CmptMeta) GetInstRelations(servInstId string, relations *[]*proto.PaasT
 	}
 }
 
+func (m *CmptMeta) GetInstCmptName(instId string) string {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	instRef := m.metaInstMap[instId]
+	if instRef == nil {
+		return ""
+	}
+
+	cmptRef := m.metaCmptIdMap[instRef.CMPT_ID]
+	if cmptRef == nil {
+		return ""
+	}
+
+	return cmptRef.CMPT_NAME
+}
+
 func (m *CmptMeta) GetInstance(instId string) *proto.PaasInstance {
 	m.mut.Lock()
 	defer m.mut.Unlock()
@@ -1006,6 +1023,18 @@ func (m *CmptMeta) UpdInstAttr(instAttr *proto.PaasInstAttr) {
 			break
 		}
 	}
+}
+
+func (m *CmptMeta) UpdInstPreEmbadded(instId, preEmbadded string) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	instAttrRef := m.GetInstAttr(instId, 320) // 320 -> 'PRE_EMBEDDED'
+	if instAttrRef == nil {
+		return
+	}
+
+	instAttrRef.ATTR_VALUE = preEmbadded
 }
 
 func (m *CmptMeta) GetAttr(attrId int) *proto.PaasMetaAttr {

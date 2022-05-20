@@ -53,6 +53,7 @@ var (
 	SQL_UPD_INST_DEPLOY                = "UPDATE t_meta_instance SET IS_DEPLOYED = ? WHERE INST_ID = ?"
 	SQL_UPD_SERV_DEPLOY                = "UPDATE t_meta_service SET IS_DEPLOYED = ? WHERE INST_ID = ?"
 	SQL_MOD_SERVICE_PSEUDO_DEPLOY_FLAG = "UPDATE t_meta_service SET PSEUDO_DEPLOY_FLAG = ? WHERE INST_ID = ?"
+	SQL_UPD_INSTANCE_PRE_EMBADDED      = "UPDATE t_meta_instance_attr SET ATTR_VALUE= ?  WHERE INST_ID = ? AND ATTR_ID = 320" // 320 -> 'PRE_EMBEDDED'
 )
 
 func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *result.ResultBean) {
@@ -2252,6 +2253,66 @@ func getChildNode(instId string, arr *[]map[string]interface{}) {
 		}
 
 		*arr = append(*arr, node)
+	}
+}
+
+func UpdateInstancePreEmbadded(instId, preEmbadded, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_UPD_INSTANCE_PRE_EMBADDED, preEmbadded, instId)
+	if err == nil {
+		// update local cache
+		meta.CMPT_META.UpdInstPreEmbadded(instId, preEmbadded)
+
+		// broadcast event to cluster
+		msgBodyMap := make(map[string]interface{})
+		msgBodyMap[consts.HEADER_INST_ID] = instId
+		msgBodyMap[consts.HEADER_PRE_EMBADDED] = preEmbadded
+
+		msgBody := utils.Struct2Json(msgBodyMap)
+		event := proto.NewPaasEvent(consts.EVENT_UPD_INST_PRE_EMBEDDED.CODE, msgBody, magicKey)
+		eventbus.EVENTBUS.PublishEvent(event)
+
+		return true
+	} else {
+		errMsg := fmt.Sprintf("UpdateInstancePreEmbadded fail, instId: %s, preEmbadded: %s", instId, preEmbadded)
+		utils.LOGGER.Error(errMsg)
+
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = errMsg
+
+		if logKey != "" {
+			global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+		}
+
+		return false
+	}
+}
+
+func ModInstanceAttr(instId string, attrId int, attrName, attrVal, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_MOD_ATTR, attrVal, instId, attrId)
+	if err == nil {
+		// add to local cache
+		instAttr := proto.NewPaasInstAttr(instId, attrId, attrName, attrVal)
+		meta.CMPT_META.UpdInstAttr(instAttr)
+
+		// broadcast event to cluster
+		msgBody := utils.Struct2Json(instAttr)
+		event := proto.NewPaasEvent(consts.EVENT_ADD_INST_ATTR.CODE, msgBody, magicKey)
+		eventbus.EVENTBUS.PublishEvent(event)
+
+		return true
+	} else {
+		errMsg := fmt.Sprintf("save component attribute fail, instId:%s, attrId:%d, attrName:%s, attrVal:%s", instId, attrId, attrName, attrVal)
+
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = errMsg
+
+		if logKey != "" {
+			global.GLOBAL_RES.PubErrorLog(logKey, errMsg)
+		}
+
+		return false
 	}
 }
 

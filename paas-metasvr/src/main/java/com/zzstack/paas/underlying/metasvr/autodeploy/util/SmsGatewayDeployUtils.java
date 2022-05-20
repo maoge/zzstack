@@ -763,9 +763,9 @@ public class SmsGatewayDeployUtils {
         if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
         
         String newName = String.format("smsserver_%s", instId);
-        String root_dir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
+        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
         
-        if (!DeployUtils.cd(ssh2, root_dir, logKey, result)) { ssh2.close(); return false; }
+        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) { ssh2.close(); return false; }
         // stop
         DeployLog.pubLog(logKey, "stop sms-server ......");
         String cmd = String.format("./bin/smsserver.sh stop");
@@ -813,9 +813,9 @@ public class SmsGatewayDeployUtils {
         if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
 
         String newName = String.format("smsprocess_%s", processor);
-        String root_dir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
+        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
         
-        if (!DeployUtils.cd(ssh2, root_dir, logKey, result)) { ssh2.close(); return false; }
+        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) { ssh2.close(); return false; }
         // stop
         DeployLog.pubLog(logKey, "stop sms-process ......");
         String cmd = String.format("./bin/smsprocess.sh stop");
@@ -866,9 +866,9 @@ public class SmsGatewayDeployUtils {
         if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
 
         String newName = String.format("smsclient-standard_%s", processor);
-        String root_dir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
+        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
         
-        if (!DeployUtils.cd(ssh2, root_dir, logKey, result)) { ssh2.close(); return false; }
+        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) { ssh2.close(); return false; }
         // stop
         DeployLog.pubLog(logKey, "stop sms-client ......");
         String cmd = String.format("./bin/smsclient.sh stop");
@@ -920,9 +920,9 @@ public class SmsGatewayDeployUtils {
         if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
 
         String newName = String.format("smsbatsave_%s_%s", processor, dbInstId);
-        String root_dir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
+        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
         
-        if (!DeployUtils.cd(ssh2, root_dir, logKey, result)) { ssh2.close(); return false; }
+        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) { ssh2.close(); return false; }
         // stop
         DeployLog.pubLog(logKey, "stop sms-batsave ......");
         String cmd = String.format("./bin/smsbatsave.sh stop");
@@ -972,9 +972,9 @@ public class SmsGatewayDeployUtils {
         if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
         
         String newName = String.format("smsstatistics_%s", instId);
-        String root_dir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
+        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.SMS_GATEWAY_ROOT, newName);
         
-        if (!DeployUtils.cd(ssh2, root_dir, logKey, result)) { ssh2.close(); return false; }
+        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) { ssh2.close(); return false; }
         // stop
         DeployLog.pubLog(logKey, "stop sms-statistics ......");
         String cmd = String.format("./bin/smsstatistics.sh stop");

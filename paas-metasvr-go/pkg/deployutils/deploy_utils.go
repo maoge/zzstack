@@ -2,6 +2,7 @@ package deployutils
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -78,6 +79,57 @@ func LoadServTopoForIncrDeploy(servInstID, instID, logKey string, checkFlag bool
 	servJson := topoJson[servCmpt.CMPT_NAME].(map[string]interface{})
 
 	return servJson, version, true
+}
+
+func IsSameSSH(instID, nextInstID string) bool {
+	sshId := meta.CMPT_META.GetInstAttr(instID, 116).ATTR_VALUE // 116 -> 'SSH_ID'
+	nextSshId := meta.CMPT_META.GetInstAttr(nextInstID, 116).ATTR_VALUE
+	return sshId == nextSshId
+}
+
+func GetServiceVersion(servInstID, instID string) string {
+	relations := make([]*proto.PaasTopology, 0)
+	meta.CMPT_META.GetInstRelations(servInstID, &relations)
+	containerId := ""
+	for _, topo := range relations {
+		toeId := topo.GetToe(servInstID)
+		if toeId == "" {
+			continue
+		}
+
+		containerRelations := make([]*proto.PaasTopology, 0)
+		meta.CMPT_META.GetInstRelations(toeId, &containerRelations)
+
+		for _, subTopo := range containerRelations {
+			subInstId := subTopo.GetToe(toeId)
+			if subInstId == instID {
+				containerId = toeId
+				break
+			}
+		}
+
+		if containerId != "" {
+			break
+		}
+	}
+
+	// 版本更新获取需要更新的版本按优先级 service.VERSION > container.VERSION > instance.VERSION
+	serv := meta.CMPT_META.GetService(servInstID)
+	if serv != nil {
+		return serv.VERSION
+	}
+
+	attr := meta.CMPT_META.GetInstAttr(containerId, consts.VERSION_ATTR_ID) // 227 -> 'VERSION'
+	if attr != nil && attr.ATTR_VALUE != "" {
+		return attr.ATTR_VALUE
+	}
+
+	attr = meta.CMPT_META.GetInstAttr(instID, consts.VERSION_ATTR_ID) // 227 -> 'VERSION'
+	if attr != nil && attr.ATTR_VALUE != "" {
+		return attr.ATTR_VALUE
+	}
+
+	return ""
 }
 
 func PostProc(servInstID, deployFlag, logKey, magicKey string, paasResult *result.ResultBean) bool {
@@ -215,6 +267,15 @@ func GetEtcdFullAddr(etcdNodeArr []map[string]interface{}) string {
 	return result
 }
 
+func IsProcExist(sshClient *SSHClient, identify, logKey string, paasResult *result.ResultBean) bool {
+	res, err := sshClient.IsProcExist(identify, logKey)
+	if err != nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = err.Error()
+	}
+	return res
+}
+
 func GetService(instID string, logKey string, paasResult *result.ResultBean) (*proto.PaasService, bool) {
 	service := meta.CMPT_META.GetService(instID)
 	if service == nil {
@@ -278,22 +339,25 @@ func IsServiceNotDeployed(logKey string, service *proto.PaasService, paasResult 
 	return false
 }
 
+func CheckInstanceDeployed(instId, logKey string, paasResult *result.ResultBean) bool {
+	inst := meta.CMPT_META.GetInstance(instId)
+	return IsInstanceDeployed(logKey, inst, paasResult)
+}
+
 func IsInstanceDeployed(logKey string, inst *proto.PaasInstance, paasResult *result.ResultBean) bool {
 	if inst.IsDeployed() {
-		// errMsg := fmt.Sprintf("instance is allready deployed, inst_id:%s", inst.INST_ID)
-		// utils.LOGGER.Error(errMsg)
-
 		paasResult.RET_CODE = consts.REVOKE_NOK
 		paasResult.RET_INFO = consts.ERR_INSTANCE_ALLREADY_DEPLOYED
-
-		// if logKey != "" {
-		// 	global.GLOBAL_RES.PubFailLog(logKey, errMsg)
-		// }
 
 		return true
 	}
 
 	return false
+}
+
+func CheckInstanceNotDeployed(instId, logKey string, paasResult *result.ResultBean) bool {
+	inst := meta.CMPT_META.GetInstance(instId)
+	return IsInstanceNotDeployed(logKey, inst, paasResult)
 }
 
 func IsInstanceNotDeployed(logKey string, inst *proto.PaasInstance, paasResult *result.ResultBean) bool {
@@ -312,6 +376,22 @@ func IsInstanceNotDeployed(logKey string, inst *proto.PaasInstance, paasResult *
 	}
 
 	return false
+}
+
+func GetSshClient(sshId, logKey string, paasResult *result.ResultBean) (*SSHClient, *proto.PaasSsh, bool) {
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	if ssh == nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_SSH_NOT_FOUND
+		return nil, nil, false
+	}
+
+	sshClient := NewSSHClientBySSH(ssh)
+	if !ConnectSSH(sshClient, logKey, paasResult) {
+		return nil, nil, false
+	}
+
+	return sshClient, ssh, true
 }
 
 func GetCmptById(servInstID, instID string, cmptID int, paasResult *result.ResultBean) *proto.PaasMetaCmpt {
@@ -367,6 +447,143 @@ func CheckPortsUpPredeploy(sshClient *SSHClient, ports []string, logKey string, 
 	}
 
 	return false
+}
+
+func IsPreEmbadded(instId string) bool {
+	paasInstAttr := meta.CMPT_META.GetInstAttr(instId, 320) // 320, 'PRE_EMBEDDED'
+	if paasInstAttr == nil {
+		return false
+	}
+
+	return paasInstAttr.ATTR_VALUE == consts.STR_TRUE
+}
+
+func StartupPreEmbadded(sshClient *SSHClient, instId, cmptName, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	global.GLOBAL_RES.PubLog(logKey, "pre_embadded instance, do not need to start ......")
+	if !metadao.UpdateInstanceDeployFlag(instId, consts.STR_PRE_EMBADDED, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	info := fmt.Sprintf("deploy pre_embadded %s success, inst_id:%s, serv_ip:%s", cmptName, instId, sshClient.Ip)
+	global.GLOBAL_RES.PubSuccessLog(logKey, info)
+
+	return true
+}
+
+func Startup(sshClient *SSHClient, instId, cmptName, startCmd, checkPort, deployFlag, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("start %s ......", cmptName))
+	if !ExecSimpleCmd(sshClient, startCmd, logKey, paasResult) {
+		return false
+	}
+	if !CheckPortUp(sshClient, cmptName, instId, checkPort, logKey, paasResult) {
+		return false
+	}
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, deployFlag, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func Shutdown(sshClient *SSHClient, instId, cmptName, stopCmd, deployDir, checkPort, deployFlag, logKey, magicKey string,
+	paasResult *result.ResultBean) bool {
+
+	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("stop %s ......", cmptName))
+	if !ExecSimpleCmd(sshClient, stopCmd, logKey, paasResult) {
+		return false
+	}
+	if !CheckPortDown(sshClient, cmptName, instId, checkPort, logKey, paasResult) {
+		return false
+	}
+
+	if !CD(sshClient, "..", logKey, paasResult) {
+		return false
+	}
+	if !RM(sshClient, deployDir, logKey, paasResult) {
+		return false
+	}
+
+	// update instance deploy flag
+	if !metadao.UpdateInstanceDeployFlag(instId, deployFlag, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	return true
+}
+
+func GetRealPort(basePort, processor string) string {
+	iBasePort, _ := strconv.Atoi(basePort)
+	iProcessor, _ := strconv.Atoi(processor)
+	return strconv.Itoa(iBasePort + iProcessor)
+}
+
+func FetchAndExtractZipDeployFile(sshClient *SSHClient, fileId int, subPath, oldName, version, logKey string,
+	paasResult *result.ResultBean) bool {
+
+	deployFile := GetDeployFile(fileId, logKey, paasResult)
+	if deployFile == nil {
+		return false
+	}
+
+	hostId := deployFile.HOST_ID
+	srcFileName := deployFile.FILE_NAME
+	srcFileDir := deployFile.FILE_DIR
+
+	if version == "" {
+		version = deployFile.VERSION
+	}
+
+	if strings.Index(srcFileName, consts.REG_VERSION) != -1 && version != "" {
+		srcFileName = strings.Replace(srcFileName, consts.REG_VERSION, version, -1)
+	}
+
+	deployHost := meta.CMPT_META.GetDeployHost(hostId)
+
+	srcIp := deployHost.IP_ADDRESS
+	srcPort := deployHost.SSH_PORT
+	srcUser := deployHost.USER_NAME
+	srcPwd := deployHost.USER_PWD
+
+	rootDir := fmt.Sprintf("%s/%s", consts.PAAS_ROOT, subPath)
+
+	global.GLOBAL_RES.PubLog(logKey, "create install dir ......")
+	if !MkDir(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+	if !CD(sshClient, rootDir, logKey, paasResult) {
+		return false
+	}
+
+	srcFile := srcFileDir + srcFileName
+	desFile := "./" + srcFileName
+	global.GLOBAL_RES.PubLog(logKey, "scp deploy file ......")
+	if !sshClient.SCP(srcUser, srcPwd, srcIp, srcPort, srcFile, desFile, logKey, paasResult) {
+		return false
+	}
+
+	// 防止文件没有下载下来
+	if !IsFileExist(sshClient, desFile, false, logKey, paasResult) {
+		return false
+	}
+
+	global.GLOBAL_RES.PubLog(logKey, "unpack install zip file ......")
+	if !RM(sshClient, oldName, logKey, paasResult) {
+		return false
+	}
+	if !UnZip(sshClient, srcFileName, oldName, logKey, paasResult) {
+		global.GLOBAL_RES.PubErrorLog(logKey, "unzip "+srcFileName+" failed ......")
+		return false
+	}
+	if !RM(sshClient, srcFileName, logKey, paasResult) {
+		return false
+	}
+
+	return true
 }
 
 func FetchAndExtractTgzDeployFile(sshClient *SSHClient, fileId int, subPath, version, logKey string, paasResult *result.ResultBean) bool {

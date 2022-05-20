@@ -16,6 +16,8 @@ const (
 	MQ_ROCKETMQ                                           = "MQ_ROCKETMQ"
 	STORE_MINIO                                           = "STORE_MINIO"
 	SERVERLESS_APISIX                                     = "SERVERLESS_APISIX"
+	SMS_GATEWAY                                           = "SMS_GATEWAY"
+	SMS_QUERY_SERVICE                                     = "SMS_QUERY_SERVICE"
 	HEADER_RET_CODE                                       = "RET_CODE"
 	HEADER_RET_INFO                                       = "RET_INFO"
 	HEADER_LOCAL_PORT                                     = "LOCAL_PORT"

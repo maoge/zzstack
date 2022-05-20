@@ -96,8 +96,7 @@ public class SMSGatewayDeployer implements ServiceDeployer {
         }
         
         // update deploy flag and local cache
-        DeployUtils.postProc(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
-        return true;
+        return DeployUtils.postProc(servInstID, FixDefs.STR_FALSE, logKey, magicKey, result);
     }
 
     @Override

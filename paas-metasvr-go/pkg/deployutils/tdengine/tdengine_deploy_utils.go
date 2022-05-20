@@ -31,24 +31,15 @@ func DeployArbitrator(tdArbitrator map[string]interface{}, version, logKey, magi
 	port := tdArbitrator[consts.HEADER_PORT].(string)
 	instId := tdArbitrator[consts.HEADER_INST_ID].(string)
 
-	ssh := meta.CMPT_META.GetSshById(sshId)
-	if ssh == nil {
-		paasResult.RET_CODE = consts.REVOKE_NOK
-		paasResult.RET_INFO = consts.ERR_SSH_NOT_FOUND
-		return false
-	}
-
-	inst := meta.CMPT_META.GetInstance(instId)
-	if DeployUtils.IsInstanceDeployed(logKey, inst, paasResult) {
+	if DeployUtils.CheckInstanceDeployed(instId, logKey, paasResult) {
 		return true
 	}
 
-	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
-	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+	sshClient, ssh, ok := DeployUtils.GetSshClient(sshId, logKey, paasResult)
+	if !ok {
 		return false
-	} else {
-		defer sshClient.Close()
 	}
+	defer sshClient.Close()
 
 	info := fmt.Sprintf("deploy tdengine-arbitrator: %s:%s, instId:%s", ssh.SERVER_IP, port, instId)
 	global.GLOBAL_RES.PubLog(logKey, info)

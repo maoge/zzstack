@@ -442,6 +442,7 @@ public class DeployerMarshell {
         if (instance == null || !instance.isDeployed()) {
             result.setRetCode(CONSTS.REVOKE_NOK);
             result.setRetInfo(CONSTS.ERR_INSTANCE_NOT_DEPLOYED);
+            return;
         }
         
         String cmptName = meta.getInstCmptName(instId);

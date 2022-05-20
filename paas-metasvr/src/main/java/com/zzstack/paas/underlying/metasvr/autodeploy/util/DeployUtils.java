@@ -535,7 +535,7 @@ public class DeployUtils {
         // int idx = srcFileName.indexOf(CONSTS.ZIP_SURFIX);
         // String oldName = srcFileName.substring(0, idx);
 
-        DeployLog.pubLog(logKey, "unpack install tar file ......");
+        DeployLog.pubLog(logKey, "unpack install zip file ......");
         if (!DeployUtils.rm(ssh2, oldName, logKey, result)) return false;
         if (!DeployUtils.unzip(ssh2, srcFileName, oldName, logKey, result)) {
             DeployLog.pubErrorLog(logKey, "unzip " + srcFileName + " failed ......");

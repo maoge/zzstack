@@ -145,6 +145,15 @@ func TAR(sshClient *SSHClient, tarParams, srcFileName, desFileName, logKey strin
 	return IsFileExist(sshClient, desFileName, true, logKey, paasResult)
 }
 
+func UnZip(sshClient *SSHClient, srcFileName, desFileName, logKey string, paasResult *result.ResultBean) bool {
+	cmd := fmt.Sprintf("%s -o %s", consts.CMD_TAR, srcFileName)
+	if !ExecSimpleCmd(sshClient, cmd, logKey, paasResult) {
+		return false
+	}
+
+	return IsFileExist(sshClient, desFileName, true, logKey, paasResult)
+}
+
 func RM(sshClient *SSHClient, file, logKey string, paasResult *result.ResultBean) bool {
 	cmd := fmt.Sprintf("%s -rf %s", consts.CMD_RM, file)
 	return ExecSimpleCmd(sshClient, cmd, logKey, paasResult)
