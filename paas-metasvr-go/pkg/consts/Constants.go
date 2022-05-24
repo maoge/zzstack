@@ -12,6 +12,8 @@ const (
 	CLICKHOUSE_DEFAULT_REPLICA_WEIGHT                                 = 100
 	STOP_WAIT_MILLI_SECONDS                                           = 200
 	START_WAIT_MILLI_SECONDS                                          = 200
+	CONSOLE_MAX_RETRY                                                 = 3
+	DEFAULT_SEQ_STEP                                    uint          = 1000
 	PATH_SPLIT                                                        = "/"
 	METASVR_ADDR_SPLIT                                                = ","
 	PATH_COMMA                                                        = ","
@@ -72,6 +74,11 @@ const (
 	VERSION_ATTR_ID                                                   = 227
 	PROCESSOR_ATTR_ID                                                 = 205
 	DB_INST_ATTR_ID                                                   = 213
+	SMS_APP_CODE                                                      = "sms_gateway"
+	SEQ_ALARM                                                         = "SEQ_ALARM"
+	SYS_USER                                                          = "sys"
+	ADD_ALARM_EVENT_URI                                               = "receiver/addAlarmEvent"
+	HEALTH_CHECK_URI                                                  = "healthCheck/test"
 	STR_NULL                                                          = ""
 	TYPE_REDIS_MASTER_NODE                                            = "1"
 	TYPE_REDIS_SLAVE_NODE                                             = "0"
@@ -347,4 +354,6 @@ const (
 	CONF_DASHBOARD_IP                                                 = "%DASHBOARD_IP%"
 	CONF_ETCD_ADDR                                                    = "%ETCD_ADDR%"
 	CONF_APISIX_LIST                                                  = "%APISIX_LIST%"
+	CONF_WORKER_PROCESSES                                             = "%WORKER_PROCESSES%"
+	CONF_SERVER_LIST                                                  = "%SERVER_LIST%"
 )

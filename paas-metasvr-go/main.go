@@ -12,6 +12,7 @@ import (
 
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/route"
+	"github.com/maoge/paas-metasvr-go/pkg/sequence"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
@@ -27,6 +28,7 @@ func init() {
 	meta.InitGlobalCmptMeta()
 	eventbus.InitEventBus()
 	global_factory.InitDeployerFactory()
+	sequence.InitSeqence()
 }
 
 func startHttp() {

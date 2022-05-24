@@ -7,7 +7,6 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 
-	//"github.com/maoge/paas-metasvr-go/pkg/deployutils"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/global_factory"
 	"github.com/maoge/paas-metasvr-go/pkg/meta"

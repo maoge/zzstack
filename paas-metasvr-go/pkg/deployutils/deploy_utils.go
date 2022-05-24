@@ -81,10 +81,58 @@ func LoadServTopoForIncrDeploy(servInstID, instID, logKey string, checkFlag bool
 	return servJson, version, true
 }
 
+func GetRealPort(item map[string]interface{}) string {
+	iProcessor := 0
+	processorRaw := item[consts.HEADER_PROCESSOR]
+	if processorRaw != nil {
+		processor := processorRaw.(string)
+		iProcessor, _ = strconv.Atoi(processor)
+	}
+
+	webConsolePort := item[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	iWebConsolePort, _ := strconv.Atoi(webConsolePort)
+
+	return strconv.Itoa(iWebConsolePort + iProcessor)
+}
+
+func GetRealPortAsInt(item map[string]interface{}) int {
+	iProcessor := 0
+	processorRaw := item[consts.HEADER_PROCESSOR]
+	if processorRaw != nil {
+		processor := processorRaw.(string)
+		iProcessor, _ = strconv.Atoi(processor)
+	}
+
+	webConsolePort := item[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	iWebConsolePort, _ := strconv.Atoi(webConsolePort)
+
+	return iWebConsolePort + iProcessor
+}
+
 func IsSameSSH(instID, nextInstID string) bool {
 	sshId := meta.CMPT_META.GetInstAttr(instID, 116).ATTR_VALUE // 116 -> 'SSH_ID'
 	nextSshId := meta.CMPT_META.GetInstAttr(nextInstID, 116).ATTR_VALUE
 	return sshId == nextSshId
+}
+
+func GetVersion(servInstId, containerInstId, instId string) string {
+	// 优先级 instance.VERSION > container.VERSION > service.VERSION > deploy_file.VERSION
+	attr := meta.CMPT_META.GetInstAttr(instId, consts.VERSION_ATTR_ID) // 227 -> 'VERSION'
+	if attr != nil && attr.ATTR_VALUE != "" {
+		return attr.ATTR_VALUE
+	}
+
+	attr = meta.CMPT_META.GetInstAttr(containerInstId, consts.VERSION_ATTR_ID)
+	if attr != nil && attr.ATTR_VALUE != "" {
+		return attr.ATTR_VALUE
+	}
+
+	serv := meta.CMPT_META.GetService(servInstId)
+	if serv != nil {
+		return serv.VERSION
+	}
+
+	return ""
 }
 
 func GetServiceVersion(servInstID, instID string) string {
@@ -516,11 +564,11 @@ func Shutdown(sshClient *SSHClient, instId, cmptName, stopCmd, deployDir, checkP
 	return true
 }
 
-func GetRealPort(basePort, processor string) string {
-	iBasePort, _ := strconv.Atoi(basePort)
-	iProcessor, _ := strconv.Atoi(processor)
-	return strconv.Itoa(iBasePort + iProcessor)
-}
+// func GetRealPort(basePort, processor string) string {
+// 	iBasePort, _ := strconv.Atoi(basePort)
+// 	iProcessor, _ := strconv.Atoi(processor)
+// 	return strconv.Itoa(iBasePort + iProcessor)
+// }
 
 func FetchAndExtractZipDeployFile(sshClient *SSHClient, fileId int, subPath, oldName, version, logKey string,
 	paasResult *result.ResultBean) bool {

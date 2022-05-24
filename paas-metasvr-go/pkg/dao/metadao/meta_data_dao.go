@@ -1,6 +1,7 @@
 package metadao
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"reflect"
@@ -54,6 +55,14 @@ var (
 	SQL_UPD_SERV_DEPLOY                = "UPDATE t_meta_service SET IS_DEPLOYED = ? WHERE INST_ID = ?"
 	SQL_MOD_SERVICE_PSEUDO_DEPLOY_FLAG = "UPDATE t_meta_service SET PSEUDO_DEPLOY_FLAG = ? WHERE INST_ID = ?"
 	SQL_UPD_INSTANCE_PRE_EMBADDED      = "UPDATE t_meta_instance_attr SET ATTR_VALUE= ?  WHERE INST_ID = ? AND ATTR_ID = 320" // 320 -> 'PRE_EMBEDDED'
+
+	// SQL_NEXT_SEQ_LOCK                  = "select current_value as CURR_VALUE from t_meta_sequence where seq_name = ? for update"
+	SQL_NEXT_SEQ_LOCK   = "select current_value as CURR_VALUE from t_meta_sequence where seq_name = ? "
+	SQL_NEXT_SEQ_UPDATE = "update t_meta_sequence set current_value = current_value + %d where seq_name = ?"
+	SQL_INS_ALARM       = "INSERT INTO t_meta_alarm(ALARM_ID,SERV_INST_ID,SERV_TYPE,INST_ID,CMPT_NAME,ALARM_TYPE,ALARM_TIME) VALUES(?,?,?,?,?,?,?)"
+
+	SQL_UPD_ALARM_STATE_BY_ALARMID = "update t_meta_alarm set DEAL_TIME = ?, DEAL_ACC_NAME = ?, IS_DEALED = ? where ALARM_ID = ?"
+	SQL_UPD_ALARM_STATE_BY_INSTID  = "update t_meta_alarm set DEAL_TIME = ?, DEAL_ACC_NAME = ?, IS_DEALED = ? where SERV_INST_ID = ? and INST_ID = ? and ALARM_TYPE = ?"
 )
 
 func GetServiceCount(getServiceCountParam *proto.GetServiceCountParam, resultBean *result.ResultBean) {
@@ -2410,4 +2419,47 @@ func ModServicePseudoFlag(servInstID, pseudoFlag, logKey, magicKey string, paasR
 
 		return false
 	}
+}
+
+func GetNextSeqMargin(seqName string, step uint) (*proto.LongMargin, error) {
+	updateSeqSql := fmt.Sprintf(SQL_NEXT_SEQ_UPDATE, step)
+
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	result, err := crud.NextSeqMargin(dbPool, &SQL_NEXT_SEQ_LOCK, &updateSeqSql, seqName)
+	if err != nil {
+		return nil, err
+	}
+
+	if result == nil || len(result) == 0 {
+		errMsg := fmt.Sprintf("sequence %s not exits", seqName)
+		return nil, errors.New(errMsg)
+	}
+
+	startId := result[consts.HEADER_CURR_VALUE].(int64)
+	endId := startId + (int64)(step) - 1
+
+	seq := proto.NewLongMargin(startId, endId)
+	return seq, nil
+}
+
+func InsertAlarm(alarmId int64, servInstId, servType, instId, cmptName string, alarmType int, alarmTime int64) bool {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Insert(dbPool, &SQL_INS_ALARM, alarmId, servInstId, servType, instId, cmptName, alarmType, alarmTime)
+	if err != nil {
+		errMsg := fmt.Sprintf("InsertAlarm fail, servInstId: %s, instId: %s, cmptName: %s, alarmType: %d", servInstId, instId, cmptName, alarmType)
+		utils.LOGGER.Error(errMsg)
+	}
+
+	return err == nil
+}
+
+func UpdateAlarmStateByAlarmId(alarmId int64, dealTime int64, dealUser, dealFlag string, paasResult *result.ResultBean) bool {
+	dbPool := global.GLOBAL_RES.GetDbPool()
+	_, err := crud.Update(dbPool, &SQL_UPD_ALARM_STATE_BY_ALARMID, dealTime, dealUser, dealFlag, alarmId)
+	if err != nil {
+		errMsg := fmt.Sprintf("UpdateAlarmStateByAlarmId fail, alarmId: %d, dealFlag: %s", alarmId, dealFlag)
+		utils.LOGGER.Error(errMsg)
+	}
+
+	return err == nil
 }

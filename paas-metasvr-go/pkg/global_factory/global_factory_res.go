@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/maoge/paas-metasvr-go/pkg/autocheck/checkerintf"
+	"github.com/maoge/paas-metasvr-go/pkg/autocheck/prober"
 	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/deployer"
 	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/deployerIntf"
 	"github.com/maoge/paas-metasvr-go/pkg/autodeploy/factory"
@@ -14,6 +16,7 @@ import (
 
 var (
 	DEPLOYER_FACTORY *factory.DeployerFactory
+	PROBER_FACTORY   *factory.ProberFactory
 	deployer_barrier sync.Once
 )
 
@@ -42,6 +45,10 @@ func InitDeployerFactory() {
 
 		// maintainer
 		DEPLOYER_FACTORY.MaintainerMap[consts.SMS_GATEWAY] = new(maintainer.SmsGatewayMaintainer)
+
+		// prober
+		PROBER_FACTORY = factory.NewProberFactory()
+		PROBER_FACTORY.ProberMap[consts.SMS_GATEWAY] = new(prober.SmsGatewayProber)
 	})
 }
 
@@ -51,6 +58,10 @@ func GetDeployer(servType string) deployerIntf.ServiceDeployer {
 
 func GetMaintainer(servType string) deployerIntf.ServiceMaintainer {
 	return DEPLOYER_FACTORY.GetMaintainer(servType)
+}
+
+func GetProber(servType string) checkerintf.CmptProber {
+	return PROBER_FACTORY.GetProber(servType)
 }
 
 func GetServiceDeployer(instID, servType string, paasResult *result.ResultBean) deployerIntf.ServiceDeployer {
@@ -73,4 +84,15 @@ func GetServiceMaintainer(instID, servType string, paasResult *result.ResultBean
 	}
 
 	return serviceMaintainer
+}
+
+func GetServiceProber(instID, servType string, paasResult *result.ResultBean) checkerintf.CmptProber {
+	serviceProber := PROBER_FACTORY.GetProber(servType)
+	if serviceProber == nil {
+		errMsg := fmt.Sprintf("service prober not found, service_id:%s, service_type:%s", instID, servType)
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = errMsg
+	}
+
+	return serviceProber
 }

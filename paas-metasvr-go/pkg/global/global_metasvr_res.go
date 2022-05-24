@@ -1,11 +1,14 @@
 package global
 
 import (
+	"fmt"
 	"runtime"
 	"sync"
+	"time"
 
 	goredis "github.com/go-redis/redis/v7"
 
+	"github.com/apache/pulsar-client-go/pulsar"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/db/pool"
 	"github.com/maoge/paas-metasvr-go/pkg/redis"
@@ -21,6 +24,8 @@ type MetaSvrGlobalRes struct {
 	ldbDbPool *pool.LdbDbPool
 	redisPool *redis.RedisPool
 
+	PulsarClient *pulsar.Client
+
 	deployLog *utils.DeployLog
 }
 
@@ -30,6 +35,7 @@ func (g *MetaSvrGlobalRes) Init() {
 	g.initDBPool()
 	g.initRedisPool()
 	g.initDeployLog()
+	g.initPulsarClient()
 }
 
 func (g *MetaSvrGlobalRes) initDBPool() {
@@ -51,6 +57,23 @@ func (g *MetaSvrGlobalRes) initRedisPool() {
 
 func (g *MetaSvrGlobalRes) initDeployLog() {
 	g.deployLog = utils.NewDeployLog()
+}
+
+func (g *MetaSvrGlobalRes) initPulsarClient() {
+	addr := fmt.Sprintf("pulsar://%v", config.META_SVR_CONFIG.EventbusAddress)
+	pulsarClient, err := pulsar.NewClient(pulsar.ClientOptions{
+		URL:               addr,
+		OperationTimeout:  3 * time.Second,
+		ConnectionTimeout: 3 * time.Second,
+	})
+
+	if err != nil {
+		errInfo := fmt.Sprintf("Could not instantiate Pulsar client: %v, error: %v", addr, err.Error())
+		utils.LOGGER.Fatal(errInfo)
+		return
+	}
+
+	g.PulsarClient = &pulsarClient
 }
 
 func (g *MetaSvrGlobalRes) GetDbPool() *pool.DbPool {

@@ -30,4 +30,5 @@ const (
 	CMD_DOS2UNIX  = "dos2unix"
 	CMD_PS        = "ps"
 	SHELL_MACRO   = "#! /bin/sh"
+	CMD_PING      = "PING\r\n"
 )

@@ -106,7 +106,7 @@ func GetAlarmList(getAlarmListParam *proto.GetAlarmListParam, resultBean *result
 
 func ClearAlarm(clearAlarmParam *proto.ClearAlarmParam, resultBean *result.ResultBean) {
 	key := fmt.Sprintf("alarm-%s-%d", clearAlarmParam.INST_ID, clearAlarmParam.ALARM_TYPE)
-	err := redisdao.RedisDel(key)
+	err := redisdao.Del(key)
 	if err != nil {
 		resultBean.RET_CODE = consts.REVOKE_NOK
 		resultBean.RET_INFO = consts.ERR_CLEAR_ALARM_REDIS_CACHE_FAIL

@@ -91,6 +91,39 @@ func TxSelectAsMap(pool *pool.DbPool, sql *string, args ...interface{}) (map[str
 	return m, nil
 }
 
+func NextSeqMargin(pool *pool.DbPool, sqlSelect *string, sqlUpdate *string, seqName string) (map[string]interface{}, error) {
+	tx, err := pool.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	// defer tx.Commit()
+
+	m := map[string]interface{}{}
+	row := tx.QueryRowx(pool.DB.Rebind(*sqlSelect), seqName)
+	err = row.MapScan(m)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	for k, encoded := range m {
+		t := reflect.TypeOf(encoded)
+		if t.Kind() == reflect.Slice {
+			byteArr := encoded.([]uint8)
+			m[k] = string(byteArr)
+		}
+	}
+
+	_, err = tx.Exec(pool.DB.Rebind(*sqlUpdate), seqName)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+	return m, nil
+}
+
 func SelectAsJson(pool *pool.DbPool, sql *string, args ...interface{}) ([]byte, error) {
 	row := pool.DB.QueryRowx(pool.DB.Rebind(*sql), args...)
 

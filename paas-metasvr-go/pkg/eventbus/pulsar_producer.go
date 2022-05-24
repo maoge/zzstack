@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/apache/pulsar-client-go/pulsar"
-	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
+	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
@@ -17,21 +17,9 @@ type PulsarProducer struct {
 }
 
 func CreatePulsarProducer() EventBusProducer {
-	addr := fmt.Sprintf("pulsar://%v", config.META_SVR_CONFIG.EventbusAddress)
-	pulsarClient, err := pulsar.NewClient(pulsar.ClientOptions{
-		URL:               addr,
-		OperationTimeout:  3 * time.Second,
-		ConnectionTimeout: 3 * time.Second,
-	})
-
-	if err != nil {
-		errInfo := fmt.Sprintf("Could not instantiate Pulsar client: %v, error: %v", addr, err.Error())
-		utils.LOGGER.Fatal(errInfo)
-		return nil
-	}
-
 	topic := fmt.Sprintf("persistent://public/default/%v", consts.SYS_EVENT_TOPIC)
-	pulsarProducer, err := pulsarClient.CreateProducer(pulsar.ProducerOptions{
+	pulsarClient := global.GLOBAL_RES.PulsarClient
+	pulsarProducer, err := (*pulsarClient).CreateProducer(pulsar.ProducerOptions{
 		Topic:                   topic,
 		BatchingMaxPublishDelay: 1 * time.Second,
 		DisableBlockIfQueueFull: false,
@@ -44,10 +32,9 @@ func CreatePulsarProducer() EventBusProducer {
 	}
 
 	return PulsarProducer{
-		client:   &pulsarClient,
+		client:   pulsarClient,
 		producer: &pulsarProducer,
 	}
-
 }
 
 func (m PulsarProducer) Send(data []byte) error {
@@ -68,10 +55,8 @@ func (m PulsarProducer) SendAsync(data []byte) {
 
 func (m PulsarProducer) Close() {
 	(*m.producer).Close()
-	(*m.client).Close()
 
 	m.producer = nil
-	m.client = nil
 }
 
 func asyncSendCallBack(_ pulsar.MessageID, _ *pulsar.ProducerMessage, err error) {

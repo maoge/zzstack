@@ -2,6 +2,7 @@ package sms
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,26 +13,6 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/meta"
 	"github.com/maoge/paas-metasvr-go/pkg/result"
 )
-
-func getVersion(servInstId, containerInstId, instId string) string {
-	// 优先级 instance.VERSION > container.VERSION > service.VERSION > deploy_file.VERSION
-	attr := meta.CMPT_META.GetInstAttr(instId, consts.VERSION_ATTR_ID) // 227 -> 'VERSION'
-	if attr != nil && attr.ATTR_VALUE != "" {
-		return attr.ATTR_VALUE
-	}
-
-	attr = meta.CMPT_META.GetInstAttr(containerInstId, consts.VERSION_ATTR_ID)
-	if attr != nil && attr.ATTR_VALUE != "" {
-		return attr.ATTR_VALUE
-	}
-
-	serv := meta.CMPT_META.GetService(servInstId)
-	if serv != nil {
-		return serv.VERSION
-	}
-
-	return ""
-}
 
 func DeploySmsInstanceArr(header, servInstID string, container map[string]interface{}, logKey, magicKey string,
 	paasResult *result.ResultBean) bool {
@@ -47,7 +28,7 @@ func DeploySmsInstanceArr(header, servInstID string, container map[string]interf
 		ret := true
 
 		instId := item[consts.HEADER_INST_ID].(string)
-		version := getVersion(servInstID, containerInstId, instId)
+		version := DeployUtils.GetVersion(servInstID, containerInstId, instId)
 
 		switch header {
 		case consts.HEADER_SMS_SERVER:
@@ -307,9 +288,9 @@ func DeploySmsProcessNode(instItem map[string]interface{}, cmptName, version, lo
 	rocketMQServ := instItem[consts.HEADER_ROCKETMQ_SERV].(string)
 	processor := instItem[consts.HEADER_PROCESSOR].(string)
 	jvmOps := instItem[consts.HEADER_JVM_OPS].(string)
-	webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	// webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
 
-	realPort := DeployUtils.GetRealPort(webConsolePort, processor)
+	realPort := DeployUtils.GetRealPort(instItem)
 
 	sshClient, ssh, ok := DeployUtils.GetSshClient(sshId, logKey, paasResult)
 	if !ok {
@@ -421,9 +402,9 @@ func DeploySmsClientNode(instItem map[string]interface{}, cmptName, version, log
 	rocketMQServ := instItem[consts.HEADER_ROCKETMQ_SERV].(string)
 	processor := instItem[consts.HEADER_PROCESSOR].(string)
 	jvmOps := instItem[consts.HEADER_JVM_OPS].(string)
-	webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	// webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
 
-	realPort := DeployUtils.GetRealPort(webConsolePort, processor)
+	realPort := DeployUtils.GetRealPort(instItem)
 
 	sshClient, ssh, ok := DeployUtils.GetSshClient(sshId, logKey, paasResult)
 	if !ok {
@@ -533,12 +514,12 @@ func DeploySmsBatSaveNode(instItem map[string]interface{}, cmptName, version, lo
 	rocketMQServ := instItem[consts.HEADER_ROCKETMQ_SERV].(string)
 	processor := instItem[consts.HEADER_PROCESSOR].(string)
 	jvmOps := instItem[consts.HEADER_JVM_OPS].(string)
-	webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	// webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
 	dbInstId := instItem[consts.HEADER_DB_INST_ID].(string)
 	esServer := instItem[consts.HEADER_ES_SERVER].(string)
 	esMtServer := instItem[consts.HEADER_ES_MT_SERVER].(string)
 
-	realPort := DeployUtils.GetRealPort(webConsolePort, processor)
+	realPort := DeployUtils.GetRealPort(instItem)
 
 	sshClient, ssh, ok := DeployUtils.GetSshClient(sshId, logKey, paasResult)
 	if !ok {
@@ -787,7 +768,7 @@ func UndeploySmsProcessNode(instItem map[string]interface{}, cmptName, logKey, m
 
 	instId := instItem[consts.HEADER_INST_ID].(string)
 	sshId := instItem[consts.HEADER_SSH_ID].(string)
-	webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	// webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
 	processor := instItem[consts.HEADER_PROCESSOR].(string)
 
 	sshClient, ssh, ok := DeployUtils.GetSshClient(sshId, logKey, paasResult)
@@ -812,7 +793,7 @@ func UndeploySmsProcessNode(instItem map[string]interface{}, cmptName, logKey, m
 		return false
 	}
 
-	realPort := DeployUtils.GetRealPort(webConsolePort, processor)
+	realPort := DeployUtils.GetRealPort(instItem)
 
 	stopCmd := "./bin/smsprocess.sh stop"
 	return DeployUtils.Shutdown(sshClient, instId, cmptName, stopCmd, newName, realPort, consts.STR_SAVED, logKey, magicKey, paasResult)
@@ -823,7 +804,7 @@ func UndeploySmsClientNode(instItem map[string]interface{}, cmptName, logKey, ma
 
 	instId := instItem[consts.HEADER_INST_ID].(string)
 	sshId := instItem[consts.HEADER_SSH_ID].(string)
-	webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	// webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
 	processor := instItem[consts.HEADER_PROCESSOR].(string)
 
 	sshClient, ssh, ok := DeployUtils.GetSshClient(sshId, logKey, paasResult)
@@ -848,7 +829,7 @@ func UndeploySmsClientNode(instItem map[string]interface{}, cmptName, logKey, ma
 		return false
 	}
 
-	realPort := DeployUtils.GetRealPort(webConsolePort, processor)
+	realPort := DeployUtils.GetRealPort(instItem)
 
 	stopCmd := "./bin/smsclient.sh stop"
 	return DeployUtils.Shutdown(sshClient, instId, cmptName, stopCmd, newName, realPort, consts.STR_SAVED, logKey, magicKey, paasResult)
@@ -859,7 +840,7 @@ func UndeploySmsBatSaveNode(instItem map[string]interface{}, cmptName, logKey, m
 
 	instId := instItem[consts.HEADER_INST_ID].(string)
 	sshId := instItem[consts.HEADER_SSH_ID].(string)
-	webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
+	// webConsolePort := instItem[consts.HEADER_WEB_CONSOLE_PORT].(string)
 	processor := instItem[consts.HEADER_PROCESSOR].(string)
 	dbInstId := instItem[consts.HEADER_DB_INST_ID].(string)
 
@@ -885,7 +866,7 @@ func UndeploySmsBatSaveNode(instItem map[string]interface{}, cmptName, logKey, m
 		return false
 	}
 
-	realPort := DeployUtils.GetRealPort(webConsolePort, processor)
+	realPort := DeployUtils.GetRealPort(instItem)
 
 	stopCmd := "./bin/smsbatsave.sh stop"
 	return DeployUtils.Shutdown(sshClient, instId, cmptName, stopCmd, newName, realPort, consts.STR_SAVED, logKey, magicKey, paasResult)
@@ -1251,4 +1232,242 @@ func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
 	}
 
 	return res
+}
+
+func UpdateInstanceForBatch(servInstID, instID, servType string, loadDeployFile, rmDeployFile, isHandle bool,
+	logKey, magicKey string, paasResult *result.ResultBean) bool {
+
+	inst := meta.CMPT_META.GetInstance(instID)
+	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+
+	cmptName := cmpt.CMPT_NAME
+	version := DeployUtils.GetServiceVersion(servInstID, instID)
+	sshId := meta.CMPT_META.GetInstAttr(instID, 116).ATTR_VALUE // 116 -> 'SSH_ID'
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	if ssh == nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_SSH_NOT_FOUND
+		return false
+	}
+
+	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("update %s, inst_id:%s, serv_ip:%s", cmptName, instID, ssh.SERVER_IP))
+
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	newName := ""
+	stopCmd := ""
+	startCmd := ""
+	processor := ""
+	dbInstId := ""
+	oldName := ""
+	baseDir := fmt.Sprintf("%s/%s", consts.PAAS_ROOT, consts.SMS_GATEWAY_ROOT)
+
+	fileId := 0
+
+	switch cmptName {
+	case consts.HEADER_SMS_SERVER:
+	case consts.HEADER_SMS_SERVER_EXT:
+		oldName = "smsserver"
+		newName = "smsserver_" + instID
+		fileId = consts.SMS_SERVER_FILE_ID
+		stopCmd = fmt.Sprintf("./%s/bin/smsserver.sh stop", newName)
+		startCmd = fmt.Sprintf("./%s/bin/smsserver.sh start", newName)
+		break
+	case consts.HEADER_SMS_PROCESS:
+		oldName = "smsprocess"
+		processor = meta.CMPT_META.GetInstAttr(instID, consts.PROCESSOR_ATTR_ID).ATTR_VALUE // 205 -> 'PROCESSOR'
+		newName = "smsprocess_" + processor
+		fileId = consts.SMS_PROCESS_FILE_ID
+		stopCmd = fmt.Sprintf("./%s/bin/smsprocess.sh stop", newName)
+		startCmd = fmt.Sprintf("./%s/bin/smsprocess.sh start", newName)
+		break
+	case consts.HEADER_SMS_CLIENT:
+		oldName = "smsclient-standard"
+		processor = meta.CMPT_META.GetInstAttr(instID, consts.PROCESSOR_ATTR_ID).ATTR_VALUE // 205 -> 'PROCESSOR'
+		newName = "smsclient-standard_" + processor
+		fileId = consts.SMS_CLIENT_FILE_ID
+		stopCmd = fmt.Sprintf("./%s/bin/smsclient.sh stop", newName)
+		startCmd = fmt.Sprintf("./%s/bin/smsclient.sh start", newName)
+		break
+	case consts.HEADER_SMS_BATSAVE:
+		oldName = "smsbatsave"
+		processor = meta.CMPT_META.GetInstAttr(instID, consts.PROCESSOR_ATTR_ID).ATTR_VALUE // 205 -> 'PROCESSOR'
+		dbInstId = meta.CMPT_META.GetInstAttr(instID, consts.DB_INST_ATTR_ID).ATTR_VALUE    // 213 -> 'DB_INST_ID'
+		newName = "smsbatsave_" + processor + "_" + dbInstId
+		fileId = consts.SMS_BATSAVE_FILE_ID
+		stopCmd = fmt.Sprintf("./%s/bin/smsbatsave.sh stop", newName)
+		startCmd = fmt.Sprintf("./%s/bin/smsbatsave.sh start", newName)
+		break
+	case consts.HEADER_SMS_STATS:
+		oldName = "smsstatistics"
+		newName = "smsstatistics_" + instID
+		fileId = consts.SMS_STATS_FILE_ID
+		stopCmd = fmt.Sprintf("./%s/bin/smsstatistics.sh stop", newName)
+		startCmd = fmt.Sprintf("./%s/bin/smsstatistics.sh start", newName)
+		break
+	default:
+		break
+	}
+
+	// 1. scp deploy file and unzip
+	if loadDeployFile {
+		if !DeployUtils.FetchAndExtractZipDeployFile(sshClient, fileId, consts.SMS_GATEWAY_ROOT, oldName, version, logKey, paasResult) {
+			return false
+		}
+	}
+
+	if !DeployUtils.CD(sshClient, baseDir, logKey, paasResult) {
+		return false
+	}
+
+	// 2. stop instance
+	global.GLOBAL_RES.PubLog(logKey, stopCmd)
+	if !DeployUtils.ExecSimpleCmd(sshClient, stopCmd, logKey, paasResult) {
+		return false
+	}
+
+	if !DeployUtils.IsPreEmbadded(instID) {
+		time.Sleep(time.Duration(consts.STOP_WAIT_MILLI_SECONDS) * time.Millisecond)
+		if DeployUtils.IsProcExist(sshClient, instID, logKey, paasResult) {
+			global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("%s %s 更新前执行进程停止失败", cmptName, instID))
+
+			return false
+		}
+	}
+
+	// 3. 更新文件
+	rmInstanceJar := fmt.Sprintf("rm ./%s/*.jar ", newName)
+	rmLibJar := fmt.Sprintf("rm ./%s/lib/*.jar ", newName)
+	cmdInstanceJar := fmt.Sprintf("cp ./%s/*.jar ./%s ", oldName, newName)
+	cmdLibJar := fmt.Sprintf("cp ./%s/lib/*.jar ./%s/lib ", oldName, newName)
+	if !DeployUtils.ExecSimpleCmd(sshClient, rmInstanceJar, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.ExecSimpleCmd(sshClient, rmLibJar, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmdInstanceJar, logKey, paasResult) {
+		return false
+	}
+	if !DeployUtils.ExecSimpleCmd(sshClient, cmdLibJar, logKey, paasResult) {
+		return false
+	}
+
+	// 4. 重新拉起
+	global.GLOBAL_RES.PubLog(logKey, startCmd)
+
+	if DeployUtils.IsPreEmbadded(instID) {
+		global.GLOBAL_RES.PubLog(logKey, "PRE_EMBADDED instance, do not need to start ......")
+		if !metadao.UpdateInstanceDeployFlag(instID, consts.STR_PRE_EMBADDED, logKey, magicKey, paasResult) {
+			return false
+		}
+	} else {
+		if !DeployUtils.ExecSimpleCmd(sshClient, startCmd, logKey, paasResult) {
+			return false
+		}
+
+		time.Sleep(time.Duration(consts.START_WAIT_MILLI_SECONDS) * time.Millisecond)
+		if !DeployUtils.IsProcExist(sshClient, instID, logKey, paasResult) {
+			global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("%s %s 更新后执行进程拉起失败", cmptName, instID))
+
+			return false
+		}
+	}
+	if rmDeployFile {
+		if !DeployUtils.RM(sshClient, oldName, logKey, paasResult) {
+			return false
+		}
+	}
+
+	// 5. 修改实例的version属性
+	// 227 -> 'VERSION'
+	if !metadao.ModInstanceAttr(instID, 227, "VERSION", version, logKey, magicKey, paasResult) {
+		return false
+	}
+
+	res := true
+	// 非预埋节点且成功启动后才更新IS_DEPLOYED = 1
+	if !DeployUtils.IsPreEmbadded(instID) {
+		time.Sleep(time.Duration(consts.START_WAIT_MILLI_SECONDS) * time.Millisecond)
+		res = DeployUtils.IsProcExist(sshClient, instID, logKey, paasResult)
+		if res {
+			res = metadao.UpdateInstanceDeployFlag(instID, consts.STR_DEPLOYED, logKey, magicKey, paasResult)
+		}
+	}
+
+	resInfo := "fail"
+	if res {
+		resInfo = "success"
+	}
+	global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("update %s to version:%s %s", cmptName, version, resInfo))
+
+	paasResult.RET_INFO = version
+	return res
+}
+
+func CheckInstanceStatus(servInstID, instID, servType, magicKey string, paasResult *result.ResultBean) bool {
+	inst := meta.CMPT_META.GetInstance(instID)
+	cmpt := meta.CMPT_META.GetCmptById(inst.CMPT_ID)
+	sshId := meta.CMPT_META.GetInstAttr(instID, 116).ATTR_VALUE // 116 -> 'SSH_ID'
+
+	ssh := meta.CMPT_META.GetSshById(sshId)
+	if ssh == nil {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = consts.ERR_SSH_NOT_FOUND
+		return false
+	}
+
+	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
+	if !DeployUtils.ConnectSSH(sshClient, "", paasResult) {
+		return false
+	} else {
+		defer sshClient.Close()
+	}
+
+	webConsolePort := meta.CMPT_META.GetInstAttr(instID, 146).ATTR_VALUE // 146 -> 'WEB_CONSOLE_PORT'
+	processorAttr := meta.CMPT_META.GetInstAttr(instID, 205)             // 205 -> 'PROCESSOR'
+	realPort := ""
+	if processorAttr != nil {
+		processor := processorAttr.ATTR_VALUE
+		iWebConsolePort, _ := strconv.Atoi(webConsolePort)
+		iProcessor, _ := strconv.Atoi(processor)
+		realPort = strconv.Itoa(iWebConsolePort + iProcessor)
+	} else {
+		realPort = webConsolePort
+	}
+
+	ret := true
+	switch cmpt.CMPT_NAME {
+	case consts.HEADER_SMS_SERVER:
+	case consts.HEADER_SMS_SERVER_EXT:
+		ret = DeployUtils.CheckPortUp(sshClient, "smsserver", instID, realPort, "", paasResult)
+		break
+	case consts.HEADER_SMS_PROCESS:
+		ret = DeployUtils.CheckPortUp(sshClient, "smsprocess", instID, realPort, "", paasResult)
+		break
+	case consts.HEADER_SMS_CLIENT:
+		ret = DeployUtils.CheckPortUp(sshClient, "smsclient", instID, realPort, "", paasResult)
+		break
+	case consts.HEADER_SMS_BATSAVE:
+		ret = DeployUtils.CheckPortUp(sshClient, "smsbatsave", instID, realPort, "", paasResult)
+		break
+	case consts.HEADER_SMS_STATS:
+		ret = DeployUtils.CheckPortUp(sshClient, "smsstatistics", instID, realPort, "", paasResult)
+		break
+	default:
+		break
+	}
+
+	if !ret {
+		paasResult.RET_CODE = consts.REVOKE_NOK
+		paasResult.RET_INFO = "service port not up"
+	}
+
+	return ret
 }

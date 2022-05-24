@@ -1,0 +1,8 @@
+package consts
+
+const (
+	ALARM_NONE                = 10000
+	ALARM_APP_PROC_DOWN       = 10001
+	ALARM_DISK_HIGH_WATERMARK = 10002
+	ALARM_MEM_HIGH_WATERMARK  = 10003
+)

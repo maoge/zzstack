@@ -76,5 +76,7 @@ const (
 	ERR_ETCD_NODE_REQUIRED_CLUSTER     = "product env must least 3 node ......"
 	ERR_ETCD_NODE_LESS_THAN_ONE        = "find etcd node less than one, but dev or test env must single or cluster"
 	ERR_APISIX_NODE_LESS_THAN_ONE      = "find apisix node less than one, but must single or cluster"
-	ERR_APISIX_NODE_INSTANT_NOT_FOUND  = " not find apisix node by instantId"
+	ERR_APISIX_NODE_INSTANT_NOT_FOUND  = "can not find apisix node by instantId"
+	ERR_FETCH_SEQ_SQL_NOT_MATCH        = "fetch sequence sql not match ......"
+	ERR_SEQ_NOT_EXISTS                 = "sequence not exists ......"
 )

@@ -9,7 +9,7 @@ import (
 )
 
 func GetSessionFromRedis(userSessionKey string) *proto.AccountSession {
-	val, err := RedisGet(userSessionKey)
+	val, err := Get(userSessionKey)
 	if err != nil {
 		return nil
 	}
@@ -23,10 +23,10 @@ func GetSessionFromRedis(userSessionKey string) *proto.AccountSession {
 func PutSessionToRedis(accSession *proto.AccountSession) {
 	key := utils.GetRedisSessionKey(accSession.ACC_NAME)
 	str := utils.Struct2Json(accSession)
-	RedisSet(key, str)
+	Set(key, str)
 }
 
-func RedisGet(key string) (interface{}, error) {
+func Get(key string) (interface{}, error) {
 	client := global.GLOBAL_RES.GetRedisClusterClient()
 
 	if client != nil {
@@ -42,7 +42,7 @@ func RedisGet(key string) (interface{}, error) {
 	}
 }
 
-func RedisSet(key, val string) error {
+func Set(key, val string) error {
 	client := global.GLOBAL_RES.GetRedisClusterClient()
 	if client != nil {
 		cmd := client.Do("set", key, val)
@@ -57,7 +57,23 @@ func RedisSet(key, val string) error {
 	}
 }
 
-func RedisDel(key string) error {
+func Pexpire(key string, expire int) (bool, error) {
+	client := global.GLOBAL_RES.GetRedisClusterClient()
+	if client != nil {
+		cmd := client.Do("pexpire", key)
+		val, err := cmd.Result()
+		if err != nil {
+			return false, err
+		} else {
+			cnt := val.(int)
+			return cnt > 0, nil
+		}
+	} else {
+		return false, err.RedisErr{ErrInfo: consts.ERR_REDIS_POOL_NIL}
+	}
+}
+
+func Del(key string) error {
 	client := global.GLOBAL_RES.GetRedisClusterClient()
 	if client != nil {
 		cmd := client.Do("del", key)
@@ -69,5 +85,21 @@ func RedisDel(key string) error {
 		}
 	} else {
 		return err.RedisErr{ErrInfo: consts.ERR_REDIS_POOL_NIL}
+	}
+}
+
+func Exists(key string) (bool, error) {
+	client := global.GLOBAL_RES.GetRedisClusterClient()
+	if client != nil {
+		cmd := client.Do("exists", key)
+		val, err := cmd.Result()
+		if err != nil {
+			return false, err
+		} else {
+			cnt := val.(int)
+			return cnt > 0, nil
+		}
+	} else {
+		return false, err.RedisErr{ErrInfo: consts.ERR_REDIS_POOL_NIL}
 	}
 }
