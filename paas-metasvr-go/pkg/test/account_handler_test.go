@@ -1,4 +1,4 @@
-package controller
+package test
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/maoge/paas-metasvr-go/pkg/config"
+	"github.com/maoge/paas-metasvr-go/pkg/controller"
 	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 
@@ -22,7 +23,7 @@ import (
 func init() {
 	utils.Init()
 	config.InitMetaSvrConf()
-	global.GLOBAL_RES.Init()
+	global.InitGlobalRes()
 	meta.InitGlobalCmptMeta()
 	eventbus.InitEventBus()
 
@@ -36,10 +37,10 @@ func init() {
 	// route.Init(engine)
 
 	defaultGroup := engine.Group("")
-	helloController := NewHelloController(defaultGroup)
+	helloController := controller.NewHelloController(defaultGroup)
 	RegisterController(helloController)
 
-	accountHandler := NewAccountHandler(defaultGroup)
+	accountHandler := controller.NewAccountHandler(defaultGroup)
 	RegisterController(accountHandler)
 
 	err := engine.Run(config.META_SVR_CONFIG.WebApiAddress)

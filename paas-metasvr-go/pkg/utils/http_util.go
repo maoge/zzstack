@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func PostJson(url string, postData *string) {
+func PostJson(url string, postData *string) []byte {
 	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(*postData)))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -16,6 +16,7 @@ func PostJson(url string, postData *string) {
 	if err != nil {
 		errMsg := fmt.Sprintf("PostJson url:{%s}, postData:{%s}, error: %s", url, *postData, err.Error())
 		LOGGER.Error(errMsg)
+		return nil
 	}
 	defer resp.Body.Close()
 
@@ -23,7 +24,9 @@ func PostJson(url string, postData *string) {
 	if err != nil {
 		errMsg := fmt.Sprintf("PostJson url:{%s}, postData:{%s}, error: %s", url, *postData, err.Error())
 		LOGGER.Error(errMsg)
+		return nil
 	}
 
-	fmt.Println("response Body:", string(body))
+	// fmt.Println("response Body:", string(body))
+	return body
 }

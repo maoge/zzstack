@@ -1,6 +1,9 @@
 package proto
 
-import "github.com/maoge/paas-metasvr-go/pkg/consts"
+import (
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
+)
 
 type PaasService struct {
 	INST_ID            string `db:"INST_ID"`
@@ -22,4 +25,11 @@ func (m *PaasService) IsDeployed() bool {
 
 func (m *PaasService) IsProduct() bool {
 	return m.IS_PRODUCT == consts.STR_TRUE
+}
+
+func ParsePaasService(s string) *PaasService {
+	paasService := new(PaasService)
+	utils.Json2Struct([]byte(s), paasService)
+
+	return paasService
 }

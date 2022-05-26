@@ -2,6 +2,7 @@ package proto
 
 import (
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
+	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
 type PaasInstance struct {
@@ -40,4 +41,10 @@ func (m *PaasInstance) IsDefaultPos() bool {
 	return m.POS_X == 0 && m.POS_Y == 0 &&
 		m.WIDTH == consts.POS_DEFAULT_VALUE && m.HEIGHT == consts.POS_DEFAULT_VALUE &&
 		m.ROW == consts.POS_DEFAULT_VALUE && m.COL == consts.POS_DEFAULT_VALUE
+}
+
+func ParsePaasInstance(s string) *PaasInstance {
+	paasInstance := new(PaasInstance)
+	utils.Json2Struct([]byte(s), paasInstance)
+	return paasInstance
 }

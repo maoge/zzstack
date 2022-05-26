@@ -3,6 +3,7 @@ module github.com/maoge/paas-metasvr-go
 go 1.18
 
 require (
+	github.com/Jeffail/tunny v0.1.4
 	github.com/Valiben/gin_unit_test v0.0.0-20181205064931-674aee46d090
 	github.com/apache/pulsar-client-go v0.8.0
 	github.com/gin-gonic/gin v1.7.7

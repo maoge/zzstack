@@ -7,6 +7,7 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/eventbus"
+	"github.com/maoge/paas-metasvr-go/pkg/eventbus/dispatcher"
 	"github.com/maoge/paas-metasvr-go/pkg/global"
 	"github.com/maoge/paas-metasvr-go/pkg/global_factory"
 
@@ -24,10 +25,11 @@ func init() {
 	consts.InitEventMap()
 	utils.Init()
 	config.InitMetaSvrConf()
-	global.GLOBAL_RES.Init()
+	global.InitGlobalRes()
 	meta.InitGlobalCmptMeta()
-	eventbus.InitEventBus()
 	global_factory.InitDeployerFactory()
+	eventbus.InitEventBus()
+	dispatcher.InitEventDispatcher()
 	sequence.InitSeqence()
 }
 

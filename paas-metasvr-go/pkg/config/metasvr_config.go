@@ -34,7 +34,7 @@ type MetaSvrConfig struct {
 
 	EventbusAddress              string `json:"eventbus_address,omitempty"`
 	EventbusConsumerSubscription string `json:"eventbus_consumer_subscription,omitempty"`
-	EventbusExpireTtl            int    `json:"eventbus_expire_ttl,omitempty"`
+	EventbusExpireTtl            int64  `json:"eventbus_expire_ttl,omitempty"`
 
 	AlarmTimeWindow int `json:"alarm_time_window,omitempty"`
 
@@ -92,7 +92,7 @@ func NewConfig() *MetaSvrConfig {
 
 	eventbusAddress := cfg.Section("System").Key("eventbus_address").String()
 	eventbusConsumerSubscription := cfg.Section("System").Key("eventbus_address").String()
-	eventbusExpireTtl := cfg.Section("System").Key("eventbus_address").MustInt(60000)
+	eventbusExpireTtl := cfg.Section("System").Key("eventbus_address").MustInt64(60000)
 
 	alarmTimeWindow := cfg.Section("System").Key("alarm_time_window").MustInt(600000)
 

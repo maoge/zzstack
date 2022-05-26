@@ -12,11 +12,19 @@ type AccountSession struct {
 }
 
 func NewAccountSession(accName, magicKey string) *AccountSession {
-	return &AccountSession{
-		ACC_NAME:        accName,
-		MAGIC_KEY:       magicKey,
-		SESSION_TIMEOUT: utils.CurrentTimeMilli() + consts.SESSION_TTL,
-	}
+	session := new(AccountSession)
+	session.ACC_NAME = accName
+	session.MAGIC_KEY = magicKey
+	session.SESSION_TIMEOUT = utils.CurrentTimeMilli() + consts.SESSION_TTL
+	return session
+}
+
+func NewAccountSessionWithTTL(accName, magicKey string, ttl int64) *AccountSession {
+	session := new(AccountSession)
+	session.ACC_NAME = accName
+	session.MAGIC_KEY = magicKey
+	session.SESSION_TIMEOUT = ttl
+	return session
 }
 
 func (m *AccountSession) IsSessionValid() bool {

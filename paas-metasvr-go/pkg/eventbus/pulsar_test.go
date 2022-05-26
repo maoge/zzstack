@@ -12,7 +12,7 @@ import (
 )
 
 func TestPulsarProducer(t *testing.T) {
-	addr := fmt.Sprintf("pulsar://%v", "172.20.0.171:61000,172.20.0.172:61000")
+	addr := "pulsar://172.20.0.171:61000,172.20.0.172:61000"
 	pulsarClient, err := pulsar.NewClient(pulsar.ClientOptions{
 		URL:               addr,
 		OperationTimeout:  3 * time.Second,

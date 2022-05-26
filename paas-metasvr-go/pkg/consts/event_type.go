@@ -1,7 +1,7 @@
 package consts
 
 type EventType struct {
-	CODE      int
+	CODE      int32
 	ALARM     bool
 	WRITE_LOG bool
 	INFO      string
@@ -39,10 +39,10 @@ var (
 	EVENT_RELOAD_METADATA       EventType = EventType{CODE: 10028, ALARM: false, WRITE_LOG: true, INFO: "EVENT_RELOAD_METADATA"}
 )
 
-var EVENT_MAP map[int]*EventType
+var EVENT_MAP map[int32]*EventType
 
 func InitEventMap() {
-	EVENT_MAP = make(map[int]*EventType)
+	EVENT_MAP = make(map[int32]*EventType)
 	EVENT_MAP[EVENT_NONE.CODE] = &EVENT_NONE
 	EVENT_MAP[EVENT_SYNC_SESSION.CODE] = &EVENT_SYNC_SESSION
 	EVENT_MAP[EVENT_ADD_SERVICE.CODE] = &EVENT_ADD_SERVICE

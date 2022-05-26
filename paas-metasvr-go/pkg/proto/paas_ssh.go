@@ -1,5 +1,7 @@
 package proto
 
+import "github.com/maoge/paas-metasvr-go/pkg/utils"
+
 type PaasSsh struct {
 	SSH_ID     string `db:"SSH_ID"`
 	SSH_NAME   string `db:"SSH_NAME"`
@@ -18,5 +20,11 @@ func NewPaasSsh(sshId string, sshName string, sshPwd string, sshPort int, servCl
 	ssh.SERV_CLAZZ = servClazz
 	ssh.SERVER_IP = serverIp
 
+	return ssh
+}
+
+func ParsePaasSSH(msg string) *PaasSsh {
+	ssh := new(PaasSsh)
+	utils.Json2Struct([]byte(msg), ssh)
 	return ssh
 }

@@ -11,9 +11,9 @@ type PulsarBusImpl struct {
 }
 
 func NewPulsarBusImpl() EventBus {
-	pulsarBus := PulsarBusImpl{}
+	pulsarBus := new(PulsarBusImpl)
 	pulsarBus.Init()
-	return &pulsarBus
+	return pulsarBus
 }
 
 func (p *PulsarBusImpl) Init() {

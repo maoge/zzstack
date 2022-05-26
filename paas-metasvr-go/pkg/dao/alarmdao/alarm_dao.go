@@ -75,8 +75,8 @@ func GetAlarmList(getAlarmListParam *proto.GetAlarmListParam, resultBean *result
 		// process: timestamp -> string format date, ALARM_TYPE -> ALARM_INFO
 		for _, item := range data {
 			node := item.(map[string]interface{})
-			alarmType := node[consts.HEADER_ALARM_TYPE].(int64)
-			alarmInfo := consts.EVENT_MAP[int(alarmType)]
+			alarmType := node[consts.HEADER_ALARM_TYPE].(int32)
+			alarmInfo := consts.EVENT_MAP[alarmType]
 			if alarmInfo != nil {
 				node[consts.HEADER_ALARM_INFO] = alarmInfo
 			} else {

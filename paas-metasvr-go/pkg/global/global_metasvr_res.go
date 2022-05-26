@@ -16,7 +16,10 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
-var GLOBAL_RES MetaSvrGlobalRes
+var (
+	GLOBAL_RES         *MetaSvrGlobalRes
+	global_res_barrier sync.Once
+)
 
 type MetaSvrGlobalRes struct {
 	Mut sync.Mutex
@@ -29,13 +32,16 @@ type MetaSvrGlobalRes struct {
 	deployLog *utils.DeployLog
 }
 
-func (g *MetaSvrGlobalRes) Init() {
-	runtime.GOMAXPROCS(config.META_SVR_CONFIG.GoMaxPorc)
+func InitGlobalRes() {
+	global_res_barrier.Do(func() {
+		runtime.GOMAXPROCS(config.META_SVR_CONFIG.GoMaxPorc)
 
-	g.initDBPool()
-	g.initRedisPool()
-	g.initDeployLog()
-	g.initPulsarClient()
+		GLOBAL_RES = new(MetaSvrGlobalRes)
+		GLOBAL_RES.initDBPool()
+		GLOBAL_RES.initRedisPool()
+		GLOBAL_RES.initDeployLog()
+		GLOBAL_RES.initPulsarClient()
+	})
 }
 
 func (g *MetaSvrGlobalRes) initDBPool() {

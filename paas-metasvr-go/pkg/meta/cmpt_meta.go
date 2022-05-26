@@ -10,7 +10,6 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 	"github.com/maoge/paas-metasvr-go/pkg/utils/multimap/setmultimap"
-	_ "github.com/tidwall/gjson"
 )
 
 var CMPT_META = &CmptMeta{}
@@ -371,6 +370,13 @@ func (m *CmptMeta) GetAccount(user string) *proto.Account {
 	return m.accountMap[user]
 }
 
+func (m *CmptMeta) ModPasswd(accName, passwd string) {
+	account, found := m.accountMap[accName]
+	if found {
+		account.PASSWD = passwd
+	}
+}
+
 func (m *CmptMeta) GetAccSession(user string) *proto.AccountSession {
 	m.mut.Lock()
 	defer m.mut.Unlock()
@@ -470,8 +476,16 @@ func (m *CmptMeta) GetInstRelations(servInstId string, relations *[]*proto.PaasT
 		return
 	}
 
-	for _, rawItem := range dataArr {
-		item := rawItem.(*proto.PaasTopology)
+	size := len(dataArr) - 1
+	idx := 0
+	for {
+		if idx > size {
+			break
+		}
+
+		item := dataArr[idx].(*proto.PaasTopology)
+		idx++
+
 		*relations = append(*relations, item)
 	}
 }
@@ -618,6 +632,13 @@ func (m *CmptMeta) DelService(instId string) {
 	delete(m.metaServiceMap, instId)
 }
 
+func (m *CmptMeta) DelParentTopo(parentId string) {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	m.metaTopoMMap.RemoveAll(parentId)
+}
+
 func (m *CmptMeta) DelTopo(parentId, instId string) {
 	m.mut.Lock()
 	defer m.mut.Unlock()
@@ -702,6 +723,10 @@ func (m *CmptMeta) AddServer(server *proto.PaasServer) {
 	defer m.mut.Unlock()
 
 	m.metaServerMap[server.SERVER_IP] = server
+}
+
+func (m *CmptMeta) DelServer(serverIp string) {
+	delete(m.metaServerMap, serverIp)
 }
 
 func (m *CmptMeta) IsSshExists(sshName, servIp, servClazz string) bool {
@@ -1039,6 +1064,24 @@ func (m *CmptMeta) UpdInstPreEmbadded(instId, preEmbadded string) {
 
 func (m *CmptMeta) GetAttr(attrId int) *proto.PaasMetaAttr {
 	return m.metaAttrIdMap[attrId]
+}
+
+func (m *CmptMeta) GetSameLevelInstList(servInstId, instId string) []*proto.PaasTopology {
+	m.mut.Lock()
+	defer m.mut.Unlock()
+
+	dataArr, found := m.metaTopoMMap.Get(servInstId)
+	if !found {
+		return nil
+	}
+
+	list := make([]*proto.PaasTopology, 0)
+	for _, rawItem := range dataArr {
+		item := rawItem.(*proto.PaasTopology)
+		list = append(list, item)
+	}
+
+	return list
 }
 
 func (m *CmptMeta) AdjustSmsABQueueWeightInfo(instAId, weightA, instBId, weightB string) {

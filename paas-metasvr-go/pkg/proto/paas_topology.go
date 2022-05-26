@@ -1,5 +1,7 @@
 package proto
 
+import "github.com/maoge/paas-metasvr-go/pkg/utils"
+
 type PaasTopology struct {
 	INST_ID1  string `db:"INST_ID1"`
 	INST_ID2  string `db:"INST_ID2"`
@@ -21,4 +23,10 @@ func (m *PaasTopology) GetToe(instId string) string {
 	} else {
 		return m.INST_ID1
 	}
+}
+
+func ParsePaasTopology(msg string) *PaasTopology {
+	topo := new(PaasTopology)
+	utils.Json2Struct([]byte(msg), topo)
+	return topo
 }

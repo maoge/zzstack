@@ -678,4 +678,11 @@ const (
 	HEADER_ALARM_ID                                       = "ALARM_ID"
 	HEADER_WORKER_PROCESSES                               = "WORKER_PROCESSES"
 	HEADER_VERTX_PORT                                     = "VERTX_PORT"
+	HEADER_APPLICATION_CODE                               = "applicationCode"
+	HEADER_APP_ALARM_CODE                                 = "alarmCode"
+	HEADER_VARIABLE                                       = "variable"
+	HEADER_ABSTRACT_MSG                                   = "abstractMsg"
+	HEADER_MSG                                            = "msg"
+	HEADER_CODE                                           = "code"
+	HEADER_MESSAGE                                        = "message"
 )

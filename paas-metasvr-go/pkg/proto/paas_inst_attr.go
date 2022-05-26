@@ -1,5 +1,7 @@
 package proto
 
+import "github.com/maoge/paas-metasvr-go/pkg/utils"
+
 type PaasInstAttr struct {
 	INST_ID    string `db:"INST_ID"`
 	ATTR_ID    int    `db:"ATTR_ID"`
@@ -15,4 +17,10 @@ func NewPaasInstAttr(instId string, attrId int, attrName string, attrVal string)
 	attr.ATTR_VALUE = attrVal
 
 	return attr
+}
+
+func ParsePaasInstAttr(msg string) *PaasInstAttr {
+	paasInstAttr := new(PaasInstAttr)
+	utils.Json2Struct([]byte(msg), paasInstAttr)
+	return paasInstAttr
 }
