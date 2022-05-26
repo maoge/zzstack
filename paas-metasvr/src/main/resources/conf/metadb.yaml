@@ -8,22 +8,14 @@ jdbc:
     masterDBSources:
         id: "RealTimeMasterDB"
         nodes:
-            - url: "jdbc:mysql://172.20.0.171:57001/metadb?useSSL=false"
-              username: "paas_metadb"
-              password: "paas_metadb"
-
-            - url: "jdbc:mysql://172.20.0.172:57001/metadb?useSSL=false"
+            - url: "jdbc:mysql://103.143.11.152:5600/metadb?useSSL=false"
               username: "paas_metadb"
               password: "paas_metadb"
                 
     backupDBSources:
         id: "RealTimeBackupDB"
         nodes:
-            - url: "jdbc:mysql://172.20.0.171:57001/metadb?useSSL=false"
-              username: "paas_metadb"
-              password: "paas_metadb"
-
-            - url: "jdbc:mysql://172.20.0.172:57001/metadb?useSSL=false"
+            - url: "jdbc:mysql://103.143.11.152:5600/metadb?useSSL=false"
               username: "paas_metadb"
               password: "paas_metadb"
 
