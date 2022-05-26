@@ -175,7 +175,7 @@ func RecoverCashedProc(servInstId, servType, instId, cmptName string) bool {
 	paasResult := result.NewResultBean()
 	smsServiceMaintainer := new(maintainer.SmsGatewayMaintainer)
 
-	op := consts.INSTANCE_OPERATION_START
+	op := &consts.INSTANCE_OPERATION_START
 	startResult := smsServiceMaintainer.MaintainInstance(servInstId, instId, servType, op, false, "", "", paasResult)
 
 	return startResult

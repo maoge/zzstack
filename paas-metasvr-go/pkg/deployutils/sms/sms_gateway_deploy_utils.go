@@ -905,7 +905,7 @@ func UndeploySmsStatsNode(instItem map[string]interface{}, cmptName, logKey, mag
 	return DeployUtils.Shutdown(sshClient, instId, cmptName, stopCmd, newName, webConsolePort, consts.STR_SAVED, logKey, magicKey, paasResult)
 }
 
-func MaintainInstance(servInstID, instID, servType string, op consts.OperationEnum,
+func MaintainInstance(servInstID, instID, servType string, op *consts.OperationExt,
 	isHandle bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
 
 	inst := meta.CMPT_META.GetInstance(instID)
@@ -916,7 +916,7 @@ func MaintainInstance(servInstID, instID, servType string, op consts.OperationEn
 	instItem := paasResult.RET_INFO.(map[string]interface{})
 	paasResult.RET_INFO = ""
 
-	if op == consts.INSTANCE_OPERATION_UPDATE {
+	if op.Code == consts.INSTANCE_OPERATION_UPDATE.Code {
 		version := DeployUtils.GetServiceVersion(servInstID, instID)
 		return updateSmsNode(instItem, instID, version, cmptName, op, logKey, magicKey, paasResult)
 	} else {
@@ -924,28 +924,8 @@ func MaintainInstance(servInstID, instID, servType string, op consts.OperationEn
 	}
 }
 
-func getAction(op consts.OperationEnum) string {
-	result := ""
-	switch op {
-	case consts.INSTANCE_OPERATION_START:
-		result = "start"
-		break
-	case consts.INSTANCE_OPERATION_STOP:
-		result = "stop"
-		break
-	case consts.INSTANCE_OPERATION_RESTART:
-		result = "restart"
-		break
-	case consts.INSTANCE_OPERATION_UPDATE:
-		result = "update"
-	default:
-		break
-	}
-	return result
-}
-
 func updateSmsNode(item map[string]interface{}, instID, version, cmptName string,
-	op consts.OperationEnum, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	op *consts.OperationExt, logKey, magicKey string, paasResult *result.ResultBean) bool {
 
 	instId := item[consts.HEADER_INST_ID].(string)
 	sshId := item[consts.HEADER_SSH_ID].(string)
@@ -957,7 +937,7 @@ func updateSmsNode(item map[string]interface{}, instID, version, cmptName string
 		return false
 	}
 
-	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("%s %s, inst_id:%s, serv_ip:%s", getAction(op), cmptName, instId, ssh.SERVER_IP))
+	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("%s %s, inst_id:%s, serv_ip:%s", op.Action, cmptName, instId, ssh.SERVER_IP))
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
 	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
@@ -1107,13 +1087,13 @@ func updateSmsNode(item map[string]interface{}, instID, version, cmptName string
 		resInfo = "success"
 	}
 
-	global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("%s %s %s", getAction(op), cmptName, resInfo))
+	global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("%s %s %s", op.Action, cmptName, resInfo))
 	paasResult.RET_INFO = version
 	return res
 }
 
 func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
-	op consts.OperationEnum, isHandle bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
+	op *consts.OperationExt, isHandle bool, logKey, magicKey string, paasResult *result.ResultBean) bool {
 
 	instId := item[consts.HEADER_INST_ID].(string)
 	sshId := item[consts.HEADER_SSH_ID].(string)
@@ -1125,7 +1105,7 @@ func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
 		return false
 	}
 
-	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("%s %s, inst_id:%s, serv_ip:%s", getAction(op), cmptName, instId, ssh.SERVER_IP))
+	global.GLOBAL_RES.PubLog(logKey, fmt.Sprintf("%s %s, inst_id:%s, serv_ip:%s", op.Action, cmptName, instId, ssh.SERVER_IP))
 
 	sshClient := DeployUtils.NewSSHClientBySSH(ssh)
 	if !DeployUtils.ConnectSSH(sshClient, logKey, paasResult) {
@@ -1145,31 +1125,31 @@ func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
 	case consts.HEADER_SMS_SERVER_EXT:
 		newName = "smsserver_" + instId
 		dir = fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.SMS_GATEWAY_ROOT, newName)
-		cmd = fmt.Sprintf("./bin/smsserver.sh %s", getAction(op))
+		cmd = fmt.Sprintf("./bin/smsserver.sh %s", op.Action)
 		break
 	case consts.HEADER_SMS_PROCESS:
 		processor = item[consts.HEADER_PROCESSOR].(string)
 		newName = "smsprocess_" + processor
 		dir = fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.SMS_GATEWAY_ROOT, newName)
-		cmd = fmt.Sprintf("./bin/smsprocess.sh %s", getAction(op))
+		cmd = fmt.Sprintf("./bin/smsprocess.sh %s", op.Action)
 		break
 	case consts.HEADER_SMS_CLIENT:
 		processor = item[consts.HEADER_PROCESSOR].(string)
 		newName = "smsclient-standard_" + processor
 		dir = fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.SMS_GATEWAY_ROOT, newName)
-		cmd = fmt.Sprintf("./bin/smsclient.sh %s", getAction(op))
+		cmd = fmt.Sprintf("./bin/smsclient.sh %s", op.Action)
 		break
 	case consts.HEADER_SMS_BATSAVE:
 		processor = item[consts.HEADER_PROCESSOR].(string)
 		dbInstId = item[consts.HEADER_DB_INST_ID].(string)
 		newName = "smsbatsave_" + processor + "_" + dbInstId
 		dir = fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.SMS_GATEWAY_ROOT, newName)
-		cmd = fmt.Sprintf("./bin/smsbatsave.sh %s", getAction(op))
+		cmd = fmt.Sprintf("./bin/smsbatsave.sh %s", op.Action)
 		break
 	case consts.HEADER_SMS_STATS:
 		newName = "smsstatistics_" + instId
 		dir = fmt.Sprintf("%s/%s/%s", consts.PAAS_ROOT, consts.SMS_GATEWAY_ROOT, newName)
-		cmd = fmt.Sprintf("./bin/smsstatistics.sh %s", getAction(op))
+		cmd = fmt.Sprintf("./bin/smsstatistics.sh %s", op.Action)
 		break
 	default:
 		break
@@ -1185,7 +1165,7 @@ func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
 			return false
 		}
 
-		if op == consts.INSTANCE_OPERATION_START || op == consts.INSTANCE_OPERATION_RESTART {
+		if op.Code == consts.INSTANCE_OPERATION_START.Code || op.Code == consts.INSTANCE_OPERATION_RESTART.Code {
 			time.Sleep(time.Duration(consts.START_WAIT_MILLI_SECONDS) * time.Millisecond)
 			if !DeployUtils.IsProcExist(sshClient, instId, logKey, paasResult) {
 				return false
@@ -1195,12 +1175,12 @@ func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
 
 	res := true
 	if !DeployUtils.IsPreEmbadded(instId) || !isHandle {
-		switch op {
-		case consts.INSTANCE_OPERATION_STOP:
+		switch op.Code {
+		case consts.INSTANCE_OPERATION_STOP.Code:
 			res = metadao.UpdateInstanceDeployFlag(instId, consts.STR_WARN, logKey, magicKey, paasResult)
 			break
-		case consts.INSTANCE_OPERATION_START:
-		case consts.INSTANCE_OPERATION_RESTART:
+		case consts.INSTANCE_OPERATION_START.Code:
+		case consts.INSTANCE_OPERATION_RESTART.Code:
 			res = metadao.UpdateInstanceDeployFlag(instId, consts.STR_DEPLOYED, logKey, magicKey, paasResult)
 			break
 		default:
@@ -1208,7 +1188,7 @@ func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
 		}
 	}
 
-	if res && (op == consts.INSTANCE_OPERATION_START || op == consts.INSTANCE_OPERATION_RESTART) {
+	if res && (op.Code == consts.INSTANCE_OPERATION_START.Code || op.Code == consts.INSTANCE_OPERATION_RESTART.Code) {
 		// 预埋节点如果手工启动
 		if DeployUtils.IsPreEmbadded(instId) && !isHandle {
 			// 预埋实例拉起成功，修改PRE_EMBEDDED属性为S_FALSE，视为与正常实例一样
@@ -1222,13 +1202,13 @@ func maintainSmsNode(item map[string]interface{}, instID, cmptName string,
 			resInfo = "success"
 		}
 
-		global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("%s %s %s", getAction(op), cmptName, resInfo))
-		if op == consts.INSTANCE_OPERATION_START || op == consts.INSTANCE_OPERATION_RESTART {
+		global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("%s %s %s", op.Action, cmptName, resInfo))
+		if op.Code == consts.INSTANCE_OPERATION_START.Code || op.Code == consts.INSTANCE_OPERATION_RESTART.Code {
 			time.Sleep(time.Duration(consts.START_WAIT_MILLI_SECONDS) * time.Millisecond)
 			res = DeployUtils.IsProcExist(sshClient, instId, logKey, paasResult)
 		}
 	} else {
-		global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("pre-embadded instance passby %s", getAction(op)))
+		global.GLOBAL_RES.PubSuccessLog(logKey, fmt.Sprintf("pre-embadded instance passby %s", op.Action))
 	}
 
 	return res

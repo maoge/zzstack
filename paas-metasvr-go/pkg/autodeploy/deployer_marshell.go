@@ -139,7 +139,7 @@ func UndeployInstance(servInstID, instID, logKey, magicKey string, paasResult *r
 	}
 }
 
-func MaintainInstance(servInstID, instID, servType, logKey, magicKey string, op consts.OperationEnum,
+func MaintainInstance(servInstID, instID, servType, logKey, magicKey string, op *consts.OperationExt,
 	isOperateByHandle bool, paasResult *result.ResultBean) {
 
 	service, found := DeployUtils.GetService(servInstID, logKey, paasResult)

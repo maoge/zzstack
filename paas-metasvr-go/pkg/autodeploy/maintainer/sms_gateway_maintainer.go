@@ -9,7 +9,7 @@ import (
 type SmsGatewayMaintainer struct {
 }
 
-func (h *SmsGatewayMaintainer) MaintainInstance(servInstID, instID, servType string, op consts.OperationEnum, isHandle bool,
+func (h *SmsGatewayMaintainer) MaintainInstance(servInstID, instID, servType string, op *consts.OperationExt, isHandle bool,
 	logKey, magicKey string, paasResult *result.ResultBean) bool {
 
 	return SmsDeployUtils.MaintainInstance(servInstID, instID, servType, op, isHandle, logKey, magicKey, paasResult)

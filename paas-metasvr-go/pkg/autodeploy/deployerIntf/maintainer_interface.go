@@ -6,7 +6,7 @@ import (
 )
 
 type ServiceMaintainer interface {
-	MaintainInstance(servInstID, instID, servType string, op consts.OperationEnum, isHandle bool,
+	MaintainInstance(servInstID, instID, servType string, op *consts.OperationExt, isHandle bool,
 		logKey, magicKey string, paasResult *result.ResultBean) bool
 
 	UpdateInstanceForBatch(servInstID, instID, servType string, loadDeployFile, rmDeployFile, isHandle bool,

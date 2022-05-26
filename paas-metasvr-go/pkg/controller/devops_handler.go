@@ -135,7 +135,7 @@ func (h *DevOpsController) StartInstance() {
 		magicKey := utils.GetMagicKey(c)
 
 		resultBean := result.NewResultBean()
-		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_START, true, resultBean)
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, &consts.INSTANCE_OPERATION_START, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
@@ -156,7 +156,7 @@ func (h *DevOpsController) StopInstance() {
 		magicKey := utils.GetMagicKey(c)
 
 		resultBean := result.NewResultBean()
-		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_STOP, true, resultBean)
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, &consts.INSTANCE_OPERATION_STOP, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
@@ -177,7 +177,7 @@ func (h *DevOpsController) RestartInstance() {
 		magicKey := utils.GetMagicKey(c)
 
 		resultBean := result.NewResultBean()
-		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_RESTART, true, resultBean)
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, &consts.INSTANCE_OPERATION_RESTART, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
@@ -198,7 +198,7 @@ func (h *DevOpsController) UpdateInstance() {
 		magicKey := utils.GetMagicKey(c)
 
 		resultBean := result.NewResultBean()
-		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, consts.INSTANCE_OPERATION_UPDATE, true, resultBean)
+		autodeploy.MaintainInstance(servID, instID, servType, logKey, magicKey, &consts.INSTANCE_OPERATION_UPDATE, true, resultBean)
 		c.JSON(http.StatusOK, resultBean)
 	})
 }
