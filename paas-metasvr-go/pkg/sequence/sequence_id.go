@@ -3,20 +3,26 @@ package sequence
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/dao/metadao"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 )
 
-var SEQ *SequenceId
+var (
+	SEQ         *SequenceId = nil
+	seq_barrier sync.Once
+)
 
 type SequenceId struct {
 	seqMap map[string]*proto.LongMargin
 }
 
 func InitSeqence() {
-	SEQ = NewSequenceId()
+	seq_barrier.Do(func() {
+		SEQ = NewSequenceId()
+	})
 }
 
 func NewSequenceId() *SequenceId {

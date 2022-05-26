@@ -23,7 +23,7 @@ func main() {
 
 func init() {
 	consts.InitEventMap()
-	utils.Init()
+	utils.InitLogger()
 	config.InitMetaSvrConf()
 	global.InitGlobalRes()
 	meta.InitGlobalCmptMeta()

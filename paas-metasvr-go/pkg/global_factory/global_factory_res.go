@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	DEPLOYER_FACTORY *factory.DeployerFactory
-	PROBER_FACTORY   *factory.ProberFactory
+	DEPLOYER_FACTORY *factory.DeployerFactory = nil
+	PROBER_FACTORY   *factory.ProberFactory   = nil
 	deployer_barrier sync.Once
 )
 

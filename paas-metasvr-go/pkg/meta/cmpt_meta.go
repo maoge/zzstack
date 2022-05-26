@@ -12,7 +12,10 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/utils/multimap/setmultimap"
 )
 
-var CMPT_META = &CmptMeta{}
+var (
+	CMPT_META    *CmptMeta = nil
+	cmpt_barrier sync.Once
+)
 
 type CmptMeta struct {
 	mut sync.Mutex
@@ -39,10 +42,13 @@ type CmptMeta struct {
 }
 
 func InitGlobalCmptMeta() {
-	CMPT_META.init()
+	cmpt_barrier.Do(func() {
+		CMPT_META = new(CmptMeta)
+		CMPT_META.Init()
+	})
 }
 
-func (m *CmptMeta) init() {
+func (m *CmptMeta) Init() {
 	m.loadAccount()
 	m.loadMetaServRoot()
 	m.loadMetaAttr()

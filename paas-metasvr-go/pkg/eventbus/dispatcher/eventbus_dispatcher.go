@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	EVENT_DISPATCHER   *EventDispatcher
+	EVENT_DISPATCHER   *EventDispatcher = nil
 	dispatcher_barrier sync.Once
 )
 

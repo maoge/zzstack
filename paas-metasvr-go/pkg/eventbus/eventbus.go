@@ -1,6 +1,8 @@
 package eventbus
 
 import (
+	"sync"
+
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
@@ -8,7 +10,10 @@ import (
 
 // pulsar go sdk under windows need: set CGO_ENABLED=0
 
-var EVENTBUS EventBus
+var (
+	EVENTBUS         EventBus = nil
+	eventbus_barrier sync.Once
+)
 
 type EventBus interface {
 	Init()
@@ -25,7 +30,9 @@ type EventBus interface {
 }
 
 func InitEventBus() {
-	EVENTBUS = newEventBus(consts.EVENTBUS_PULSAR)
+	eventbus_barrier.Do(func() {
+		EVENTBUS = newEventBus(consts.EVENTBUS_PULSAR)
+	})
 }
 
 func newEventBus(busType string) EventBus {

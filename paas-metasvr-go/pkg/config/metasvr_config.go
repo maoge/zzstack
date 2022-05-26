@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	ini "gopkg.in/ini.v1"
@@ -10,13 +11,14 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
-var META_SVR_CONFIG *MetaSvrConfig
+var (
+	META_SVR_CONFIG *MetaSvrConfig = nil
+	config_barrier  sync.Once
+)
 
 type MetaSvrConfig struct {
-	GoMaxPorc int `json:"go_max_porc,omitempty"`
-
-	MetaServId string `json:"meta_serv_id,omitempty"`
-
+	GoMaxPorc     int    `json:"go_max_porc,omitempty"`
+	MetaServId    string `json:"meta_serv_id,omitempty"`
 	WebApiAddress string `json:"web_api_address,omitempty"`
 	WebApiUseSSL  bool   `json:"web_api_use_ssl,omitempty"`
 
@@ -61,7 +63,9 @@ type MetaSvrConfig struct {
 }
 
 func InitMetaSvrConf() {
-	META_SVR_CONFIG = NewConfig()
+	config_barrier.Do(func() {
+		META_SVR_CONFIG = NewConfig()
+	})
 }
 
 func NewConfig() *MetaSvrConfig {
@@ -117,49 +121,41 @@ func NewConfig() *MetaSvrConfig {
 	metadbYamlName := cfg.Section("DataBase").Key("metadb_yaml_name").MustString("metadb")
 	tdYamlName := cfg.Section("DataBase").Key("td_yaml_name").MustString("tdengine")
 
-	return &MetaSvrConfig{
-		GoMaxPorc:     goMaxPorc,
-		MetaServId:    metaServId,
-		WebApiAddress: webApiAddress,
-		WebApiUseSSL:  webApiUseSSL,
+	metaSrvConf := new(MetaSvrConfig)
+	metaSrvConf.GoMaxPorc = goMaxPorc
+	metaSrvConf.MetaServId = metaServId
+	metaSrvConf.WebApiAddress = webApiAddress
+	metaSrvConf.WebApiUseSSL = webApiUseSSL
+	metaSrvConf.ServerlessGatewayRegist = serverlessGatewayRegist
+	metaSrvConf.ServerlessGatewayAddress = serverlessGatewayAddress
+	metaSrvConf.ServerlessGatewayUpstreamId = serverlessGatewayUpstreamId
+	metaSrvConf.ServerlessGatewayServiceId = serverlessGatewayServiceId
+	metaSrvConf.ServerlessGatewayXapiKey = serverlessGatewayXapiKey
+	metaSrvConf.AlarmNotifyUrl = alarmNotifyUrl
+	metaSrvConf.AlarmNotifyEnabled = alarmNotifyEnabled
+	metaSrvConf.ThreadPoolCoreSize = threadPoolCoreSize
+	metaSrvConf.ThreadPoolMaxSize = threadPoolMaxSize
+	metaSrvConf.EventbusAddress = eventbusAddress
+	metaSrvConf.EventbusConsumerSubscription = eventbusConsumerSubscription
+	metaSrvConf.EventbusExpireTtl = eventbusExpireTtl
+	metaSrvConf.AlarmTimeWindow = alarmTimeWindow
+	metaSrvConf.PasswordExpire = passwordExpire
+	metaSrvConf.NeedAuth = needAuth
+	metaSrvConf.CheckBlackwhiteList = checkBlackwhiteList
+	metaSrvConf.RaftClusterEnabled = raftClusterEnabled
+	metaSrvConf.CollectEnabled = collectEnabled
+	metaSrvConf.CollectInterval = collectInterval
+	metaSrvConf.RedisCluster = redisCluster
+	metaSrvConf.RedisAuth = redisAuth
+	metaSrvConf.RedisPoolMaxSize = redisPoolMaxSize
+	metaSrvConf.RedisPoolMinSize = redisPoolMinSize
+	metaSrvConf.RedisIdleTimeout = time.Duration(redisIdleTimeout) * time.Millisecond
+	metaSrvConf.RedisIdleCheckFrequency = time.Duration(redisIdleCheckFrequency) * time.Millisecond
+	metaSrvConf.RedisDialTimeout = time.Duration(redisDialTimeout) * time.Millisecond
+	metaSrvConf.RedisReadTimeout = time.Duration(redisReadTimeout) * time.Millisecond
+	metaSrvConf.RedisWriteTimeout = time.Duration(redisWriteTimeout) * time.Millisecond
+	metaSrvConf.MetadbYamlName = metadbYamlName
+	metaSrvConf.TDYamlName = tdYamlName
 
-		ServerlessGatewayRegist:     serverlessGatewayRegist,
-		ServerlessGatewayAddress:    serverlessGatewayAddress,
-		ServerlessGatewayUpstreamId: serverlessGatewayUpstreamId,
-		ServerlessGatewayServiceId:  serverlessGatewayServiceId,
-		ServerlessGatewayXapiKey:    serverlessGatewayXapiKey,
-
-		AlarmNotifyUrl:     alarmNotifyUrl,
-		AlarmNotifyEnabled: alarmNotifyEnabled,
-
-		ThreadPoolCoreSize: threadPoolCoreSize,
-		ThreadPoolMaxSize:  threadPoolMaxSize,
-
-		EventbusAddress:              eventbusAddress,
-		EventbusConsumerSubscription: eventbusConsumerSubscription,
-		EventbusExpireTtl:            eventbusExpireTtl,
-
-		AlarmTimeWindow: alarmTimeWindow,
-
-		PasswordExpire:      passwordExpire,
-		NeedAuth:            needAuth,
-		CheckBlackwhiteList: checkBlackwhiteList,
-
-		RaftClusterEnabled: raftClusterEnabled,
-		CollectEnabled:     collectEnabled,
-		CollectInterval:    collectInterval,
-
-		RedisCluster:            redisCluster,
-		RedisAuth:               redisAuth,
-		RedisPoolMaxSize:        redisPoolMaxSize,
-		RedisPoolMinSize:        redisPoolMinSize,
-		RedisIdleTimeout:        time.Duration(redisIdleTimeout) * time.Millisecond,
-		RedisIdleCheckFrequency: time.Duration(redisIdleCheckFrequency) * time.Millisecond,
-		RedisDialTimeout:        time.Duration(redisDialTimeout) * time.Millisecond,
-		RedisReadTimeout:        time.Duration(redisReadTimeout) * time.Millisecond,
-		RedisWriteTimeout:       time.Duration(redisWriteTimeout) * time.Millisecond,
-
-		MetadbYamlName: metadbYamlName,
-		TDYamlName:     tdYamlName,
-	}
+	return metaSrvConf
 }

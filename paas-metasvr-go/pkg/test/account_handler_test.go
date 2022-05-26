@@ -21,7 +21,7 @@ import (
 )
 
 func init() {
-	utils.Init()
+	utils.InitLogger()
 	config.InitMetaSvrConf()
 	global.InitGlobalRes()
 	meta.InitGlobalCmptMeta()

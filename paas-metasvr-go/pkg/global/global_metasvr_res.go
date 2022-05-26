@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	GLOBAL_RES         *MetaSvrGlobalRes
+	GLOBAL_RES         *MetaSvrGlobalRes = nil
 	global_res_barrier sync.Once
 )
 
