@@ -37,6 +37,8 @@ fi
 
 PIDS=`ps -ef | grep java | grep -v grep | grep "$LIB_DIR" |awk '{print $2}'`
 
+ERR_LOG=./logs/stderr.log
+
 #===========================================================================================
 # JVM Configuration
 #===========================================================================================
@@ -65,7 +67,7 @@ function start(){
     echo "Starting the PAAS-METASVR ...\c"
     JAVA="java"
 
-    nohup $JAVA $JAVA_OPTS "$@" >/dev/null 2>&1 &
+    nohup $JAVA $JAVA_OPTS "$@" >/dev/null 2>$ERR_LOG &
 
     sleep 1
     COUNT=`ps -ef | grep java | grep -v grep | grep "$LIB_DIR" | awk '{print $2}' | wc -l`
