@@ -46,6 +46,7 @@ func startHttp() {
 		runtime.SetBlockProfileRate(1)     // 开启对阻塞操作的跟踪，block
 		runtime.SetMutexProfileFraction(1) // 开启对锁调用的跟踪，mutex
 		go http.ListenAndServe("0.0.0.0:6060", nil)
+		utils.LOGGER.Info("pprof enabled ......")
 	}
 
 	engine := gin.New()
