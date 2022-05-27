@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
@@ -16,6 +19,8 @@ import (
 	"github.com/maoge/paas-metasvr-go/pkg/sequence"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
+
+// pprof: http://127.0.0.1:9090/debug/pprof/
 
 func main() {
 	startHttp()
@@ -35,6 +40,10 @@ func init() {
 
 func startHttp() {
 	gin.SetMode(gin.ReleaseMode)
+
+	if config.META_SVR_CONFIG.PProfEnabled {
+		go http.ListenAndServe("0.0.0.0:6060", nil)
+	}
 
 	engine := gin.New()
 

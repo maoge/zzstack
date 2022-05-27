@@ -17,7 +17,10 @@ var (
 )
 
 type MetaSvrConfig struct {
-	GoMaxPorc     int    `json:"go_max_porc,omitempty"`
+	GoMaxPorc    int  `json:"go_max_porc,omitempty"`
+	PProfEnabled bool `json:"pprof_enable,omitempty"`
+	PProfPort    int  `json:"pprof_port,omitempty"`
+
 	MetaServId    string `json:"meta_serv_id,omitempty"`
 	WebApiAddress string `json:"web_api_address,omitempty"`
 	WebApiUseSSL  bool   `json:"web_api_use_ssl,omitempty"`
@@ -79,6 +82,8 @@ func NewConfig() *MetaSvrConfig {
 	metaServId := utils.GenUUID()
 
 	goMaxPorc := cfg.Section("System").Key("go_max_porc").MustInt(16)
+	pprofEnabled := cfg.Section("System").Key("pprof_enable").MustBool(false)
+	pprofPort := cfg.Section("System").Key("pprof_port").MustInt(6060)
 
 	webApiAddress := cfg.Section("System").Key("web_api_address").MustString("0.0.0.0:9090")
 	webApiUseSSL := cfg.Section("System").Key("web_api_use_ssl").MustBool(false)
@@ -95,7 +100,7 @@ func NewConfig() *MetaSvrConfig {
 	threadPoolCoreSize := cfg.Section("System").Key("thread_pool_core_size").MustInt(20)
 	threadPoolMaxSize := cfg.Section("System").Key("thread_pool_max_size").MustInt(40)
 
-	eventbusEnabled := cfg.Section("System").Key("eventbus_enabled").MustBool()
+	eventbusEnabled := cfg.Section("System").Key("eventbus_enabled").MustBool(false)
 	eventbusAddress := cfg.Section("System").Key("eventbus_address").String()
 	eventbusConsumerSubscription := cfg.Section("System").Key("eventbus_address").String()
 	eventbusExpireTtl := cfg.Section("System").Key("eventbus_address").MustInt64(60000)
@@ -125,6 +130,8 @@ func NewConfig() *MetaSvrConfig {
 
 	metaSrvConf := new(MetaSvrConfig)
 	metaSrvConf.GoMaxPorc = goMaxPorc
+	metaSrvConf.PProfEnabled = pprofEnabled
+	metaSrvConf.PProfPort = pprofPort
 	metaSrvConf.MetaServId = metaServId
 	metaSrvConf.WebApiAddress = webApiAddress
 	metaSrvConf.WebApiUseSSL = webApiUseSSL
