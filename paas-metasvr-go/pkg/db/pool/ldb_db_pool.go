@@ -22,9 +22,9 @@ type LdbDbPool struct {
 }
 
 func NewLdbDbPool(dbYaml *config.DbYaml) *LdbDbPool {
-	ldbPool := LdbDbPool{}
+	ldbPool := new(LdbDbPool)
 	ldbPool.Init(dbYaml)
-	return &ldbPool
+	return ldbPool
 }
 
 func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
@@ -42,28 +42,26 @@ func (ldbDbPool *LdbDbPool) Init(dbYaml *config.DbYaml) {
 	ldbDbPool.inavlDBArr = make([]*DbPool, 0)
 
 	for _, node := range dbSources {
-		var dbPool = DbPool{
-			Addr:     node.Addr,
-			Username: node.Username,
-			Password: node.Password,
-			DbName:   node.DbName,
-			DbType:   node.DbType,
-
-			MaxOpenConns:    dbYaml.MaxOpenConns,
-			MaxIdleConns:    dbYaml.MaxIdleConns,
-			ConnTimeout:     dbYaml.ConnTimeout,
-			ReadTimeout:     dbYaml.ReadTimeout,
-			ConnMaxLifetime: time.Duration(dbYaml.ConnMaxLifetime) * time.Second,
-			ConnMaxIdleTime: time.Duration(dbYaml.ConnMaxIdletime) * time.Second,
-		}
+		var dbPool = new(DbPool)
+		dbPool.Addr = node.Addr
+		dbPool.Username = node.Username
+		dbPool.Password = node.Password
+		dbPool.DbName = node.DbName
+		dbPool.DbType = node.DbType
+		dbPool.MaxOpenConns = dbYaml.MaxOpenConns
+		dbPool.MaxIdleConns = dbYaml.MaxIdleConns
+		dbPool.ConnTimeout = dbYaml.ConnTimeout
+		dbPool.ReadTimeout = dbYaml.ReadTimeout
+		dbPool.ConnMaxLifetime = time.Duration(dbYaml.ConnMaxLifetime) * time.Second
+		dbPool.ConnMaxIdleTime = time.Duration(dbYaml.ConnMaxIdletime) * time.Second
 
 		if dbPool.Connect() {
-			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, &dbPool)
+			ldbDbPool.avlDBArr = append(ldbDbPool.avlDBArr, dbPool)
 		} else {
 			errMsg := fmt.Sprintf("dbSource: %v connect fail ......", node.Addr)
 			utils.LOGGER.Error(errMsg)
 
-			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, &dbPool)
+			ldbDbPool.inavlDBArr = append(ldbDbPool.inavlDBArr, dbPool)
 		}
 	}
 

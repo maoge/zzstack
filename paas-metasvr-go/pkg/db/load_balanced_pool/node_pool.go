@@ -1,16 +1,17 @@
-package pool
+package load_balanced_pool
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
+	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
 )
 
-type DbPool struct {
-	DB              *sqlx.DB
+type NodePool struct {
+	DB              *sql.DB
 	Addr            string        `json:"addr,omitempty"`
 	Username        string        `json:"username,omitempty"`
 	Password        string        `json:"password,omitempty"`
@@ -24,14 +25,31 @@ type DbPool struct {
 	ConnMaxIdleTime time.Duration `json:"conn_max_idle_time,omitempty"`
 }
 
-func (pool *DbPool) Connect() bool {
-	// postgresql: sql.Open("pgx","postgres://localhost:5432/postgres")
-	// mysql: username:password@tcp(ip:port)/dbname?timeout=%ds&readTimeout=%ds&charset=utf8
-	connStr := fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%ds&readTimeout=%ds",
-		pool.Username, pool.Password, pool.Addr, pool.DbName, pool.ConnTimeout, pool.ReadTimeout)
+func (pool *NodePool) GetConnStr() (string, string) {
+	connStr := ""
+	driver := ""
+	switch pool.DbType {
+	case consts.DBTYPE_MYSQL.DBName:
+		connStr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%ds&readTimeout=%ds&charset=utf8",
+			pool.Username, pool.Password, pool.Addr, pool.DbName, pool.ConnTimeout, pool.ReadTimeout)
+		driver = consts.DBTYPE_MYSQL.DriverName
+		break
+	case consts.DBTYPE_PG.DBName:
+		connStr = fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%ds&readTimeout=%ds",
+			pool.Username, pool.Password, pool.Addr, pool.DbName, pool.ConnTimeout, pool.ReadTimeout)
+		driver = consts.DBTYPE_PG.DriverName
+		break
+	default:
+		break
+	}
+	return connStr, driver
+}
+
+func (pool *NodePool) Connect() bool {
+	connStr, driver := pool.GetConnStr()
 
 	result := false
-	db, err := sqlx.Connect(pool.DbType, connStr)
+	db, err := sql.Open(driver, connStr)
 	if err == nil {
 		info := fmt.Sprintf("database: %v connect OK", pool.Addr)
 		utils.LOGGER.Info(info)
@@ -53,7 +71,7 @@ func (pool *DbPool) Connect() bool {
 	return result
 }
 
-func (pool *DbPool) Release() {
+func (pool *NodePool) Release() {
 	if pool.DB != nil {
 		pool.DB.Close()
 		pool.DB = nil
