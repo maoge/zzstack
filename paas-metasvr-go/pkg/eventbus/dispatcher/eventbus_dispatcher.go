@@ -23,8 +23,10 @@ type EventDispatcher struct {
 
 func InitEventDispatcher() {
 	dispatcher_barrier.Do(func() {
-		EVENT_DISPATCHER = new(EventDispatcher)
-		EVENT_DISPATCHER.Start()
+		if config.META_SVR_CONFIG.EventbusEnabled {
+			EVENT_DISPATCHER = new(EventDispatcher)
+			EVENT_DISPATCHER.Start()
+		}
 	})
 }
 

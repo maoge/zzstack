@@ -9,7 +9,7 @@ jdbc:
         id: "RealTimeMasterDB"
         nodes:
             -
-                url: "jdbc:TAOS://172.20.0.171:27700/tsdb"
+                url: "jdbc:TAOS://192.168.238.135:4600/tsdb"
                 username: "root"
                 password: "taosdata"
                 
@@ -17,7 +17,7 @@ jdbc:
         id: "RealTimeBackupDB"
         nodes:
             -
-                url: "jdbc:TAOS://172.20.0.172:27700/tsdb"
+                url: "jdbc:TAOS://192.168.238.135:4600/tsdb"
                 username: "root"
                 password: "taosdata"
                 

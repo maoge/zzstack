@@ -34,6 +34,7 @@ type MetaSvrConfig struct {
 	ThreadPoolCoreSize int `json:"thread_pool_core_size,omitempty"`
 	ThreadPoolMaxSize  int `json:"thread_pool_max_size,omitempty"`
 
+	EventbusEnabled              bool   `json:"eventbus_enabled,omitempty"`
 	EventbusAddress              string `json:"eventbus_address,omitempty"`
 	EventbusConsumerSubscription string `json:"eventbus_consumer_subscription,omitempty"`
 	EventbusExpireTtl            int64  `json:"eventbus_expire_ttl,omitempty"`
@@ -94,6 +95,7 @@ func NewConfig() *MetaSvrConfig {
 	threadPoolCoreSize := cfg.Section("System").Key("thread_pool_core_size").MustInt(20)
 	threadPoolMaxSize := cfg.Section("System").Key("thread_pool_max_size").MustInt(40)
 
+	eventbusEnabled := cfg.Section("System").Key("eventbus_enabled").MustBool()
 	eventbusAddress := cfg.Section("System").Key("eventbus_address").String()
 	eventbusConsumerSubscription := cfg.Section("System").Key("eventbus_address").String()
 	eventbusExpireTtl := cfg.Section("System").Key("eventbus_address").MustInt64(60000)
@@ -135,6 +137,7 @@ func NewConfig() *MetaSvrConfig {
 	metaSrvConf.AlarmNotifyEnabled = alarmNotifyEnabled
 	metaSrvConf.ThreadPoolCoreSize = threadPoolCoreSize
 	metaSrvConf.ThreadPoolMaxSize = threadPoolMaxSize
+	metaSrvConf.EventbusEnabled = eventbusEnabled
 	metaSrvConf.EventbusAddress = eventbusAddress
 	metaSrvConf.EventbusConsumerSubscription = eventbusConsumerSubscription
 	metaSrvConf.EventbusExpireTtl = eventbusExpireTtl

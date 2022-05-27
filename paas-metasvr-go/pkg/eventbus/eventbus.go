@@ -3,6 +3,7 @@ package eventbus
 import (
 	"sync"
 
+	"github.com/maoge/paas-metasvr-go/pkg/config"
 	"github.com/maoge/paas-metasvr-go/pkg/consts"
 	"github.com/maoge/paas-metasvr-go/pkg/proto"
 	"github.com/maoge/paas-metasvr-go/pkg/utils"
@@ -31,7 +32,9 @@ type EventBus interface {
 
 func InitEventBus() {
 	eventbus_barrier.Do(func() {
-		EVENTBUS = newEventBus(consts.EVENTBUS_PULSAR)
+		if config.META_SVR_CONFIG.EventbusEnabled {
+			EVENTBUS = newEventBus(consts.EVENTBUS_PULSAR)
+		}
 	})
 }
 

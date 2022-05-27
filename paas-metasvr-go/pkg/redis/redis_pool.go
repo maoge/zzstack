@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -72,6 +73,7 @@ func (redisPool *RedisPool) Init() {
 		info := fmt.Sprintf("ping -> %v, redis cluster: {%v} init OK", res, redisPool.Addr)
 		utils.LOGGER.Info(info)
 	} else {
+		log.Printf("error:%s", err.Error())
 		panic(err)
 	}
 }
