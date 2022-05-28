@@ -21,11 +21,13 @@ import com.zzstack.paas.underlying.httpserver.annotation.App;
 import com.zzstack.paas.underlying.httpserver.annotation.HttpMethodEnum;
 import com.zzstack.paas.underlying.httpserver.annotation.Parameter;
 import com.zzstack.paas.underlying.httpserver.annotation.Service;
+import com.zzstack.paas.underlying.httpserver.bean.ApiInfo;
 import com.zzstack.paas.underlying.httpserver.consts.HttpServerConstants;
 import com.zzstack.paas.underlying.httpserver.marshell.handler.IAuthHandler;
 import com.zzstack.paas.underlying.httpserver.serverless.ServerlessGatewayRegister;
 import com.zzstack.paas.underlying.httpserver.singleton.AllServiceMap;
 import com.zzstack.paas.underlying.httpserver.singleton.ServiceData;
+import com.zzstack.paas.underlying.httpserver.stats.StatisticHandler;
 import com.zzstack.paas.underlying.httpserver.utils.HttpUtils;
 import com.zzstack.paas.underlying.utils.FixHeader;
 import com.zzstack.paas.underlying.utils.consts.CONSTS;
@@ -92,6 +94,9 @@ public class ServerHandleRegister {
     }
 
     private static void registRoute(Vertx vertx, Router router, List<Class<?>> handlers, IAuthHandler authHandle) {
+    	// 添加api doc handler
+    	handlers.add(StatisticHandler.class);
+    	
         for (Class<?> clazz : handlers) {
             App app = clazz.getAnnotation(App.class);
             String rootPath = app.path();
@@ -130,6 +135,9 @@ public class ServerHandleRegister {
                 buildPathParams(builder, pathParams);
                 buildBodyParams(builder, bodyParams);
                 ValidationHandler validationHandler = builder.build();
+                
+                ApiInfo api = new ApiInfo(path, httpMethodEnum.name(), headerParams, queryParams, pathParams, bodyParams);
+                serviceMap.addApiInfo(path, api);
 
                 HttpMethod httpMethod = httpMethodEnum == HttpMethodEnum.POST ? HttpMethod.POST : HttpMethod.GET;
                 router.route(httpMethod, path).handler(BodyHandler.create()).handler(validationHandler).handler(ctx -> {
