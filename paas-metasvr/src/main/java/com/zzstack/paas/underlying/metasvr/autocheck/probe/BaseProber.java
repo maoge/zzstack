@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
+import com.zzstack.paas.underlying.dbclient.exception.SeqException;
+import com.zzstack.paas.underlying.dbclient.utils.SequenceId;
 import com.zzstack.paas.underlying.metasvr.alarm.AlarmType;
 import com.zzstack.paas.underlying.metasvr.autodeploy.DeployerFactory;
 import com.zzstack.paas.underlying.metasvr.autodeploy.ServiceDeployer;
@@ -19,8 +21,6 @@ import com.zzstack.paas.underlying.metasvr.bean.PaasInstance;
 import com.zzstack.paas.underlying.metasvr.bean.PaasTopology;
 import com.zzstack.paas.underlying.metasvr.consts.FixDefs;
 import com.zzstack.paas.underlying.metasvr.dataservice.dao.MetaDataDao;
-import com.zzstack.paas.underlying.metasvr.dataservice.dao.SequenceId;
-import com.zzstack.paas.underlying.metasvr.exception.SeqException;
 import com.zzstack.paas.underlying.metasvr.metadata.CmptMeta;
 import com.zzstack.paas.underlying.metasvr.singleton.MetaSvrGlobalRes;
 import com.zzstack.paas.underlying.metasvr.utils.SysConfig;

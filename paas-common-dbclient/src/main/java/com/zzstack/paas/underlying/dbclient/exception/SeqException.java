@@ -1,4 +1,4 @@
-package com.zzstack.paas.underlying.metasvr.exception;
+package com.zzstack.paas.underlying.dbclient.exception;
 
 public class SeqException extends Exception {
 
