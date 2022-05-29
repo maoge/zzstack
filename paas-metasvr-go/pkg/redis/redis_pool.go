@@ -46,23 +46,22 @@ func NewRedisPool() *RedisPool {
 func (redisPool *RedisPool) Init() {
 	addrArr := strings.Split(redisPool.Addr, ",")
 
-	clusterOptions := &goredis.ClusterOptions{
-		Addrs:          addrArr,
-		ReadOnly:       true,
-		RouteByLatency: true,
-		RouteRandomly:  true,
-		Password:       redisPool.Password,
+	clusterOptions := new(goredis.ClusterOptions)
+	clusterOptions.Addrs = addrArr
+	clusterOptions.ReadOnly = true
+	clusterOptions.RouteByLatency = true
+	clusterOptions.RouteRandomly = true
+	clusterOptions.Password = redisPool.Password
 
-		PoolSize:           redisPool.MaxActive,
-		MinIdleConns:       redisPool.MaxIdle,
-		MaxConnAge:         redisPool.IdleTimeout,
-		PoolTimeout:        0,
-		IdleTimeout:        redisPool.IdleTimeout,
-		IdleCheckFrequency: redisPool.IdleCheckFrequency,
-		DialTimeout:        redisPool.DialTimeout,  // 设置连接超时
-		ReadTimeout:        redisPool.ReadTimeout,  // 设置读取超时
-		WriteTimeout:       redisPool.WriteTimeout, // 设置写入超时
-	}
+	clusterOptions.PoolSize = redisPool.MaxActive
+	clusterOptions.MinIdleConns = redisPool.MaxIdle
+	clusterOptions.MaxConnAge = redisPool.IdleTimeout
+	clusterOptions.PoolTimeout = 0
+	clusterOptions.IdleTimeout = redisPool.IdleTimeout
+	clusterOptions.IdleCheckFrequency = redisPool.IdleCheckFrequency
+	clusterOptions.DialTimeout = redisPool.DialTimeout   // 设置连接超时
+	clusterOptions.ReadTimeout = redisPool.ReadTimeout   // 设置读取超时
+	clusterOptions.WriteTimeout = redisPool.WriteTimeout // 设置写入超时
 
 	redisPool.clusterClient = goredis.NewClusterClient(clusterOptions)
 	time.Sleep(time.Duration(20) * time.Millisecond)
