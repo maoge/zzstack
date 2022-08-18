@@ -441,6 +441,7 @@ public class CONSTS {
     public static final String DB_TYPE_VOLTDB = "voltdb";
     public static final String DB_TYPE_TDENGINE = "tdengine";
     public static final String DB_TYPE_CLICKHOUSE = "clickhouse";
+    public static final String DB_TYPE_SQLITE = "sqlite";
 
     public static final String DB_DRIVER_ORCL = "oracle.jdbc.OracleDriver";
     public static final String DB_DRIVER_MYSQL = "com.mysql.cj.jdbc.Driver";
@@ -448,6 +449,7 @@ public class CONSTS {
     public static final String DB_DRIVER_VOLTDB = "org.voltdb.jdbc.Driver";
     public static final String DB_DRIVER_TDENGINE = "com.taosdata.jdbc.TSDBDriver";
     public static final String DB_DRIVER_CLICKHOUSE = "com.github.housepower.jdbc.ClickHouseDriver";
+    public static final String DB_DRIVER_SQLITE = "org.sqlite.JDBC";
 
     public static final String JDBC_URL_FMT_ORCL = "jdbc:oracle:thin:@%s:%s:%s";
     public static final String JDBC_URL_FMT_MYSQL = "jdbc:mysql://%s:%s/%s?useSSL=false";
@@ -455,6 +457,7 @@ public class CONSTS {
     public static final String JDBC_URL_FMT_VOLTDB = "jdbc:voltdb://%s?autoreconnect=true";
     public static final String JDBC_URL_FMT_TDENGINE = "jdbc:TAOS://%s:%s/%s";
     public static final String JDBC_URL_FMT_CLICKHOUSE = "jdbc:clickhouse://%s:%s/%s";
+    public static final String JDBC_URL_FMT_SQLITE = "jdbc:sqlite:%s";
 
     public static final String NODE_TYPE_MASTER = "1";
     public static final String NODE_TYPE_SLAVE = "0";

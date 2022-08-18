@@ -15,7 +15,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class HikariModel extends DataSourceModel {
     
-    private static final Logger logger = LoggerFactory.getLogger(DruidModel.class);
+    private static final Logger logger = LoggerFactory.getLogger(HikariModel.class);
     
     private HikariConfig hikariConf = null;
     private HikariDataSource dataSource = null;

@@ -90,6 +90,8 @@ public class ActiveStandbyDBSrcPool {
             dbPool = new ActiveStandbyDBSrcPool(dbName);
             dbPool.init(false, null);
             instMap.put(dbName, dbPool);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         } finally {
             lock.unlock();
         }
