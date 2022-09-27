@@ -47,6 +47,7 @@ public class SysConfig {
     private int threadPoolWorkQueueLen = 1000;
 
     private String redisCluster = "127.0.0.1:7001,127.0.0.1:7002,127.0.0.1:7003";
+    private boolean redisEncrypt = false;
     private String redisAuth = "";
     private int redisPoolMaxSize = 20;
     private int redisPoolMinSize = 10;
@@ -121,9 +122,11 @@ public class SysConfig {
             this.threadPoolWorkQueueLen = props.getInt("thread.pool.workqueue.len", 1000);
 
             this.redisCluster = props.get("redis.cluster", "127.0.0.1:7001,127.0.0.1:7002,127.0.0.1:7003");
-            String authStr = props.get("redis.auth");
-            if (authStr != null && !authStr.isEmpty())
-                this.redisAuth = CryptTools.decrypt(authStr);
+            this.redisEncrypt = props.getBoolean("redis.encrypt", false);
+            this.redisAuth = props.get("redis.auth");
+            if (redisEncrypt && StringUtils.isNull(redisAuth)) {
+                this.redisAuth = CryptTools.decrypt(redisAuth);
+            }
             this.redisPoolMaxSize = props.getInt("redis.pool.max.size", 20);
             this.redisPoolMinSize = props.getInt("redis.pool.min.size", 10);
             this.redisMaxWaitMillis = props.getInt("redis.max.wait.millis", 3000);

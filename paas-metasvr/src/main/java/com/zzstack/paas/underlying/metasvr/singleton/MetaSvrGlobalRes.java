@@ -207,11 +207,13 @@ public class MetaSvrGlobalRes {
     private void initRedisPool() {
         try {
             SysConfig sysConfig = SysConfig.get();
-            JedisUtil.setRedisConnPoolMax(sysConfig.getRedisPoolMaxSize());
-            JedisUtil.setRedisConnPoolMin(sysConfig.getRedisPoolMinSize());
-            JedisUtil.setMaxWaitMillis(sysConfig.getRedisMaxWaitMillis());
-
-            jedisCluster = JedisUtil.getPool(SysConfig.get().getRedisCluster());
+            String clusterAddress = sysConfig.getRedisCluster();
+            String auth = sysConfig.getRedisAuth();
+            int maxPoolSize = sysConfig.getRedisPoolMaxSize();
+            int minPoolSize = sysConfig.getRedisPoolMinSize();
+            int maxWaitMillis = sysConfig.getRedisMaxWaitMillis();
+            
+            jedisCluster = JedisUtil.getPool(clusterAddress, auth, maxPoolSize, minPoolSize, maxWaitMillis);
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

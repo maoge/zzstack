@@ -61,7 +61,8 @@ public class DeployUtils {
         PaasMetaCmpt servCmpt = cmptMeta.getCmptById(servInst.getCmptId());
         String version = serv.getVersion();
 
-        JsonObject servJson = topoJson.getJsonObject(servCmpt.getCmptName());
+        JsonObject infoJson = topoJson.getJsonObject(FixHeader.HEADER_RET_INFO);
+        JsonObject servJson = infoJson.getJsonObject(servCmpt.getCmptName());
         return new TopoResult(servJson, version, true);
     }
     
