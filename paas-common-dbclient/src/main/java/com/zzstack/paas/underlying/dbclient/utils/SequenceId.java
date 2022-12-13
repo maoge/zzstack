@@ -67,6 +67,7 @@ public class SequenceId {
         if (id == -1) {
             // id取完了，拉取下一步长
             margin = getNextSeqMargin(seqName, DEFAULT_SEQ_STEP);
+            seqMap.put(seqName, margin);
             id = margin.getNextId();
         }
         
@@ -89,6 +90,7 @@ public class SequenceId {
         if (id == -1) {
             // id取完了，拉取下一步长
             margin = getNextSeqMargin(dbName, seqName, DEFAULT_SEQ_STEP);
+            seqMap.put(seqName, margin);
             id = margin.getNextId();
         }
         
