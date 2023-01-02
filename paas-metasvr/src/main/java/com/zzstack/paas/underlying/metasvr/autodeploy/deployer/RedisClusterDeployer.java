@@ -56,25 +56,38 @@ public class RedisClusterDeployer implements ServiceDeployer {
         StringBuilder nodes4proxy = new StringBuilder("");
         if (!RedisDeployUtils.getClusterNodes(redisNodeArr, node4cluster, nodes4proxy, logKey, result)) return false;
         
+        CmptMeta cmptMeta = MetaSvrGlobalRes.get().getCmptMeta();
+        PaasService serv = cmptMeta.getService(servInstID);
+        String servPasswd = serv.getPassword();
+        
         // 1. deploy redis nodes
         int redisNodeCnt = redisNodeArr.size();
         for (int idx = 0; idx < redisNodeCnt; ++idx) {
             boolean init = idx == (redisNodeCnt - 1);
             JsonObject redisJson = redisNodeArr.getJsonObject(idx);
             if (!RedisDeployUtils.deployRedisNode(redisJson, init, false, true, node4cluster.toString(), version,
-                    logKey, magicKey, result))
+                    servPasswd, logKey, magicKey, result)) {
                 return false;
+            }
         }
 
-        // 2. deploy proxy
+        // 2. 设置密码
+        /*for (int idx = 0; idx < redisNodeCnt; ++idx) {
+            JsonObject redisJson = redisNodeArr.getJsonObject(idx);
+            if (!RedisDeployUtils.setRedisPasswd(redisJson, servPasswd, logKey, magicKey, result)) {
+                return false;
+            }
+        }*/
+        
+        // 3. deploy proxy
         int redisProxyCnt = proxyArr.size();
         for (int idx = 0; idx < redisProxyCnt; ++idx) {
             JsonObject proxyJson = proxyArr.getJsonObject(idx);
-            if (!RedisDeployUtils.deployProxyNode(proxyJson, nodes4proxy.toString(), logKey, magicKey, result))
+            if (!RedisDeployUtils.deployProxyNode(proxyJson, nodes4proxy.toString(), servPasswd, logKey, magicKey, result))
                 return false;
         }
 
-        // 部署collectd服务
+        // 4. 部署collectd服务
         if (servJson.containsKey(FixHeader.HEADER_COLLECTD)) {
             JsonObject collectd = servJson.getJsonObject(FixHeader.HEADER_COLLECTD);
             if (!collectd.isEmpty()) {
@@ -84,7 +97,7 @@ public class RedisClusterDeployer implements ServiceDeployer {
                 }
             }
         }
-
+        
         // update deploy flag and local cache
         DeployUtils.postProc(servInstID, FixDefs.STR_TRUE, logKey, magicKey, result);
         return true;
@@ -177,11 +190,14 @@ public class RedisClusterDeployer implements ServiceDeployer {
         PaasInstance inst = cmptMeta.getInstance(instID);
         PaasMetaCmpt instCmpt = cmptMeta.getCmptById(inst.getCmptId());
         boolean deployResult = false;
+        
+        PaasService serv = cmptMeta.getService(servInstID);
+        String servPasswd = serv.getPassword();
 
         switch (instCmpt.getCmptName()) {
         case FixDefs.CMPT_REDIS_PROXY:
             JsonObject proxyJson = DeployUtils.getSpecifiedItem(proxyArr, instID);
-            deployResult = RedisDeployUtils.deployProxyNode(proxyJson, nodes4proxy.toString(), logKey, magicKey, result);
+            deployResult = RedisDeployUtils.deployProxyNode(proxyJson, nodes4proxy.toString(), servPasswd, logKey, magicKey, result);
             break;
         case FixDefs.CMPT_REDIS_NODE:
             String joinIp = "", joinPort = "", sshUser = "", sshPasswd = "";
@@ -207,7 +223,7 @@ public class RedisClusterDeployer implements ServiceDeployer {
                     continue;
                 }
                 
-                if (!RedisDeployUtils.deployRedisNode(redis_json, false, true, true, "", version, logKey, magicKey,
+                if (!RedisDeployUtils.deployRedisNode(redis_json, false, true, true, "", version, servPasswd, logKey, magicKey,
                         result))
                     return false;
 

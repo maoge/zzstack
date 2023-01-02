@@ -33,6 +33,9 @@ public class FixDefs {
 	public static final String STR_TRUE                           =   "1";
 	public static final String STR_FALSE                          =   "0";
 	
+	public static final String DEPLOY_FLAG_TRUE                   =   "1";
+	public static final String DEPLOY_FLAG_FALSE                  =   "0";
+	
 	public static final String STR_PRE_EMBADDED                   =   "5";
 	public static final String STR_ALARM                          =   "4";
 	public static final String STR_ERROR                          =   "3";

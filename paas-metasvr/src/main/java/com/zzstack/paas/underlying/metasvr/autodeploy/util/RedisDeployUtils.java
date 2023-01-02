@@ -53,9 +53,47 @@ public class RedisDeployUtils {
 
         return true;
     }
-
+    
+    public static boolean setRedisPasswd(JsonObject redisJson, String servPasswd, String logKey, String magicKey, ResultBean result) {
+        String  instId     = redisJson.getString(FixHeader.HEADER_INST_ID);
+        String  sshId      = redisJson.getString(FixHeader.HEADER_SSH_ID);
+        String  port       = redisJson.getString(FixHeader.HEADER_PORT);
+        PaasSsh ssh        = DeployUtils.getSshById(sshId, logKey, result);
+        if (ssh == null) return false;
+        
+        String  servIp     = ssh.getServerIp();
+        String  sshName    = ssh.getSshName();
+        String  sshPwd     = ssh.getSshPwd();
+        int     sshPort    = ssh.getSshPort();
+        
+        {
+            String info = String.format("start reset redis-server password, inst_id:%s, serv_ip:%s, port:%s", instId, servIp, port);
+            DeployLog.pubLog(logKey, info);
+        }
+        
+        PaasInstance inst = MetaSvrGlobalRes.get().getCmptMeta().getInstance(instId);
+        if (inst != null && !inst.isDeployed()) {
+            String info = String.format("redis-server instance not deployed, inst_id:%s, serv_ip:%s, port:%s", instId, servIp, port);
+            DeployLog.pubLog(logKey, info);
+            return false;
+        }
+        
+        SSHExecutor ssh2 = new SSHExecutor(sshName, sshPwd, servIp, sshPort);
+        if (!DeployUtils.initSsh2(ssh2, logKey, result)) return false;
+        
+        String redisDir = String.format("redis_%s", port);
+        String rootDir = String.format("%s/%s/%s", FixDefs.PAAS_ROOT, FixDefs.CACHE_REDIS_ROOT, redisDir);
+        if (!DeployUtils.cd(ssh2, rootDir, logKey, result)) { ssh2.close(); return false; }
+                
+        String cmd = String.format("./bin/redis-cli -h %s -p %s", servIp, port);
+        if (!DeployUtils.resetRedisPassword(ssh2, cmd, servPasswd, logKey, result)) { ssh2.close(); return false; }
+        
+        ssh2.close();
+        return true;
+    }
+    
     public static boolean deployRedisNode(JsonObject redisJson, boolean init, boolean expand, boolean typeCluster,
-            String node4cluster, String version, String logKey, String magicKey, ResultBean result) {
+            String node4cluster, String version, String servPasswd, String logKey, String magicKey, ResultBean result) {
         
         // {
         //     "INST_ID": "302a5f2f-b8dd-ffb5-878e-4a86ea0c99e0", 
@@ -156,10 +194,10 @@ public class RedisDeployUtils {
         
         // if needs auth
         // new node added to redis cluster need set auth setting before join.
-        if (expand) {
+        if (expand && !StringUtils.isNull(servPasswd)) {
             DeployLog.pubLog(logKey, "set requirepass and masterauth ......");
-            String requirepass = "requirepass " + FixDefs.ZZSOFT_REDIS_PASSWD;
-            String masterauth  = "masterauth " + FixDefs.ZZSOFT_REDIS_PASSWD;
+            String requirepass = "requirepass " + servPasswd;
+            String masterauth  = "masterauth " + servPasswd;
             if (!DeployUtils.addLine(ssh2, requirepass, newConf, logKey, result)) { ssh2.close(); return false; }
             if (!DeployUtils.addLine(ssh2, masterauth, newConf, logKey, result)) { ssh2.close(); return false; }
         }
@@ -172,7 +210,7 @@ public class RedisDeployUtils {
         if (!DeployUtils.createShell(ssh2, FixDefs.START_SHELL, startShell, logKey, result)) { ssh2.close(); return false; }
         
         
-        String stopShell = String.format("./bin/redis-cli -h %s -p %s -a %s -c shutdown", servIp, port, FixDefs.ZZSOFT_REDIS_PASSWD);
+        String stopShell = String.format("./bin/redis-cli -h %s -p %s -a %s -c shutdown", servIp, port, servPasswd);
         if (!DeployUtils.createShell(ssh2, FixDefs.STOP_SHELL, stopShell, logKey, result)) { ssh2.close(); return false; }
         
         
@@ -207,7 +245,7 @@ public class RedisDeployUtils {
         return true;
     }
     
-    public static boolean deployProxyNode(JsonObject proxyJson, String nodes4proxy, String logKey, String magicKey, ResultBean result) {
+    public static boolean deployProxyNode(JsonObject proxyJson, String nodes4proxy, String servPasswd, String logKey, String magicKey, ResultBean result) {
         // "REDIS_PROXY": [
         //     {
         //         "INST_ID": "955518f4-775b-bdf2-57ea-564cb197bb01", 
@@ -299,7 +337,12 @@ public class RedisDeployUtils {
         if (!DeployUtils.sed(ssh2, FixDefs.CONF_LOG_FILE, log_file, new_conf, logKey, result)) { ssh2.close(); return false; }
         if (!DeployUtils.sed(ssh2, FixDefs.CONF_MAX_CONN, maxConn, new_conf, logKey, result)) { ssh2.close(); return false; }
         if (!DeployUtils.sed(ssh2, FixDefs.CONF_PROXY_THREADS, proxyThreads, new_conf, logKey, result)) { ssh2.close(); return false; }
-        // if (!DeployUtils.sed(ssh2, FixDefs.CONF_PASSWORD, ZZSOFT_REDIS_PASSWD, new_conf, log_key)) return false;
+        if (!StringUtils.isNull(servPasswd)) {
+            if (!DeployUtils.sed(ssh2, FixDefs.CONF_PASSWORD, servPasswd, new_conf, logKey, result)) {
+                ssh2.close();
+                return false;
+            }
+        }
         
         // create start and stop shell
         DeployLog.pubLog(logKey, "create proxy start and stop shell ......");

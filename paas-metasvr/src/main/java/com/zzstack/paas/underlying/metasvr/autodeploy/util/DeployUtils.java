@@ -69,10 +69,11 @@ public class DeployUtils {
     public static boolean postProc(String servInstID, String flag, String logKey, String magicKey,
             ResultBean result) {
 
-        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
+        String deployFlag = flag.equals(FixDefs.STR_TRUE) ? FixDefs.DEPLOY_FLAG_TRUE : FixDefs.DEPLOY_FLAG_FALSE;
+        if (!MetaDataDao.updateInstanceDeployFlag(servInstID, deployFlag, result, magicKey)) {
             return false;
         }
-        if (!MetaDataDao.updateServiceDeployFlag(servInstID, FixDefs.STR_TRUE, result, magicKey)) {
+        if (!MetaDataDao.updateServiceDeployFlag(servInstID, deployFlag, result, magicKey)) {
             return false;
         }
 
@@ -1095,6 +1096,18 @@ public class DeployUtils {
         boolean res = false;
         try {
             res = ssh2.initRedisCluster(cmd, logKey);
+        } catch (SSHException e) {
+            logger.error(e.getMessage(), e);
+            result.setRetCode(CONSTS.REVOKE_NOK);
+            result.setRetInfo(e.getMessage());
+        }
+        return res;
+    }
+
+    public static boolean resetRedisPassword(SSHExecutor ssh2, String cmd, String servPasswd, String logKey, ResultBean result) {
+        boolean res = false;
+        try {
+            res = ssh2.resetRedisPassword(cmd, servPasswd, logKey);
         } catch (SSHException e) {
             logger.error(e.getMessage(), e);
             result.setRetCode(CONSTS.REVOKE_NOK);

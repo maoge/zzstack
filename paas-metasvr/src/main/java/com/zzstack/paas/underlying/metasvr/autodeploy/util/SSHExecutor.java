@@ -13,8 +13,10 @@ import com.zzstack.paas.underlying.utils.consts.CONSTS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +66,7 @@ public class SSHExecutor {
     public static final byte[] YES_NO_FINGERPRINT = { '(', 'y', 'e', 's', '/', 'n', 'o', '/', '[', 'f', 'i', 'n', 'g', 'e', 'r', 'p', 'r', 'i', 'n', 't', ']', ')', '?', ' ' };
     public static final byte[] PASSWD = { 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', ':', ' ' };
 
+    public static final String REDIS_LINE_END = "> ";
     public static final String REDIS_CLUSTER_INIT_ACCEPT = "(type 'yes' to accept): ";
     public static final String REDIS_CLUSTER_INIT_OK = "[OK] All 16384 slots covered.";
     public static final String REDIS_CLUSTER_INIT_ERR = "ERR";
@@ -87,6 +90,8 @@ public class SSHExecutor {
 
     private InputStream in;
     private OutputStream os;
+    
+    private BufferedReader lineReader;
 
     private final int BUF_LEN = 1024;
     private byte[] buf;
@@ -126,6 +131,8 @@ public class SSHExecutor {
 
             in = channel.getInputStream();
             os = channel.getOutputStream();
+            
+            lineReader = new BufferedReader(new InputStreamReader(in));
 
             // TimeUnit.MILLISECONDS.sleep(100L);
 
@@ -152,6 +159,11 @@ public class SSHExecutor {
                 os = null;
             }
 
+            if (lineReader != null) {
+                lineReader.close();
+                lineReader = null;
+            }
+            
             if (in != null) {
                 in.close();
                 in = null;
@@ -174,7 +186,6 @@ public class SSHExecutor {
     private void writeLn(String command) throws SSHException {
         try {
             byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
-            // os.write(command.getBytes(), Charset.);
             os.write(bytes, 0, bytes.length);
 
             os.write("\n".getBytes());
@@ -287,6 +298,11 @@ public class SSHExecutor {
         return context.contains(REDIS_CLUSTER_INIT_ACCEPT);
     }
 
+    // 192.168.1.110:8001>
+    public boolean isRedisLineEnd(String context) {
+        return context.endsWith(REDIS_LINE_END);
+    }
+    
     public boolean isTaosShellEnd(String context) {
         int len = TAOS_CMD_END.length();
         int count = context.length();
@@ -615,6 +631,61 @@ public class SSHExecutor {
         return res;
     }
 
+    public boolean resetRedisPassword(String cmd, String passwd, String logKey) throws SSHException {
+        StringBuilder context = new StringBuilder();
+        
+        // ./bin/redis-cli -h 172.16.0.59 -p 8002
+        // config set requirepass 'yousu.123321'
+        // config set masterauth 'yousu.123321'
+        // config rewrite
+        
+        String line = null;
+        boolean res = false;
+        
+        try {
+            writeLn(cmd);
+            TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            
+            while (lineReader.read() > 0) {
+                // lineReader.read(null)
+                context.append(line);
+                TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            }
+            
+            String requirepass = String.format("config set requirepass '%s'", passwd);
+            writeLn(requirepass);
+            TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            while ((line = lineReader.readLine()) != null) {
+                context.append(line);
+                TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            }
+            
+            String masterauth = String.format("config set masterauth '%s'", passwd);
+            writeLn(masterauth);
+            TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            while ((line = lineReader.readLine()) != null) {
+                context.append(line);
+                TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            }
+            
+            writeLn("config rewrite");
+            TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            while ((line = lineReader.readLine()) != null) {
+                context.append(line);
+                TimeUnit.MILLISECONDS.sleep(CPU_SLICE);
+            }
+            
+            res = true;
+            
+        } catch (Exception e) {
+            logger.error("resetRedisPassword error:{}", e.getMessage(), e);
+        }
+        
+        System.out.println(context);
+
+        return res;
+    }
+    
     public boolean loginTaosShell(String cmd, String logKey) throws SSHException {
         writeLn(cmd);
 
