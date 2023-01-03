@@ -40,6 +40,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.validation.BadRequestException;
+import io.vertx.ext.web.validation.BodyProcessorException;
+import io.vertx.ext.web.validation.ParameterProcessorException;
+import io.vertx.ext.web.validation.RequestPredicateException;
 import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.ext.web.validation.builder.ValidationHandlerBuilder;
 import io.vertx.json.schema.SchemaParser;
@@ -54,7 +58,7 @@ public class ServerHandleRegister {
     private static JsonObject rejectJson;
     private static JsonObject errJson;
     private static JsonObject ipLimitJosn;
-    private static long taskTimeOut = CONSTS.HTTP_TASK_TIMEOUE;
+    private static long TASK_TIMEOUT = CONSTS.HTTP_TASK_TIMEOUE;
     public static final String SERVICE_ID_SPLITTER = "_";
 
     static {
@@ -70,7 +74,7 @@ public class ServerHandleRegister {
         ipLimitJosn.put(FixHeader.HEADER_RET_CODE, CONSTS.REVOKE_AUTH_IP_LIMIT);
         ipLimitJosn.put(FixHeader.HEADER_RET_INFO, "ip limit !");
 
-        taskTimeOut = ServiceData.get().getTaskTimeOut();
+        TASK_TIMEOUT = ServiceData.get().getTaskTimeOut();
     }
 
     public static void registVertxRoute(Vertx vertx, int port, List<Class<?>> handlers) {
@@ -174,14 +178,15 @@ public class ServerHandleRegister {
                             long start = System.currentTimeMillis();
                             m.invoke(null, ctx);
                             long end = System.currentTimeMillis();
+                            long cost = end - start;
 
-                            if (taskTimeOut > taskTimeOut) {
+                            if (cost > TASK_TIMEOUT) {
                                 logger.error("request:{} {} process cost:{} ms", method.getClass().getSimpleName(),
-                                        request.path(), (end - start));
+                                        request.path(), cost);
                             }
                         } catch (Exception e) {
                             doError(ctx);
-                            logger.error(e.getMessage(), e);
+                            logger.error("handler: {} caught error: {}", path, e.getMessage(), e);
                         } finally {
                             future.complete();
                         }
@@ -190,6 +195,23 @@ public class ServerHandleRegister {
                 });
             }
         }
+        
+        router.errorHandler(400, ctx -> {
+            if (ctx.failure() instanceof BadRequestException) {
+                HttpServerRequest req = ctx.request();
+                Throwable failure = ctx.failure();
+                if (failure instanceof ParameterProcessorException) {
+                    ParameterProcessorException f = (ParameterProcessorException) failure;
+                    logger.error("handler: {} error: {}", req.path(), f.toJson());
+                } else if (failure instanceof BodyProcessorException) {
+                    BodyProcessorException f = (BodyProcessorException) failure;
+                    logger.error("handler: {} error: {}", req.path(), f.toJson());
+                } else if (failure instanceof RequestPredicateException) {
+                    RequestPredicateException f = (RequestPredicateException) failure;
+                    logger.error("handler: {} error: {}", req.path(), f.toJson());
+                }
+            }
+        });
     }
     
     public static boolean registServerlessGateway() {
