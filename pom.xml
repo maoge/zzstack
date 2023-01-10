@@ -67,7 +67,7 @@
         <druid.version>1.1.16</druid.version>
 
         <snakeyaml.version>1.23</snakeyaml.version>
-        <jedis.version>4.2.2</jedis.version>
+        <jedis.version>4.3.1</jedis.version>
 
         <guava-jre.version>30.1-jre</guava-jre.version>
         <google-guice.version>4.2.3</google-guice.version>
