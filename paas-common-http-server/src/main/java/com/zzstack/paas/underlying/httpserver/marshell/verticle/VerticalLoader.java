@@ -9,6 +9,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
 
 public class VerticalLoader extends AbstractVerticle {
@@ -21,6 +22,7 @@ public class VerticalLoader extends AbstractVerticle {
         
         Router router = ServiceData.get().getRouter();
 
+        String ip = ServiceData.get().getIP();
         int port = ServiceData.get().getPort();
         boolean useSSL = ServiceData.get().isUseSSL();
         
@@ -36,7 +38,9 @@ public class VerticalLoader extends AbstractVerticle {
         HttpServer server = vertx.createHttpServer(httpServerOpts);
         String protocol = useSSL ? "https" : "http";
         
-        server.requestHandler(router).listen(port, res -> {
+        SocketAddress sockAddr = SocketAddress.inetSocketAddress(port, ip);
+        
+        server.requestHandler(router).listen(sockAddr, res -> {
             ServiceData.get().setHttpServer(server);
             
             if (res.succeeded()) {
