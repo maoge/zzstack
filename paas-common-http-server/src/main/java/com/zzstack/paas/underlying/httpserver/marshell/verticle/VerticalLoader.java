@@ -45,14 +45,12 @@ public class VerticalLoader extends AbstractVerticle {
             
             if (res.succeeded()) {
                 // registerEventBus();
-                logger.info("{} server listen on port:{} succeeded!", protocol, port);
+                logger.info("{} server listen:{}:{} succeeded!", protocol, ip, port);
             } else {
                 Throwable t = res.cause();
-                logger.error("{} server listen on port:{} failed, reason:{}", protocol, port, t);
+                logger.error("{} server listen:{}:{} failed, reason:{}", protocol, ip, port, t);
             }
         });
-        
-        logger.info("{} server started!", protocol);
     }
 
     @Override
