@@ -71,6 +71,14 @@
     </Appenders>
 
     <Loggers>
+        <logger name="org.apache.pulsar.client.impl.ProducerStatsRecorderImpl" level="error"/>
+        <logger name="org.apache.pulsar.client.impl.ClientCnx" level="error"/>
+        <logger name="org.apache.pulsar.client.impl.ProducerImpl" level="error"/>
+        <logger name="org.apache.pulsar.client.impl.ProducerStatsRecorderImpl" level="error"/>
+        <logger name="org.apache.pulsar.client.impl.ConsumerImpl" level="error"/>
+        <logger name="org.apache.pulsar.client.impl.ConsumerStatsRecorderImpl" level="error"/>
+        <logger name="com.zaxxer.hikari.HikariDataSource" level="error"/>
+        
         <AsyncRoot level="${output_log_level}" includeLocation="false">
             <AppenderRef ref="STDOUT" />
             <AppenderRef ref="RollingRandomInfoFile"/>

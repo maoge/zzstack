@@ -182,6 +182,8 @@ public class VoltDBDeployUtils {
         if (!DeployUtils.sedOnFailClose(ssh2, FixDefs.CONF_USER_PASSWORD, FixDefs.VOLTDB_ADMIN_PWD, stopFile, logKey, result)) return false;
         
         // init database
+        if (!DeployUtils.mkdir(ssh2, "./database", logKey, result)) return false;
+        
         String initDBCmd = "./bin/voltdb init --dir=./database --config=deployment.xml";
         if (!DeployUtils.execSimpleCmdOnFailClose(ssh2, initDBCmd, logKey, result)) return false;
         
