@@ -321,7 +321,7 @@ public class StatisticHandler implements IServerHandler {
     public static void saveCollectd(RoutingContext ctx) {
         HttpServerRequest req = ctx.request();
         String servIP = req.headers().get(FixHeader.HEADER_SERVER_IP);
-        String body = ctx.getBodyAsString();
+        String body = ctx.body().asString();
         
         // logger.info(body);
         
