@@ -235,25 +235,34 @@ public class HttpUtils {
         });
 	}
 
-	public static void inChunkedFile(RoutingContext ctx, String path, String saveFileName) {
+	public static void inChunkedFile(RoutingContext ctx, String path, String saveFileName, JsonObject result) {
 		Buffer body = ctx.getBody();
 		int len = body.length();
 		String saveFile = String.format("%s%s%s", path, HttpUtils.PATH_SPLIT, saveFileName);
-		ServiceData.get().getVertx().fileSystem().open(saveFile, new OpenOptions(), asyncEvent -> {
-			
-			AsyncFile asyncFile = asyncEvent.result();
-			asyncFile.write(body, 0, aResult -> {
-				if (aResult.succeeded()) {
-					logger.info("save file success, file:{}, size:{}", saveFile, len);
-					asyncFile.flush();
-				}
+		
+		try {
+			ServiceData.get().getVertx().fileSystem().open(saveFile, new OpenOptions(), asyncEvent -> {
 				
-				asyncFile.close();
+				AsyncFile asyncFile = asyncEvent.result();
+				asyncFile.write(body, 0, aResult -> {
+					if (aResult.succeeded()) {
+						logger.info("save file success, file:{}, size:{}", saveFile, len);
+						asyncFile.flush();
+					}
+					
+					asyncFile.close();
+				});
+				
 			});
 			
-		});
-		
-		ctx.response().end();
+			result.put(FixHeader.HEADER_RET_CODE, CONSTS.REVOKE_OK);
+			result.put(FixHeader.HEADER_RET_INFO, "上传成功！");
+			
+		} catch (Exception e) {
+			logger.error("inChunkedFile 文件上传失败：{}", e, e.getMessage());
+			result.put(FixHeader.HEADER_RET_CODE, CONSTS.REVOKE_NOK);
+			result.put(FixHeader.HEADER_RET_INFO, "上传失败！");
+		}
 	}
 	
 	public static void writeRetBuffer(HttpServerResponse response, int retCode, String retInfo) {
