@@ -30,10 +30,10 @@
         <project.build.locale>zh_CN</project.build.locale>
 
         <!-- netty support -->
-        <netty-all.version>4.1.76.Final</netty-all.version>
+        <netty-all.version>4.1.90.Final</netty-all.version>
 
         <!-- vertx -->
-        <vertx.version>4.4.0</vertx.version>
+        <vertx.version>4.4.1</vertx.version>
 
         <!-- jackson support -->
         <jackson-annotations.version>2.12.0</jackson-annotations.version>
