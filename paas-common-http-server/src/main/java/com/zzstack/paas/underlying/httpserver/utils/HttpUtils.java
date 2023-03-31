@@ -80,7 +80,7 @@ public class HttpUtils {
             } else if (method.equals(HttpMethod.POST)) {
                 String contentType = request.getHeader(CONSTS.CONTENT_TYPE);
                 if (contentType.indexOf(CONSTS.CONTENT_TYPE_APP_JSON) != -1) {
-                    JsonObject json = ctx.getBodyAsJson();
+                    JsonObject json = ctx.body().asJsonObject();
                     parseJsonParams(json, paramMap);
                 } else {
                     map = request.formAttributes();
@@ -236,7 +236,7 @@ public class HttpUtils {
 	}
 
 	public static void inChunkedFile(RoutingContext ctx, String path, String saveFileName, JsonObject result) {
-		Buffer body = ctx.getBody();
+		Buffer body = ctx.body().buffer();
 		int len = body.length();
 		String saveFile = String.format("%s%s%s", path, HttpUtils.PATH_SPLIT, saveFileName);
 		

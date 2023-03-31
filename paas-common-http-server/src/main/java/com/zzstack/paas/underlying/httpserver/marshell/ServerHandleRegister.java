@@ -50,6 +50,7 @@ import io.vertx.json.schema.SchemaParser;
 import io.vertx.json.schema.SchemaRouter;
 import io.vertx.json.schema.SchemaRouterOptions;
 import io.vertx.json.schema.common.dsl.ObjectSchemaBuilder;
+import io.vertx.json.schema.common.dsl.SchemaBuilder;
 
 public class ServerHandleRegister {
 
@@ -133,7 +134,7 @@ public class ServerHandleRegister {
 
                 SchemaParser parser = SchemaParser.createDraft7SchemaParser(SchemaRouter.create(vertx, new SchemaRouterOptions()));
 
-                ValidationHandlerBuilder builder = ValidationHandler.builder(parser);
+                ValidationHandlerBuilder builder = ValidationHandlerBuilder.create(parser); // ValidationHandler.builder(parser);
                 buildHeaderParams(builder, headerParams);
                 buildQueryParams(builder, queryParams);
                 buildPathParams(builder, pathParams);
@@ -316,7 +317,7 @@ public class ServerHandleRegister {
             case ParamBoolean:
                 builder.headerParameter(param.required() ? param(parmName, booleanSchema()) : optionalParam(parmName, booleanSchema()));
                 break;
-            
+
             default:
                 break;
             }
@@ -333,19 +334,19 @@ public class ServerHandleRegister {
             case ParamString:
                 builder.queryParameter(param.required() ? param(parmName, stringSchema()) : optionalParam(parmName, stringSchema()));
                 break;
-            
+
             case ParamInt:
                 builder.queryParameter(param.required() ? param(parmName, intSchema()) : optionalParam(parmName, stringSchema()));
                 break;
-            
+
             case ParamNumber:
                 builder.queryParameter(param.required() ? param(parmName, numberSchema()) : optionalParam(parmName, stringSchema()));
                 break;
-            
+
             case ParamBoolean:
                 builder.queryParameter(param.required() ? param(parmName, booleanSchema()) : optionalParam(parmName, stringSchema()));
                 break;
-            
+
             default:
                 break;
             }
@@ -362,19 +363,19 @@ public class ServerHandleRegister {
             case ParamString:
                 builder.pathParameter(param.required() ? param(parmName, stringSchema()) : optionalParam(parmName, stringSchema()));
                 break;
-            
+
             case ParamInt:
                 builder.pathParameter(param.required() ? param(parmName, intSchema()) : optionalParam(parmName, intSchema()));
                 break;
-            
+
             case ParamNumber:
                 builder.pathParameter(param.required() ? param(parmName, numberSchema()) : optionalParam(parmName, numberSchema()));
                 break;
-            
+
             case ParamBoolean:
                 builder.pathParameter(param.required() ? param(parmName, booleanSchema()) : optionalParam(parmName, booleanSchema()));
                 break;
-            
+
             default:
                 break;
             }
@@ -384,66 +385,54 @@ public class ServerHandleRegister {
     private static void buildBodyParams(ValidationHandlerBuilder builder, Parameter[] params) {
         if (params == null || params.length == 0)
             return;
-        
+
         ObjectSchemaBuilder objSchemaBuilder = objectSchema();
-        
+
         for (Parameter param : params) {
             String parmName = param.name();
             switch (param.type()) {
             case ParamString:
-                if (param.required())
-                    objSchemaBuilder.property(parmName, stringSchema());
-                else
-                    objSchemaBuilder.optionalProperty(parmName, stringSchema());
-                
+                addSchema(objSchemaBuilder, parmName, stringSchema(), param.required());
                 break;
-                
+
             case ParamInt:
-                if (param.required())
-                    objSchemaBuilder.property(parmName, intSchema());
-                else
-                    objSchemaBuilder.optionalProperty(parmName, intSchema());
-                
+                addSchema(objSchemaBuilder, parmName, intSchema(), param.required());
                 break;
-            
+
             case ParamNumber:
-                if (param.required())
-                    objSchemaBuilder.property(parmName, numberSchema());
-                else
-                    objSchemaBuilder.optionalProperty(parmName, numberSchema());
-                
+                addSchema(objSchemaBuilder, parmName, numberSchema(), param.required());
                 break;
-            
+
             case ParamBoolean:
-                if (param.required())
-                    objSchemaBuilder.property(parmName, booleanSchema());
-                else
-                    objSchemaBuilder.optionalProperty(parmName, booleanSchema());
-                
+                addSchema(objSchemaBuilder, parmName, booleanSchema(), param.required());
                 break;
-            
+
             case ParamObject:
-                if (param.required())
-                    objSchemaBuilder.property(parmName, objectSchema());
-                else
-                    objSchemaBuilder.optionalProperty(parmName, objectSchema());
-                
+                addSchema(objSchemaBuilder, parmName, objectSchema(), param.required());
                 break;
-            
+
             case ParamArray:
-                if (param.required())
-                    objSchemaBuilder.property(parmName, arraySchema());
-                else
-                    objSchemaBuilder.optionalProperty(parmName, arraySchema());
-                
+                addSchema(objSchemaBuilder, parmName, arraySchema(), param.required());
                 break;
-            
+
+            case ParamTuple:
+                addSchema(objSchemaBuilder, parmName, tupleSchema(), param.required());
+                break;
+
             default:
                 break;
             }
         }
         
         builder.body(json(objSchemaBuilder));
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static void addSchema(ObjectSchemaBuilder objSchemaBuilder, String paramName, SchemaBuilder schemaBuilder, boolean required) {
+        if (required)
+            objSchemaBuilder.property(paramName, schemaBuilder);
+        else
+            objSchemaBuilder.optionalProperty(paramName, schemaBuilder);
     }
 
     private static void doError(RoutingContext ctx) {
