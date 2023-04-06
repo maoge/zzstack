@@ -52,6 +52,7 @@ import io.vertx.json.schema.SchemaRouterOptions;
 import io.vertx.json.schema.common.dsl.ObjectSchemaBuilder;
 import io.vertx.json.schema.common.dsl.SchemaBuilder;
 
+@SuppressWarnings("deprecation")
 public class ServerHandleRegister {
 
     private static Logger logger = LoggerFactory.getLogger(ServerHandleRegister.class);
