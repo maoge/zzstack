@@ -238,6 +238,8 @@ public class HttpUtils {
 	public static void inChunkedFile(RoutingContext ctx, String path, String saveFileName, JsonObject result) {
 		Buffer body = ctx.body().buffer();
 		int len = body.length();
+		logger.info("inChunkedFile len:{}", len);
+		
 		String saveFile = String.format("%s%s%s", path, HttpUtils.PATH_SPLIT, saveFileName);
 		
 		try {
@@ -248,6 +250,8 @@ public class HttpUtils {
 					if (aResult.succeeded()) {
 						logger.info("save file success, file:{}, size:{}", saveFile, len);
 						asyncFile.flush();
+					} else if (aResult.failed()) {
+					    logger.info("save file failed, file:{}, size:{}", saveFile, len);
 					}
 					
 					asyncFile.close();
