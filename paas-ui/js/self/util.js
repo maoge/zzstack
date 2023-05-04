@@ -267,7 +267,7 @@ $.ajaxSetup({
     },
     error : function (jqxhr) {
         Util.hideLoading();
-        if(jqxhr.status === 401 || jqxhr.status === 400){
+        if(jqxhr.status === 401){
             /*alert("密码错误或者Token过期，请重新登录！");*/
             window.location.href="../login.html";
             return;

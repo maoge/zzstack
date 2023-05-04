@@ -450,7 +450,7 @@ public class ServerHandleRegister {
         HttpServerResponse response = ctx.response();
         response.putHeader("Access-Control-Allow-Origin", "*");
         response.setStatusCode(401);
-        response.end("auth fail!");
+        response.end("Unauthorized");
     }
 
 }
