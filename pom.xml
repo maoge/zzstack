@@ -74,7 +74,7 @@
 
         <redisson.version>3.16.8</redisson.version>
 
-        <pulsar.version>2.7.2</pulsar.version>
+        <pulsar.version>3.0.0</pulsar.version>
 
         <!--<ganymed-ssh2.version>262</ganymed-ssh2.version>-->
         <jsch.version>0.1.55</jsch.version>
