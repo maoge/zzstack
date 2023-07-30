@@ -96,6 +96,7 @@ public class ActiveStandbyDBSrcPool {
             lock.unlock();
         }
         
+        logger.info("init db:{}", dbName);
         return dbPool;
     }
     

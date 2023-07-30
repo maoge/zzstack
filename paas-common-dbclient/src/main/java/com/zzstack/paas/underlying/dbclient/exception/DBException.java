@@ -10,7 +10,8 @@ public class DBException extends Exception {
 		e3(80010003),        // 查询出错
 		e4(80010004),        // 更新出错
 		e5(80010005),        // setAutoCommit(false) error
-		e6(80010006);        // 解密出错
+		e6(80010006),        // 解密出错
+		e7(80010007);        // 执行DDL出错
 		
 		private int value;
 		

@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -122,9 +123,54 @@ public class CRUD {
         }
         return res;
     }
-
+    
     public boolean executeUpdate() {
         return executeUpdate(true, false);
+    }
+    
+    public boolean executeDDL() {
+        return executeUpdate(true, false);
+    }
+    
+    public boolean executeDDL(boolean recycle, boolean autoCommit) {
+        if (conn == null) {
+            try {
+                getConn();
+            } catch (DBException e) {
+                logger.error(e.getMessage(), e);
+                return false;
+            }
+        }
+
+        boolean res = false;
+        try {
+            if (!autoCommit) {
+                conn.setAutoCommit(false);
+            }
+            
+            while (true) {
+                SqlBean sb = queue.poll();
+                if (sb == null)
+                    break;
+
+                String sql = sb.getSql();
+                res = EXECUTE(conn, sql);
+            }
+            
+            if (!autoCommit) {
+                conn.commit();
+            }
+
+        } catch (Exception e) {
+            String dbInfo = pool.getDBInfo();
+            logger.error("db:{}, message:{}", dbInfo, e.getMessage(), e);
+        } finally {
+            if (null != conn) {
+                pool.recycle(conn);
+                conn = null;
+            }
+        }
+        return res;
     }
     
     public boolean executeUpdate(boolean recycle, boolean autoCommit) {
@@ -137,11 +183,12 @@ public class CRUD {
             }
         }
 
-        boolean res = true;
+        boolean res = false;
         try {
             if (!autoCommit) {
                 conn.setAutoCommit(false);
             }
+            
             while (true) {
                 SqlBean sb = queue.poll();
                 if (sb == null)
@@ -152,11 +199,11 @@ public class CRUD {
                 res = UPDATE(conn, sql, objs != null ? objs.toArray() : null) >= 1;
             }
 
-            if (!autoCommit)
+            if (!autoCommit) {
                 conn.commit();
+            }
 
         } catch (Exception e) {
-            res = false;
             try {
                 conn.rollback();
             } catch (SQLException e1) {
@@ -888,6 +935,36 @@ public class CRUD {
                 if (ps != null) {
                     try {
                         ps.close();
+                    } catch (SQLException e) {
+
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+    
+    public boolean EXECUTE(Connection conn, String sql) throws DBException {
+        boolean res = false;
+
+        if (conn != null) {
+            Statement stmt = null;
+            try {
+                if (logger.isDebugEnabled())
+                    logger.debug("executeSql:[" + sql + "]");
+
+                stmt = conn.createStatement();
+                res = stmt.execute(sql);
+
+            } catch (Exception e) {
+                String errInfo = String.format("error:%s, sql:%s", e.getMessage(), sql);
+                logger.error("{}", errInfo, e);
+                throw new DBException("sql:" + sql, e, DBERRINFO.e7);
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
                     } catch (SQLException e) {
 
                     }

@@ -63,10 +63,10 @@ public abstract class DataSourceModel {
         DB_DRIVER_MAP.put(CONSTS.DB_TYPE_TDENGINE,   CONSTS.DB_DRIVER_TDENGINE);
         DB_DRIVER_MAP.put(CONSTS.DB_TYPE_CLICKHOUSE, CONSTS.DB_DRIVER_CLICKHOUSE);
         DB_DRIVER_MAP.put(CONSTS.DB_TYPE_SQLITE,     CONSTS.DB_DRIVER_SQLITE);
+        DB_DRIVER_MAP.put(CONSTS.DB_TYPE_DUCKDB,     CONSTS.DB_DRIVER_DUCKDB);
     }
 
     public DataSourceModel(String url, String username, String passwd, String dbType, DBConfig.Jdbc jdbc) {
-
         this.driver = DB_DRIVER_MAP.get(dbType);
         if (this.driver == null || this.driver.isEmpty()) {
             logger.error("driver not found");

@@ -245,7 +245,8 @@ public class DBSrcPool {
                 this.invalidDBMap.put(url, instancePool);
                 this.invalidIdList.add(url);
             }
-
+        } catch (Exception e) {
+            logger.error("db:{} init fail:{}", url, e.getMessage(), e);
         } finally {
             lock.unlock();
         }

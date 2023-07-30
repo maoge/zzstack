@@ -31,12 +31,16 @@ public class InstancePoolImpl implements DataSourcePool {
         this.id = url;
         this.dbType = dbType;
         
-        if (jdbc.dbSourceModel.equals(DB_SOURCE_MODEL_DRUID))
-            this.model = new DruidModel(url, username, passwd, dbType, jdbc);
-        else if (jdbc.dbSourceModel.equals(DB_SOURCE_MODEL_HIKARI))
-            this.model = new HikariModel(url, username, passwd, dbType, jdbc);
-        else
-            logger.error("no compatial dbSourceModel, check jdbc yaml ......");
+        try {
+            if (jdbc.dbSourceModel.equals(DB_SOURCE_MODEL_DRUID))
+                this.model = new DruidModel(url, username, passwd, dbType, jdbc);
+            else if (jdbc.dbSourceModel.equals(DB_SOURCE_MODEL_HIKARI))
+                this.model = new HikariModel(url, username, passwd, dbType, jdbc);
+            else
+                logger.error("no compatial dbSourceModel, check jdbc yaml ......");
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
     }
 
     @Override

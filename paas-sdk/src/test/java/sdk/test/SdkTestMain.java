@@ -267,7 +267,7 @@ public class SdkTestMain {
                     .batchingMaxMessages(1000)
                     .batchingMaxPublishDelay(5, TimeUnit.MILLISECONDS)
                     .maxPendingMessages(80000)
-                    .maxPendingMessagesAcrossPartitions(80000)
+                    // .maxPendingMessagesAcrossPartitions(80000)
                     .sendTimeout(0, TimeUnit.MILLISECONDS)
                     .messageRoutingMode(MessageRoutingMode.RoundRobinPartition)
                     .hashingScheme(HashingScheme.Murmur3_32Hash)
@@ -305,7 +305,7 @@ public class SdkTestMain {
                     .autoUpdatePartitionsInterval(60, TimeUnit.SECONDS)
                     .enableRetry(true)
                     .enableBatchIndexAcknowledgment(true)
-                    .maxPendingChuckedMessage(100)
+                    // .maxPendingChuckedMessage(100)
                     .subscribe();
             
             Message<byte[]> msgBytes = consumer.receive();

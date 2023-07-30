@@ -88,6 +88,7 @@
         
         <brpc-java.version>2.5.9</brpc-java.version>
         <rocksdbjni.version>5.1.4</rocksdbjni.version>
+        <duckdb.version>0.8.1</duckdb.version>
 
         <repositories.ip>https://maven.aliyun.com</repositories.ip>
     </properties>
@@ -512,6 +513,12 @@
                 <groupId>org.rocksdb</groupId>
                 <artifactId>rocksdbjni</artifactId>
                 <version>${rocksdbjni.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.duckdb</groupId>
+                <artifactId>duckdb_jdbc</artifactId>
+                <version>${duckdb.version}</version>
             </dependency>
             
         </dependencies>
