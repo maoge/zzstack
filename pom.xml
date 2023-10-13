@@ -30,10 +30,10 @@
         <project.build.locale>zh_CN</project.build.locale>
 
         <!-- netty support -->
-        <netty-all.version>4.1.90.Final</netty-all.version>
+        <netty-all.version>4.1.100.Final</netty-all.version>
 
         <!-- vertx -->
-        <vertx.version>4.4.1</vertx.version>
+        <vertx.version>4.4.6</vertx.version>
 
         <!-- jackson support -->
         <jackson-annotations.version>2.12.0</jackson-annotations.version>
@@ -49,7 +49,7 @@
 
         <commons-codec.verion>1.11</commons-codec.verion>
 
-        <mysql-connector-java.version>8.0.23</mysql-connector-java.version>
+        <mysql-connector-java.version>8.0.33</mysql-connector-java.version>
         <ojdbc6.version>11.2.0.3</ojdbc6.version>
 
         <lz4-java.version>1.7.1</lz4-java.version>
@@ -61,20 +61,20 @@
         <maven-source-plugin.version>3.1.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
 
-        <hikari-cp.version>2.7.9</hikari-cp.version>
+        <hikari-cp.version>3.0.0</hikari-cp.version>
         <mybatis.version>3.5.0</mybatis.version>
         <mybatis-guice.version>3.12</mybatis-guice.version>
-        <druid.version>1.1.16</druid.version>
+        <druid.version>1.2.20</druid.version>
 
         <snakeyaml.version>1.23</snakeyaml.version>
-        <jedis.version>4.3.1</jedis.version>
+        <jedis.version>5.0.1</jedis.version> <!-- 4.3.1 -->
 
-        <guava-jre.version>30.1-jre</guava-jre.version>
+        <guava-jre.version>32.1.2-jre</guava-jre.version>
         <google-guice.version>4.2.3</google-guice.version>
 
-        <redisson.version>3.16.8</redisson.version>
+        <redisson.version>3.23.5</redisson.version>
 
-        <pulsar.version>3.0.0</pulsar.version>
+        <pulsar.version>3.1.0</pulsar.version>
 
         <!--<ganymed-ssh2.version>262</ganymed-ssh2.version>-->
         <jsch.version>0.1.55</jsch.version>
