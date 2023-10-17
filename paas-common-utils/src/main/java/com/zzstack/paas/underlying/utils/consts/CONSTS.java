@@ -442,7 +442,6 @@ public class CONSTS {
     public static final String DB_TYPE_TDENGINE = "tdengine";
     public static final String DB_TYPE_CLICKHOUSE = "clickhouse";
     public static final String DB_TYPE_SQLITE = "sqlite";
-    public static final String DB_TYPE_DUCKDB = "duckdb";
 
     public static final String DB_DRIVER_ORCL = "oracle.jdbc.OracleDriver";
     public static final String DB_DRIVER_MYSQL = "com.mysql.cj.jdbc.Driver";
@@ -451,7 +450,6 @@ public class CONSTS {
     public static final String DB_DRIVER_TDENGINE = "com.taosdata.jdbc.TSDBDriver";
     public static final String DB_DRIVER_CLICKHOUSE = "com.github.housepower.jdbc.ClickHouseDriver";
     public static final String DB_DRIVER_SQLITE = "org.sqlite.JDBC";
-    public static final String DB_DRIVER_DUCKDB = "org.duckdb.DuckDBDriver";
 
     public static final String JDBC_URL_FMT_ORCL = "jdbc:oracle:thin:@%s:%s:%s";
     public static final String JDBC_URL_FMT_MYSQL = "jdbc:mysql://%s:%s/%s?useSSL=false";
