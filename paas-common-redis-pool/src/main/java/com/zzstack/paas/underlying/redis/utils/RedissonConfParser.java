@@ -7,13 +7,11 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.StringCodec;
-import org.redisson.codec.FstCodec;
 import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.codec.Kryo5Codec;
 import org.redisson.codec.KryoCodec;
 import org.redisson.codec.LZ4Codec;
 import org.redisson.codec.SerializationCodec;
-import org.redisson.codec.SnappyCodec;
 import org.redisson.codec.SnappyCodecV2;
 import org.redisson.config.ClusterServersConfig;
 import org.redisson.config.Config;
@@ -138,9 +136,6 @@ public class RedissonConfParser {
             case "ByteArrayCodec":
                 config.setCodec(new ByteArrayCodec());
                 break;
-            case "FstCodec":
-                config.setCodec(new FstCodec());
-                break;
             case "JsonJacksonCodec":
                 config.setCodec(new JsonJacksonCodec());
                 break;
@@ -155,9 +150,6 @@ public class RedissonConfParser {
                 break;
             case "SerializationCodec":
                 config.setCodec(new SerializationCodec());
-                break;
-            case "SnappyCodec":
-                config.setCodec(new SnappyCodec());
                 break;
             case "SnappyCodecV2":
                 config.setCodec(new SnappyCodecV2());
@@ -209,7 +201,7 @@ public class RedissonConfParser {
             masterSlaveServersConfig.setSlaveConnectionPoolSize(redisConf.slaveConnectionPoolSize);
             
             masterSlaveServersConfig.setFailedSlaveReconnectionInterval(redisConf.failedSlaveReconnectionInterval);
-            masterSlaveServersConfig.setFailedSlaveCheckInterval(redisConf.failedSlaveCheckInterval);
+            // masterSlaveServersConfig.setFailedSlaveCheckInterval(redisConf.failedSlaveCheckInterval);
             
             masterSlaveServersConfig.setMasterConnectionMinimumIdleSize(redisConf.masterConnectionMinimumIdleSize);
             masterSlaveServersConfig.setMasterConnectionPoolSize(redisConf.masterConnectionPoolSize);
@@ -257,9 +249,6 @@ public class RedissonConfParser {
             case "ByteArrayCodec":
                 config.setCodec(new ByteArrayCodec());
                 break;
-            case "FstCodec":
-                config.setCodec(new FstCodec());
-                break;
             case "JsonJacksonCodec":
                 config.setCodec(new JsonJacksonCodec());
                 break;
@@ -274,9 +263,6 @@ public class RedissonConfParser {
                 break;
             case "SerializationCodec":
                 config.setCodec(new SerializationCodec());
-                break;
-            case "SnappyCodec":
-                config.setCodec(new SnappyCodec());
                 break;
             case "SnappyCodecV2":
                 config.setCodec(new SnappyCodecV2());
@@ -321,7 +307,7 @@ public class RedissonConfParser {
             clusterServersConfig.setSlaveConnectionPoolSize(redisConf.slaveConnectionPoolSize);
             
             clusterServersConfig.setFailedSlaveReconnectionInterval(redisConf.failedSlaveReconnectionInterval);
-            clusterServersConfig.setFailedSlaveCheckInterval(redisConf.failedSlaveCheckInterval);
+            // clusterServersConfig.setFailedSlaveCheckInterval(redisConf.failedSlaveCheckInterval);
             
             clusterServersConfig.setMasterConnectionMinimumIdleSize(redisConf.masterConnectionMinimumIdleSize);
             clusterServersConfig.setMasterConnectionPoolSize(redisConf.masterConnectionPoolSize);
@@ -369,9 +355,6 @@ public class RedissonConfParser {
             case "ByteArrayCodec":
                 config.setCodec(new ByteArrayCodec());
                 break;
-            case "FstCodec":
-                config.setCodec(new FstCodec());
-                break;
             case "JsonJacksonCodec":
                 config.setCodec(new JsonJacksonCodec());
                 break;
@@ -386,9 +369,6 @@ public class RedissonConfParser {
                 break;
             case "SerializationCodec":
                 config.setCodec(new SerializationCodec());
-                break;
-            case "SnappyCodec":
-                config.setCodec(new SnappyCodec());
                 break;
             case "SnappyCodecV2":
                 config.setCodec(new SnappyCodecV2());
@@ -433,7 +413,7 @@ public class RedissonConfParser {
             clusterServersConfig.setSlaveConnectionPoolSize(redisConf.slaveConnectionPoolSize);
             
             clusterServersConfig.setFailedSlaveReconnectionInterval(redisConf.failedSlaveReconnectionInterval);
-            clusterServersConfig.setFailedSlaveCheckInterval(redisConf.failedSlaveCheckInterval);
+            // clusterServersConfig.setFailedSlaveCheckInterval(redisConf.failedSlaveCheckInterval);
             
             clusterServersConfig.setMasterConnectionMinimumIdleSize(redisConf.masterConnectionMinimumIdleSize);
             clusterServersConfig.setMasterConnectionPoolSize(redisConf.masterConnectionPoolSize);
