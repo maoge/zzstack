@@ -14,6 +14,7 @@ import com.zzstack.paas.underlying.httpserver.singleton.ServiceStatInfo;
 import com.zzstack.paas.underlying.utils.consts.CONSTS;
 
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 
@@ -52,7 +53,7 @@ public class HttpServerMarshell {
         vertxOptions.setEventLoopPoolSize(serviceData.getEvLoopPoolSize());
         
         DeploymentOptions deployOptions = new DeploymentOptions();
-        deployOptions.setWorker(true);
+        deployOptions.setThreadingModel(ThreadingModel.WORKER);
         deployOptions.setWorkerPoolName("verticle.worker.pool");
         deployOptions.setWorkerPoolSize(serviceData.getWorkerPoolSize());
         deployOptions.setMaxWorkerExecuteTimeUnit(TimeUnit.MILLISECONDS);
