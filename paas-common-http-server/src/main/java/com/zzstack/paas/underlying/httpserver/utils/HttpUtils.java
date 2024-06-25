@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Base64;
@@ -45,7 +46,6 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.streams.Pump;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
@@ -223,10 +223,9 @@ public class HttpUtils {
             }
 
             AsyncFile asyncFile = asyncEvent.result();
+            
             ctx.response().setChunked(true);
-
-            Pump pump = Pump.pump(asyncFile, ctx.response());
-            pump.start();
+            ctx.request().pipeTo(asyncFile);
 
             asyncFile.endHandler(aVoid -> {
                 asyncFile.close();
@@ -360,7 +359,7 @@ public class HttpUtils {
 		boolean isConn = false;
 		
 		try {
-			url = new URL(urlString);
+			url = URI.create(urlString).toURL();
 			urlcon = (HttpURLConnection) url.openConnection();
 			
 			urlcon.setRequestMethod(CONSTS.HTTP_METHOD_GET);
@@ -404,7 +403,7 @@ public class HttpUtils {
 		boolean isConn = false;
 		
 		try {
-			url = new URL(urlString);
+			url = URI.create(urlString).toURL();
 			urlcon = (HttpURLConnection) url.openConnection();
 			String userPassword = userName + ":" + userPwd;
 			urlcon.setRequestProperty("Authorization", "Basic " + HttpUtils.base64(userPassword));
@@ -446,7 +445,7 @@ public class HttpUtils {
 		boolean isConn = false;
 
 		try {
-			url = new URL(urlString);
+			url = URI.create(urlString).toURL();
 
 			urlcon = (HttpURLConnection) url.openConnection();
 			urlcon.setRequestMethod("POST");

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -111,7 +112,7 @@ public class HttpCommonTools {
         boolean ok = true;
 
         try {
-            url = new URL(urlStr);
+            url = URI.create(urlStr).toURL();
             urlConn = (HttpURLConnection) url.openConnection();
 
             urlConn.setRequestMethod(method);

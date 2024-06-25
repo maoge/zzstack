@@ -97,7 +97,7 @@ public class ClickHouseTest {
         CRUD c = new CRUD("clickhouse");
         
         SqlBean sqlBean1 = new SqlBean(INSERT_NESTED);
-        sqlBean1.putParam(new Long(1));
+        sqlBean1.putParam(Long.valueOf(1L));
         sqlBean1.putParam("https://doi.org/10.1038/s41467-022-29443-w");
         sqlBean1.putParam("Learning meaningful representations of protein sequences");
         sqlBean1.putParam(new String[] {"Nicki Skafte Detlefsen", "Søren Hauberg", "Wouter Boomsma"});

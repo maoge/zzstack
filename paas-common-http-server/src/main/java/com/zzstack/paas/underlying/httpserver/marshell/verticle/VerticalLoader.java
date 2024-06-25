@@ -8,7 +8,7 @@ import com.zzstack.paas.underlying.httpserver.singleton.ServiceData;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
 
@@ -28,11 +28,9 @@ public class VerticalLoader extends AbstractVerticle {
         
         HttpServerOptions httpServerOpts = new HttpServerOptions();
         httpServerOpts.setSsl(useSSL);
-        if (useSSL) {
-            PemKeyCertOptions pkCertOpts = new PemKeyCertOptions();
-            pkCertOpts.addCertPath("cert/cert.pem");
-            pkCertOpts.addKeyPath("cert/key.pem");
-            httpServerOpts.setPemKeyCertOptions(pkCertOpts);
+        if (useSSL) {            
+            JksOptions jksOpts = new JksOptions();
+            jksOpts.setPath("cert/keystore.jks").setPassword("secret");
         }
         
         HttpServer server = vertx.createHttpServer(httpServerOpts);
