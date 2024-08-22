@@ -91,16 +91,7 @@
         
         <brpc-java.version>2.5.9</brpc-java.version>
         <rocksdbjni.version>5.1.4</rocksdbjni.version>
-        
     </properties>
-    
-    <repositories>
-		<repository>
-            <id>local-file</id>
-            <url>file://D:/data/.m2/repository</url>
-            <layout>default</layout>
-        </repository>
-    </repositories>
 
     <dependencyManagement>
         <dependencies>

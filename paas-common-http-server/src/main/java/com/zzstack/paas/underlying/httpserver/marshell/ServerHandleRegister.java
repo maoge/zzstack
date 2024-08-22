@@ -13,6 +13,7 @@ import static io.vertx.json.schema.draft7.dsl.Schemas.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,30 +113,30 @@ public class ServerHandleRegister {
             AllServiceMap serviceMap = AllServiceMap.get();
 
             Method[] methods = clazz.getMethods();
-            for (Method m : methods) {
-                if (!Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
+            for (Method handleMethod : methods) {
+                if (!Modifier.isStatic(handleMethod.getModifiers()) || !Modifier.isPublic(handleMethod.getModifiers())) {
                     continue;
                 }
 
-                if (!m.isAnnotationPresent(Service.class)) {
+                if (!handleMethod.isAnnotationPresent(Service.class)) {
                     continue;
                 }
 
-                Service s = m.getAnnotation(Service.class);
-                HttpMethodEnum httpMethodEnum = s.method();
-                String id = s.id();
-                String subPath = id.startsWith(CONSTS.PATH_SPLIT) ? s.id().substring(1) : s.id();
+                Service svc = handleMethod.getAnnotation(Service.class);
+                HttpMethodEnum httpMethodEnum = svc.method();
+                String id = svc.id();
+                String subPath = id.startsWith(CONSTS.PATH_SPLIT) ? svc.id().substring(1) : svc.id();
                 String path = rootPath + subPath;
-                serviceMap.add(path, s);
+                serviceMap.add(path, svc);
 
-                Parameter[] headerParams = s.headerParams();
-                Parameter[] queryParams = s.queryParams();
-                Parameter[] pathParams = s.pathParams();
-                Parameter[] bodyParams = s.bodyParams();
+                Parameter[] headerParams = svc.headerParams();
+                Parameter[] queryParams = svc.queryParams();
+                Parameter[] pathParams = svc.pathParams();
+                Parameter[] bodyParams = svc.bodyParams();
 
                 SchemaParser parser = SchemaParser.createDraft7SchemaParser(SchemaRouter.create(vertx, new SchemaRouterOptions()));
 
-                ValidationHandlerBuilder builder = ValidationHandlerBuilder.create(parser); // ValidationHandler.builder(parser);
+                ValidationHandlerBuilder builder = ValidationHandlerBuilder.create(parser);
                 buildHeaderParams(builder, headerParams);
                 buildQueryParams(builder, queryParams);
                 buildPathParams(builder, pathParams);
@@ -147,53 +148,8 @@ public class ServerHandleRegister {
 
                 HttpMethod httpMethod = httpMethodEnum == HttpMethodEnum.POST ? HttpMethod.POST : HttpMethod.GET;
                 router.route(httpMethod, path).handler(BodyHandler.create()).handler(validationHandler).handler(ctx -> {
-
-                    ctx.vertx().executeBlocking(future -> {
-                        try {
-                            // 判断是不是OPTIONS请求，是的话 直接通过
-                            HttpServerRequest request = ctx.request();
-                            HttpMethod method = request.method();
-                            if (method.equals(HttpMethod.OPTIONS)) {
-                                HttpServerResponse response = ctx.response();
-                                response.putHeader("Access-Control-Allow-Origin", "*");
-                                response.putHeader("Access-Control-Allow-Headers", "MAGIC_KEY");
-                                response.putHeader("Access-Control-Allow-Methods", "OPTIONS,HEAD,GET,POST,PUT,DELETE");
-                                response.putHeader("Access-Control-Max-Age", "180000");
-                                response.setStatusCode(200);
-                                response.end();
-                                return;
-                            }
-                            
-                            if (s.auth() && authHandle != null) {
-                                if (!authHandle.doAuth(ctx)) {
-                                    doAuthFail(ctx);
-                                    return;
-                                }
-                            }
-
-                            // service call statistic
-                            // doStatistic(ctx);
-                            
-                            // do log request
-                            doLogRequest(ctx);
-
-                            long start = System.currentTimeMillis();
-                            m.invoke(null, ctx);
-                            long end = System.currentTimeMillis();
-                            long cost = end - start;
-
-                            if (cost > TASK_TIMEOUT) {
-                                logger.error("request:{} {} process cost:{} ms", method.getClass().getSimpleName(),
-                                        request.path(), cost);
-                            }
-                        } catch (Exception e) {
-                            doError(ctx);
-                            logger.error("handler: {} caught error: {}", path, e.getMessage(), e);
-                        } finally {
-                            future.complete();
-                        }
-
-                    }, false, null);
+                	CtxProcessor ctxProc = new CtxProcessor(ctx, svc, authHandle, handleMethod, path);
+                	ctx.vertx().executeBlocking(ctxProc, false);
                 });
             }
         }
@@ -451,6 +407,79 @@ public class ServerHandleRegister {
         response.putHeader("Access-Control-Allow-Origin", "*");
         response.setStatusCode(401);
         response.end("Unauthorized");
+    }
+
+    private static class CtxProcessor implements Callable<RoutingContext> {
+
+    	private RoutingContext ctx;
+    	private Service svc;
+    	private IAuthHandler authHandle;
+    	private Method handleMethod;
+    	private String path;
+
+    	public CtxProcessor(RoutingContext ctx, Service svc, IAuthHandler authHandle, Method handleMethod, String path) {
+    		this.ctx = ctx;
+    		this.svc = svc;
+    		this.authHandle = authHandle;
+    		this.handleMethod = handleMethod;
+    		this.path = path;
+    	}
+
+		@Override
+		public RoutingContext call() throws Exception {
+			long start = System.currentTimeMillis();
+			HttpServerRequest request = null;
+			HttpMethod method = null;
+
+			try {
+                // 判断是不是OPTIONS请求，是的话 直接通过
+                request = ctx.request();
+                method = request.method();
+                if (method.equals(HttpMethod.OPTIONS)) {
+                	procOption(ctx);
+                    return ctx;
+                }
+
+                if (svc.auth() && authHandle != null) {
+                    if (!authHandle.doAuth(ctx)) {
+                        doAuthFail(ctx);
+                        return ctx;
+                    }
+                }
+
+                // service call statistic
+                // doStatistic(ctx);
+
+                // do log request
+                doLogRequest(ctx);
+
+                handleMethod.invoke(null, ctx);
+
+            } catch (Exception e) {
+                doError(ctx);
+                logger.error("handler: {} caught error: {}", path, e.getMessage(), e);
+            } finally {
+            	long end = System.currentTimeMillis();
+                long cost = end - start;
+                
+                if (cost > TASK_TIMEOUT) {
+                    logger.error("request:{} {} process cost:{} ms", method.getClass().getSimpleName(), request.path(), cost);
+                }
+            }
+
+			return ctx;
+		}
+		
+		private void procOption(RoutingContext ctx) {
+			HttpServerResponse response = ctx.response();
+            response.putHeader("Access-Control-Allow-Origin", "*");
+            response.putHeader("Access-Control-Allow-Headers", "MAGIC_KEY");
+            response.putHeader("Access-Control-Allow-Methods", "OPTIONS,HEAD,GET,POST,PUT,DELETE");
+            response.putHeader("Access-Control-Max-Age", "180000");
+            response.setStatusCode(200);
+            response.end();
+		}
+		
     }
 
 }

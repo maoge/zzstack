@@ -39,7 +39,7 @@ public class FileUploadClient extends AbstractVerticle {
         // void request(HttpMethod method, int port, String host, String requestURI, Handler<AsyncResult<HttpClientRequest>> handler);
         
         String filename = "//e:/redis_cache.tar.gz";
-        FileSystem fs = vertx.fileSystem();        
+        FileSystem fs = vertx.fileSystem();
         
         HttpClient httpClient = vertx.createHttpClient(new HttpClientOptions());
         httpClient.request(HttpMethod.POST, 9090, "172.16.2.51", "/test/uploadFile", ar -> {

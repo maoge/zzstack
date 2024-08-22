@@ -78,8 +78,9 @@ public class TestHandler implements IServerHandler {
     public static void uploadFile(RoutingContext routeContext) {
         String path = "//e:";
         String saveFileName = UUID.randomUUID() + ".uploaded";
+        JsonObject result = new JsonObject();
 
-        HttpUtils.inChunkedFile(routeContext, path, saveFileName);
+        HttpUtils.inChunkedFile(routeContext, path, saveFileName, result);
     }
     
 	@Service(id = "queryParamsTest", method = HttpMethodEnum.GET,
