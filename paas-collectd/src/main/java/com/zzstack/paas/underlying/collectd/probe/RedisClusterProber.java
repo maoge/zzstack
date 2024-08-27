@@ -119,7 +119,7 @@ public class RedisClusterProber implements Prober {
                 }
             }
         }
-        int roundingMode = BigDecimal.ROUND_DOWN;
+        RoundingMode roundingMode = RoundingMode.DOWN;
         BigDecimal bigDecimalZero = BigDecimal.ZERO;
         JSONObject redis = new JSONObject();
         redis.put(FixHeader.HEADER_TS, currentStamp);

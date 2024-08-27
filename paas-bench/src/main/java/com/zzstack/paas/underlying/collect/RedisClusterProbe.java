@@ -20,6 +20,7 @@ import redis.clients.jedis.Protocol;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -224,7 +225,7 @@ public class RedisClusterProbe {
                 }
             }
         }
-        int roundingMode = BigDecimal.ROUND_DOWN;
+        RoundingMode roundingMode = RoundingMode.DOWN;
         BigDecimal bigDecimalZero = BigDecimal.ZERO;
         JSONObject redis = new JSONObject();
         redis.put(FixHeader.HEADER_TS, currentStamp);

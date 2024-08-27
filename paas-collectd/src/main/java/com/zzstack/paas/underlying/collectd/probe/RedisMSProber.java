@@ -95,7 +95,7 @@ public class RedisMSProber implements Prober {
                 infoTransformRedis(info, currentStamp, instId, jsonArray, intMap, longMap, bigDecimalMap);
             }
         }
-        int roundingMode = BigDecimal.ROUND_DOWN;
+        RoundingMode roundingMode = RoundingMode.DOWN;
         BigDecimal bigDecimalZero = BigDecimal.ZERO;
         JSONObject redis = new JSONObject();
         redis.put(FixHeader.HEADER_TS, currentStamp);
